@@ -1,11 +1,13 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
+import { getProducts, getProductById, getCartItems, addToCart, getUserOrders } from "./db";
+import { z } from "zod";
 
 export const appRouter = router({
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
+  
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
@@ -17,12 +19,21 @@ export const appRouter = router({
     }),
   }),
 
-  // TODO: add feature routers here, e.g.
-  // todo: router({
-  //   list: protectedProcedure.query(({ ctx }) =>
-  //     db.getUserTodos(ctx.user.id)
-  //   ),
-  // }),
+  products: router({
+    list: publicProcedure.query(() => getProducts()),
+    getById: publicProcedure.input(z.number()).query(({ input }) => getProductById(input)),
+  }),
+
+  cart: router({
+    getItems: protectedProcedure.query(({ ctx }) => getCartItems(ctx.user.id)),
+    addItem: protectedProcedure
+      .input(z.object({ productId: z.number(), quantity: z.number().optional() }))
+      .mutation(({ ctx, input }) => addToCart(ctx.user.id, input.productId, input.quantity || 1)),
+  }),
+
+  orders: router({
+    list: protectedProcedure.query(({ ctx }) => getUserOrders(ctx.user.id)),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
