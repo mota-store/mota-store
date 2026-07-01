@@ -15,10 +15,10 @@
 
 ## Fase 3: Sistema de Carrinho e Checkout
 - [x] Implementar carrinho de compras (adicionar/remover itens)
-- [ ] Criar página de carrinho com resumo de itens
-- [ ] Desenvolver página de checkout
+- [x] Criar página de carrinho com resumo de itens
+- [x] Desenvolver página de checkout
 - [ ] Integrar sistema de pagamento (Stripe ou similar)
-- [ ] Criar confirmação de pedido
+- [x] Criar confirmação de pedido
 
 ## Fase 4: Perfil do Usuário e Dashboard
 - [x] Criar página de perfil do usuário
@@ -27,9 +27,9 @@
 - [x] Criar página de pedidos e status
 
 ## Fase 5: Design Responsivo
-- [ ] Otimizar layout para dispositivos móveis (Android/iPhone)
-- [ ] Testar responsividade em diferentes resoluções
-- [ ] Implementar navegação mobile-first
+- [x] Otimizar layout para dispositivos móveis (Android/iPhone)
+- [x] Testar responsividade em diferentes resoluções
+- [x] Implementar navegação mobile-first
 - [ ] Garantir performance em conexões lentas
 
 ## Fase 6: Testes e Checkpoint
