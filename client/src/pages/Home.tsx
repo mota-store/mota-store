@@ -64,9 +64,9 @@ export default function Home() {
             ) : (
               <Button
                 size="sm"
-                onClick={() => (window.location.href = getLoginUrl())}
+                onClick={() => navigate("/login")}
               >
-                Entrar com Google
+                Entrar
               </Button>
             )}
           </div>
@@ -251,9 +251,9 @@ export default function Home() {
             </div>
             <div>
               <h4 className="font-semibold mb-4">Suporte</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-accent transition-colors">FAQ</a></li>
-                <li><a href="#" className="hover:text-accent transition-colors">Ajuda</a></li>
+              <ul className="space-y-2 text-sm">
+                <li><a href="https://wa.me/5591984886473" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-accent transition-colors">WhatsApp: +55 91 8488-6473</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-accent transition-colors">FAQ</a></li>
               </ul>
             </div>
           </div>
