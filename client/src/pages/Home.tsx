@@ -66,7 +66,7 @@ export default function Home() {
                 size="sm"
                 onClick={() => (window.location.href = getLoginUrl())}
               >
-                Entrar
+                Entrar com Google
               </Button>
             )}
           </div>
@@ -171,7 +171,13 @@ export default function Home() {
                       <Button
                         variant="outline"
                         className="flex-1"
-                        onClick={() => setCartCount(cartCount + 1)}
+                        onClick={() => {
+                          if (isAuthenticated) {
+                            setCartCount(cartCount + 1);
+                          } else {
+                            window.location.href = getLoginUrl();
+                          }
+                        }}
                       >
                         <ShoppingCart className="h-4 w-4" />
                       </Button>
