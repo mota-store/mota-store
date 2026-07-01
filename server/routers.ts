@@ -68,6 +68,12 @@ export const appRouter = router({
 
   orders: router({
     list: protectedProcedure.query(({ ctx }) => getUserOrders(ctx.user.id)),
+    create: protectedProcedure
+      .input(z.object({ totalAmount: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { createOrder } = await import("./db");
+        return createOrder(ctx.user.id, input.totalAmount);
+      }),
   }),
 });
 

@@ -12,6 +12,7 @@ export default function Cart() {
   const { data: cartItems, isLoading } = trpc.cart.getItems.useQuery(undefined, {
     enabled: isAuthenticated,
   });
+  const { data: products } = trpc.products.list.useQuery();
   const [removedItems, setRemovedItems] = useState<number[]>([]);
 
   if (!isAuthenticated) {
@@ -25,8 +26,13 @@ export default function Cart() {
     );
   }
 
-  const filteredItems = cartItems?.filter(item => !removedItems.includes(item.id)) || [];
-  const total = filteredItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
+  const enrichedItems = cartItems?.map(item => {
+    const product = products?.find(p => p.id === item.productId);
+    return { ...item, product };
+  }).filter(item => !removedItems.includes(item.id)) || [];
+
+  const subtotal = enrichedItems.reduce((sum, item) => sum + (item.product?.price || 0) * (item.quantity || 1), 0);
+  const total = subtotal;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -55,7 +61,7 @@ export default function Cart() {
               <div key={i} className="h-24 bg-muted rounded-lg animate-pulse" />
             ))}
           </div>
-        ) : filteredItems.length === 0 ? (
+        ) : enrichedItems.length === 0 ? (
           <Card className="p-12 text-center">
             <ShoppingCart className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
             <p className="text-muted-foreground mb-6 text-lg">Seu carrinho está vazio</p>
@@ -67,13 +73,28 @@ export default function Cart() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Cart Items */}
             <div className="lg:col-span-2 space-y-4">
-              {filteredItems.map((item) => (
-                <Card key={item.id} className="p-6 flex items-center justify-between">
+              {enrichedItems.map((item) => (
+                <Card key={item.id} className="p-6 flex items-center gap-4">
+                  <div className={`h-16 w-16 rounded-lg flex items-center justify-center bg-gradient-to-br ${
+                    item.product?.name.includes("Spotify") ? "from-green-600 to-green-900" :
+                    item.product?.name.includes("YouTube Music") ? "from-red-800 to-black" :
+                    item.product?.name.includes("YouTube") ? "from-red-600 to-red-900" :
+                    "from-blue-800 to-blue-950"
+                  }`}>
+                    {item.product?.imageUrl ? (
+                      <img src={item.product.imageUrl} alt={item.product.name} className="w-10 h-10 object-contain" />
+                    ) : (
+                      <ShoppingCart className="h-8 w-8 text-white/40" />
+                    )}
+                  </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold mb-2">Produto #{item.productId}</h3>
+                    <h3 className="font-semibold text-lg">{item.product?.name || `Produto #${item.productId}`}</h3>
                     <p className="text-sm text-muted-foreground">
-                      Quantidade: {item.quantity || 1}
+                      Quantidade: {item.quantity || 1} • R$ {((item.product?.price || 0) / 100).toFixed(2)}
                     </p>
+                  </div>
+                  <div className="text-right mr-4">
+                    <p className="font-bold text-accent">R$ {(((item.product?.price || 0) * (item.quantity || 1)) / 100).toFixed(2)}</p>
                   </div>
                   <button
                     onClick={() => setRemovedItems([...removedItems, item.id])}
@@ -92,8 +113,8 @@ export default function Cart() {
 
                 <div className="space-y-4 mb-6">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Itens ({filteredItems.length})</span>
-                    <span className="font-semibold">R$ {(filteredItems.length * 12.99).toFixed(2)}</span>
+                    <span className="text-muted-foreground">Itens ({enrichedItems.length})</span>
+                    <span className="font-semibold">R$ {(subtotal / 100).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Frete</span>
@@ -104,7 +125,7 @@ export default function Cart() {
                 <div className="border-t border-border pt-4 mb-6">
                   <div className="flex justify-between text-lg font-bold">
                     <span>Total</span>
-                    <span className="text-accent">R$ {(filteredItems.length * 12.99).toFixed(2)}</span>
+                    <span className="text-accent">R$ {(total / 100).toFixed(2)}</span>
                   </div>
                 </div>
 

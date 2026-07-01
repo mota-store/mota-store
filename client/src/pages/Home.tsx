@@ -11,6 +11,7 @@ export default function Home() {
   const { user, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
   const { data: products, isLoading } = trpc.products.list.useQuery();
+  const addItem = trpc.cart.addItem.useMutation();
   const [cartCount, setCartCount] = useState(0);
 
   return (
@@ -117,47 +118,81 @@ export default function Home() {
                   className="overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col"
                 >
                   {/* Product Image */}
-                  <div className="h-40 bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center">
-                    {product.category === "music" ? (
-                      <Music className="h-16 w-16 text-accent/40" />
+                  <div className={`h-48 relative overflow-hidden flex items-center justify-center bg-gradient-to-br ${
+                    product.name.includes("Spotify") ? "from-green-600 to-green-900" :
+                    product.name.includes("YouTube Music") ? "from-red-800 to-black" :
+                    product.name.includes("YouTube") ? "from-red-600 to-red-900" :
+                    "from-blue-800 to-blue-950"
+                  }`}>
+                    {product.imageUrl ? (
+                      <img 
+                        src={product.imageUrl} 
+                        alt={product.name}
+                        className="w-24 h-24 object-contain transition-transform duration-500 hover:scale-110"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
                     ) : (
-                      <Play className="h-16 w-16 text-accent/40" />
+                      product.category === "music" ? (
+                        <Music className="h-20 w-20 text-white/40" />
+                      ) : (
+                        <Play className="h-20 w-20 text-white/40" />
+                      )
                     )}
+                    <div className="absolute top-4 right-4">
+                      <div className="bg-accent text-accent-foreground text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider shadow-lg">
+                        {product.trialDays} Dias Grátis
+                      </div>
+                    </div>
                   </div>
 
                   {/* Product Info */}
                   <div className="flex-1 p-6 flex flex-col">
-                    <h3 className="text-lg font-semibold mb-2">{product.name}</h3>
-                    <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                      {product.description}
-                    </p>
+                    <div className="mb-4">
+                      <h3 className="text-xl font-bold mb-2 group-hover:text-accent transition-colors">{product.name}</h3>
+                      <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+                        {product.description}
+                      </p>
+                    </div>
 
-                    {/* Trial Info */}
-                    <div className="mb-4 p-3 bg-accent/10 rounded-lg">
-                      <p className="text-sm font-semibold text-accent">
-                        {product.trialDays} dias grátis
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Depois R$ {(product.price / 100).toFixed(2)}/mês
-                      </p>
+                    {/* Price Tag */}
+                    <div className="mb-6 flex items-baseline gap-1">
+                      <span className="text-2xl font-black text-accent">R$ {(product.price / 100).toFixed(2)}</span>
+                      <span className="text-sm text-muted-foreground">/mês</span>
                     </div>
 
                     {/* Benefits */}
                     {product.benefits && (
-                      <ul className="text-xs text-muted-foreground mb-4 space-y-1">
-                        {JSON.parse(product.benefits).slice(0, 2).map((benefit: string, idx: number) => (
-                          <li key={idx} className="flex items-start gap-2">
-                            <span className="text-accent mt-1">•</span>
+                      <div className="mb-6 space-y-2">
+                        {JSON.parse(product.benefits).slice(0, 3).map((benefit: string, idx: number) => (
+                          <div key={idx} className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <div className="h-1.5 w-1.5 rounded-full bg-accent" />
                             <span>{benefit}</span>
-                          </li>
+                          </div>
                         ))}
-                      </ul>
+                      </div>
                     )}
 
                     {/* Action Buttons */}
-                    <div className="mt-auto flex gap-2">
+                    <div className="mt-auto flex flex-col gap-2">
                       <Button
-                        className="flex-1 bg-accent hover:bg-accent/90"
+                        className="w-full bg-accent hover:bg-accent/90 font-bold py-6 shadow-md hover:shadow-accent/20 transition-all"
+                        onClick={() => {
+                          if (isAuthenticated) {
+                            addItem.mutate({ productId: product.id });
+                            setCartCount(prev => prev + 1);
+                          } else {
+                            window.location.href = getLoginUrl();
+                          }
+                        }}
+                      >
+                        <ShoppingCart className="h-5 w-5 mr-2" />
+                        Adicionar ao Carrinho
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        className="w-full text-muted-foreground hover:text-accent font-medium"
                         onClick={() => {
                           if (isAuthenticated) {
                             navigate(`/product/${product.id}`);
@@ -166,20 +201,7 @@ export default function Home() {
                           }
                         }}
                       >
-                        Detalhes
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => {
-                          if (isAuthenticated) {
-                            setCartCount(cartCount + 1);
-                          } else {
-                            window.location.href = getLoginUrl();
-                          }
-                        }}
-                      >
-                        <ShoppingCart className="h-4 w-4" />
+                        Ver Detalhes
                       </Button>
                     </div>
                   </div>

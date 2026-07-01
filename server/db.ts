@@ -125,3 +125,20 @@ export async function getUserOrders(userId: number) {
   if (!db) return [];
   return db.select().from(orders).where(eq(orders.userId, userId));
 }
+
+export async function createOrder(userId: number, totalAmount: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const [result] = await db.insert(orders).values({
+    userId,
+    totalAmount,
+    status: "completed",
+    paymentMethod: "automatic",
+  });
+
+  // Clear cart after order
+  await db.delete(cartItems).where(eq(cartItems.userId, userId));
+
+  return { id: result.insertId };
+}
