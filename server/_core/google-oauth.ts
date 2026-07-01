@@ -6,10 +6,17 @@ import { ENV } from "./env";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { SignJWT } from "jose";
 
+const getRedirectUri = () => {
+  const origin = process.env.ORIGIN || "http://localhost:3000";
+  // Remove trailing slash if present
+  const normalizedOrigin = origin.endsWith("/") ? origin.slice(0, -1) : origin;
+  return `${normalizedOrigin}/api/google-oauth/callback`;
+};
+
 const oauth2Client = new OAuth2Client(
   ENV.googleClientId,
   ENV.googleClientSecret,
-  `${process.env.ORIGIN || "http://localhost:3000"}/api/google-oauth/callback`
+  getRedirectUri()
 );
 
 function getSessionSecret() {
@@ -45,9 +52,13 @@ export function registerGoogleOAuthRoutes(app: Express) {
       "https://www.googleapis.com/auth/userinfo.profile",
     ];
 
+    const redirectUri = getRedirectUri();
+    console.log("[Google OAuth] Generating auth URL with redirect_uri:", redirectUri);
+
     const authUrl = oauth2Client.generateAuthUrl({
       access_type: "offline",
       scope: scopes,
+      redirect_uri: redirectUri,
       state: Buffer.from(req.query.redirect_uri?.toString() || "/").toString(
         "base64"
       ),
