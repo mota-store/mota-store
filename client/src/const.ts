@@ -12,6 +12,7 @@ export const getLoginUrl = () => {
   url.searchParams.set("redirectUri", redirectUri);
   url.searchParams.set("state", state);
   url.searchParams.set("type", "signIn");
+  url.searchParams.set("connection", "google");
 
   return url.toString();
 };
