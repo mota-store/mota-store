@@ -14,9 +14,9 @@ services:
         sync: false
       - key: JWT_SECRET
         generateValue: true
-      - key: VITE_APP_ID
-        value: mota-store
-      - key: VITE_OAUTH_PORTAL_URL
-        value: https://auth.manus.im
-      - key: OAUTH_SERVER_URL
-        value: https://auth.manus.im
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: ORIGIN
+        sync: false
