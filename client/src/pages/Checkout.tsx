@@ -47,6 +47,8 @@ export default function Checkout() {
   }) || [];
 
   const subtotal = enrichedItems.reduce((sum, item) => sum + (item.product?.price || 0) * (item.quantity || 1), 0);
+  const originalTotal = subtotal * 2; // Preço original (sem desconto)
+  const savings = originalTotal - subtotal; // Economia
   const total = subtotal;
 
   const handleShippingSubmit = (e: React.FormEvent) => {
@@ -208,17 +210,31 @@ export default function Checkout() {
 
               <div className="space-y-3 mb-6 pb-6 border-b border-border">
                 {enrichedItems.map((item, idx) => (
-                  <div key={idx} className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">{item.product?.name}</span>
-                    <span className="font-medium">R$ {((item.product?.price || 0) / 100).toFixed(2)}</span>
+                  <div key={idx} className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">{item.product?.name}</span>
+                      <span className="font-medium">R$ {((item.product?.price || 0) / 100).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-xs text-muted-foreground line-through">
+                      <span></span>
+                      <span>De R$ {(((item.product?.price || 0) * 2) / 100).toFixed(2)}</span>
+                    </div>
                   </div>
                 ))}
               </div>
 
               <div className="space-y-2 mb-6">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Subtotal</span>
-                  <span>R$ {(subtotal / 100).toFixed(2)}</span>
+                  <span className="text-muted-foreground">Subtotal Original</span>
+                  <span className="line-through">R$ {(originalTotal / 100).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Com Desconto</span>
+                  <span className="text-accent font-semibold">R$ {(subtotal / 100).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Economia</span>
+                  <span className="text-green-600 font-semibold">-R$ {(savings / 100).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Taxa de Ativação</span>

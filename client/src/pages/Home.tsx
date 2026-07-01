@@ -157,9 +157,21 @@ export default function Home() {
                     </div>
 
                     {/* Price Tag */}
-                    <div className="mb-6 flex items-baseline gap-1">
-                      <span className="text-2xl font-black text-accent">R$ {(product.price / 100).toFixed(2)}</span>
-                      <span className="text-sm text-muted-foreground">/mês</span>
+                    <div className="mb-6">
+                      <div className="flex items-baseline gap-2 mb-2">
+                        <span className="text-sm text-muted-foreground line-through">De R$ {((product.price * 2) / 100).toFixed(2)}</span>
+                      </div>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-2xl font-black text-accent">Por R$ {(product.price / 100).toFixed(2)}</span>
+                        <span className="text-sm text-muted-foreground">/mês</span>
+                      </div>
+                    </div>
+
+                    {/* Discount Badge */}
+                    <div className="mb-6">
+                      <div className="inline-block bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                        50% OFF
+                      </div>
                     </div>
 
                     {/* Benefits */}

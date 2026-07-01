@@ -32,6 +32,8 @@ export default function Cart() {
   }).filter(item => !removedItems.includes(item.id)) || [];
 
   const subtotal = enrichedItems.reduce((sum, item) => sum + (item.product?.price || 0) * (item.quantity || 1), 0);
+  const originalTotal = subtotal * 2; // Preço original (sem desconto)
+  const savings = originalTotal - subtotal; // Economia
   const total = subtotal;
 
   return (
@@ -90,7 +92,10 @@ export default function Cart() {
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg">{item.product?.name || `Produto #${item.productId}`}</h3>
                     <p className="text-sm text-muted-foreground">
-                      Quantidade: {item.quantity || 1} • R$ {((item.product?.price || 0) / 100).toFixed(2)}
+                      Quantidade: {item.quantity || 1}
+                    </p>
+                    <p className="text-xs text-muted-foreground line-through">
+                      De R$ {(((item.product?.price || 0) * 2 * (item.quantity || 1)) / 100).toFixed(2)}
                     </p>
                   </div>
                   <div className="text-right mr-4">
@@ -113,8 +118,16 @@ export default function Cart() {
 
                 <div className="space-y-4 mb-6">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Itens ({enrichedItems.length})</span>
-                    <span className="font-semibold">R$ {(subtotal / 100).toFixed(2)}</span>
+                    <span className="text-muted-foreground">Subtotal ({enrichedItems.length} itens)</span>
+                    <span className="font-semibold line-through">R$ {(originalTotal / 100).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Com Desconto</span>
+                    <span className="font-semibold text-accent">R$ {(subtotal / 100).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Economia</span>
+                    <span className="font-semibold text-green-600">-R$ {(savings / 100).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Frete</span>
