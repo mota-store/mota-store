@@ -223,7 +223,7 @@ class EfiPaymentService {
           expiracao: 3600,
         },
         valor: {
-          original: Number(amount).toFixed(2),
+          original: Number(amount).toFixed(2).toString(),
         },
         chave: this.pixKey,
         solicitacaoPagador: description || `Pedido #${orderId}`,

@@ -34,11 +34,30 @@ export function PixPayment({
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const copyPixCode = () => {
-    navigator.clipboard.writeText(pixCode);
-    setCopied(true);
-    toast.success("Código PIX copiado!");
-    setTimeout(() => setCopied(false), 2000);
+  const copyPixCode = async () => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(pixCode);
+      } else {
+        // Fallback para navegadores sem suporte ou contextos não seguros
+        const textArea = document.createElement("textarea");
+        textArea.value = pixCode;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        textArea.style.top = "0";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+      setCopied(true);
+      toast.success("Código PIX copiado!");
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      toast.error("Erro ao copiar código");
+      console.error("Falha ao copiar:", err);
+    }
   };
 
   return (
@@ -53,7 +72,11 @@ export function PixPayment({
         <div className="relative group">
           <div className="w-64 h-64 bg-white p-4 rounded-xl shadow-inner flex items-center justify-center overflow-hidden">
             {qrCodeBase64 ? (
-              <img src={`data:image/png;base64,${qrCodeBase64}`} alt="QR Code PIX" className="w-full h-full object-contain" />
+              <img 
+                src={qrCodeBase64.startsWith('data:') ? qrCodeBase64 : `data:image/png;base64,${qrCodeBase64}`} 
+                alt="QR Code PIX" 
+                className="w-full h-full object-contain" 
+              />
             ) : (
               <div className="flex flex-col items-center text-slate-400">
                 <QrCode className="w-20 h-20 mb-2 opacity-20" />
