@@ -26,68 +26,46 @@ export default function Home() {
       <Header />
 
       {/* Hero Section - Professional Store Look */}
-      <section className="relative pt-20 pb-32 flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-accent/20 via-background to-background z-10" />
-          <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-accent/10 blur-[120px] rounded-full animate-pulse" />
-          <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-accent/5 blur-[120px] rounded-full" />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/0 via-background/40 to-background z-10" />
+          <img 
+            src="/assets/hero-banner.jpg" 
+            alt="Mota Store Banner" 
+            className="w-full h-full object-cover opacity-60"
+          />
         </div>
 
-        <div className="container relative z-20 px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="container relative z-20 px-4 pt-20">
+          <div className="max-w-4xl mx-auto text-center">
             <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20 text-accent text-sm font-bold mb-6">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 border border-accent/30 text-accent text-sm font-black mb-8 backdrop-blur-md">
                 <Sparkles className="h-4 w-4" />
-                <span>OFERTA DE LANÇAMENTO: 50% OFF</span>
+                <span>OFERTA DE LANÇAMENTO: 50% OFF EM TODO O SITE</span>
               </div>
-              <h1 className="text-5xl md:text-7xl font-black tracking-tighter mb-6 leading-[0.9]">
-                SUA DIVERSÃO <br />
-                <span className="text-accent">SEM LIMITES.</span>
+              <h1 className="text-6xl md:text-8xl font-black tracking-tighter mb-8 leading-[0.8] text-white drop-shadow-2xl">
+                O MELHOR DO <br />
+                <span className="text-accent">STREAMING</span> AQUI.
               </h1>
-              <p className="text-lg md:text-xl text-muted-foreground max-w-xl mb-10 font-medium leading-relaxed">
-                Acesse as melhores plataformas de streaming com preços que cabem no seu bolso. Entrega imediata e suporte 24h.
+              <p className="text-xl md:text-2xl text-white/80 max-w-2xl mx-auto mb-12 font-bold leading-relaxed drop-shadow-md">
+                Acesse Spotify, YouTube, Prime Video e muito mais por um preço que você nunca viu. Entrega instantânea via WhatsApp.
               </p>
-              <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
                 <Button
                   size="lg"
-                  className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-accent-foreground px-10 py-7 text-lg font-black rounded-2xl shadow-xl shadow-accent/20 transition-all hover:scale-105 active:scale-95"
+                  className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-accent-foreground px-12 py-8 text-xl font-black rounded-[2rem] shadow-2xl shadow-accent/40 transition-all hover:scale-105 active:scale-95"
                   onClick={() => {
                     document.getElementById("products")?.scrollIntoView({ behavior: "smooth" });
                   }}
                 >
-                  COMPRAR AGORA
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="w-full sm:w-auto border-border/50 bg-background/50 backdrop-blur-md px-10 py-7 text-lg font-black rounded-2xl hover:bg-accent/10 transition-all"
-                  onClick={() => (window.location.href = "https://wa.me/5591984886473")}
-                >
-                  FALAR COM SUPORTE
+                  GARANTIR MEU ACESSO
+                  <ArrowRight className="ml-2 h-6 w-6" />
                 </Button>
               </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="hidden lg:block relative"
-            >
-              <div className="relative z-10 rounded-[3rem] overflow-hidden border border-border/50 shadow-2xl shadow-accent/10">
-                <img 
-                  src="/assets/cross-logo.jpg" 
-                  alt="Mota Store Premium" 
-                  className="w-full h-auto aspect-square object-cover"
-                />
-              </div>
-              <div className="absolute -top-6 -right-6 h-32 w-32 bg-accent/20 blur-3xl rounded-full" />
-              <div className="absolute -bottom-6 -left-6 h-32 w-32 bg-accent/20 blur-3xl rounded-full" />
             </motion.div>
           </div>
         </div>

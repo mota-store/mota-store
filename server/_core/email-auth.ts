@@ -50,11 +50,13 @@ export async function registerUser(
       lastSignedIn: new Date(),
     });
 
-    // Enviar e-mail de boas-vindas (usando o serviço de notificação como proxy para simular e-mail)
+    // Enviar e-mail de boas-vindas (Desativado temporariamente até configurar serviço real)
+    /*
     await notifyOwner({
       title: `Novo Cadastro: ${finalName}`,
       content: `O usuário ${finalName} (${email}) acabou de se cadastrar na Mota Store!`,
     });
+    */
 
     return { success: true, userId: (result as any).insertId };
   } catch (error) {
