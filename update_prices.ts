@@ -2,9 +2,15 @@ import { drizzle } from "drizzle-orm/mysql2";
 import { products } from "./drizzle/schema";
 import { eq, inArray } from "drizzle-orm";
 
-const DATABASE_URL = 'mysql://3RvvX2vLXvzEDqG.root:TIUcO1NCxhFGdDfD@gateway01.us-east-1.prod.aws.tidbcloud.com:4000/test?ssl={"rejectUnauthorized":true}';
+import "dotenv/config";
 
 async function updatePrices() {
+  const DATABASE_URL = process.env.DATABASE_URL;
+  if (!DATABASE_URL) {
+    console.error("DATABASE_URL não configurada no .env");
+    process.exit(1);
+  }
+
   console.log("Iniciando a atualização dos preços...");
   const db = drizzle(DATABASE_URL);
 
