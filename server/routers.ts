@@ -2,7 +2,7 @@ import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
-import { getProducts, getProductById, getCartItems, addToCart, getUserOrders } from "./db";
+import { getProducts, getProductById, getCartItems, addToCart, getUserOrders, updateUser } from "./db";
 import { loginUser, registerUser } from "./_core/email-auth";
 import { SignJWT } from "jose";
 import { z } from "zod";
@@ -51,6 +51,12 @@ export const appRouter = router({
           return { success: true, user: result.user };
         }
         return result;
+      }),
+    updateProfile: protectedProcedure
+      .input(z.object({ name: z.string().optional(), avatarUrl: z.string().optional() }))
+      .mutation(async ({ ctx, input }) => {
+        await updateUser(ctx.user.id, input);
+        return { success: true };
       }),
   }),
 

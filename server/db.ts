@@ -35,7 +35,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     };
     const updateSet: Record<string, unknown> = {};
 
-    const textFields = ["name", "email", "loginMethod"] as const;
+    const textFields = ["name", "email", "loginMethod", "avatarUrl"] as const;
     type TextField = (typeof textFields)[number];
 
     const assignNullable = (field: TextField) => {
@@ -124,6 +124,12 @@ export async function getUserOrders(userId: number) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(orders).where(eq(orders.userId, userId));
+}
+
+export async function updateUser(userId: number, data: { name?: string; avatarUrl?: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(users).set(data).where(eq(users.id, userId));
 }
 
 export async function createOrder(userId: number, totalAmount: number) {

@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import { getDb } from "../db";
 import { users } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
+import { notifyOwner } from "./notification";
 
 const SALT_ROUNDS = 10;
 
@@ -39,13 +40,20 @@ export async function registerUser(
     const passwordHash = await hashPassword(password);
 
     // Create user
+    const finalName = name || email.split("@")[0];
     const result = await db.insert(users).values({
       email,
       passwordHash,
-      name: name || email.split("@")[0],
+      name: finalName,
       loginMethod: "email",
       openId: `email_${email}`,
       lastSignedIn: new Date(),
+    });
+
+    // Enviar e-mail de boas-vindas (usando o serviço de notificação como proxy para simular e-mail)
+    await notifyOwner({
+      title: `Novo Cadastro: ${finalName}`,
+      content: `O usuário ${finalName} (${email}) acabou de se cadastrar na Mota Store!`,
     });
 
     return { success: true, userId: (result as any).insertId };

@@ -4,7 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Header } from "@/components/Header";
-import { ShoppingCart, Zap, Music, Play, CheckCircle2, Star, ShieldCheck, Headphones } from "lucide-react";
+import { ShoppingCart, Zap, Music, Play, CheckCircle2, Star, ShieldCheck, Headphones, ArrowRight, Sparkles } from "lucide-react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -25,131 +25,165 @@ export default function Home() {
     <div className="min-h-screen bg-background text-foreground selection:bg-accent selection:text-accent-foreground overflow-x-hidden">
       <Header />
 
-      {/* Hero Section with Video Background */}
-      <section className="relative h-[70vh] flex items-center justify-center overflow-hidden">
+      {/* Hero Section - Professional Store Look */}
+      <section className="relative pt-20 pb-32 flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover opacity-40 scale-105"
-          >
-            <source src="/assets/hero-video.mp4" type="video/mp4" />
-          </video>
-          <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/60 to-background z-10" />
+          <div className="absolute inset-0 bg-gradient-to-br from-accent/20 via-background to-background z-10" />
+          <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-accent/10 blur-[120px] rounded-full animate-pulse" />
+          <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-accent/5 blur-[120px] rounded-full" />
         </div>
 
-        <div className="container relative z-20 text-center px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <h1 className="text-5xl md:text-7xl font-black tracking-tighter mb-4 bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/50">
-              MOTA STORE
-            </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 font-medium">
-              Testes gratuitos de 1 mês das maiores plataformas de streaming.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button
-                size="lg"
-                className="bg-accent hover:bg-accent/90 text-accent-foreground px-8 py-6 text-base font-bold rounded-xl shadow-lg shadow-accent/20 transition-all hover:scale-105"
-                onClick={() => {
-                  document.getElementById("products")?.scrollIntoView({ behavior: "smooth" });
-                }}
-              >
-                Ver Produtos
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-border/50 backdrop-blur-md px-8 py-6 text-base font-bold rounded-xl hover:bg-accent/10 transition-all"
-                onClick={() => (window.location.href = "https://wa.me/5591984886473")}
-              >
-                Suporte
-              </Button>
-            </div>
-          </motion.div>
+        <div className="container relative z-20 px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+            >
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20 text-accent text-sm font-bold mb-6">
+                <Sparkles className="h-4 w-4" />
+                <span>OFERTA DE LANÇAMENTO: 50% OFF</span>
+              </div>
+              <h1 className="text-5xl md:text-7xl font-black tracking-tighter mb-6 leading-[0.9]">
+                SUA DIVERSÃO <br />
+                <span className="text-accent">SEM LIMITES.</span>
+              </h1>
+              <p className="text-lg md:text-xl text-muted-foreground max-w-xl mb-10 font-medium leading-relaxed">
+                Acesse as melhores plataformas de streaming com preços que cabem no seu bolso. Entrega imediata e suporte 24h.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-accent-foreground px-10 py-7 text-lg font-black rounded-2xl shadow-xl shadow-accent/20 transition-all hover:scale-105 active:scale-95"
+                  onClick={() => {
+                    document.getElementById("products")?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                >
+                  COMPRAR AGORA
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="w-full sm:w-auto border-border/50 bg-background/50 backdrop-blur-md px-10 py-7 text-lg font-black rounded-2xl hover:bg-accent/10 transition-all"
+                  onClick={() => (window.location.href = "https://wa.me/5591984886473")}
+                >
+                  FALAR COM SUPORTE
+                </Button>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="hidden lg:block relative"
+            >
+              <div className="relative z-10 rounded-[3rem] overflow-hidden border border-border/50 shadow-2xl shadow-accent/10">
+                <img 
+                  src="/assets/cross-logo.jpg" 
+                  alt="Mota Store Premium" 
+                  className="w-full h-auto aspect-square object-cover"
+                />
+              </div>
+              <div className="absolute -top-6 -right-6 h-32 w-32 bg-accent/20 blur-3xl rounded-full" />
+              <div className="absolute -bottom-6 -left-6 h-32 w-32 bg-accent/20 blur-3xl rounded-full" />
+            </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* Trust Badges */}
-      <div className="container px-4 -mt-8 relative z-30">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 bg-card/50 backdrop-blur-xl border border-border/50 rounded-2xl shadow-xl">
+      {/* Trust Badges - More Professional */}
+      <div className="container px-4 relative z-30 -mt-16">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-8 bg-card/40 backdrop-blur-2xl border border-border/50 rounded-[2.5rem] shadow-2xl">
           {[
-            { icon: <Zap className="text-yellow-500 h-5 w-5" />, text: "Entrega Imediata" },
-            { icon: <ShieldCheck className="text-green-500 h-5 w-5" />, text: "Compra Segura" },
-            { icon: <Star className="text-orange-500 h-5 w-5" />, text: "Suporte 24/7" },
-            { icon: <CheckCircle2 className="text-blue-500 h-5 w-5" />, text: "Garantia Total" },
+            { icon: <Zap className="text-accent h-6 w-6" />, title: "Entrega Imediata", desc: "Acesso na hora" },
+            { icon: <ShieldCheck className="text-accent h-6 w-6" />, title: "Compra Segura", desc: "Pagamento via PIX" },
+            { icon: <Star className="text-accent h-6 w-6" />, title: "Suporte 24/7", desc: "Via WhatsApp" },
+            { icon: <CheckCircle2 className="text-accent h-6 w-6" />, title: "Garantia Total", desc: "Satisfação ou Reembolso" },
           ].map((item, i) => (
-            <div key={i} className="flex items-center justify-center gap-2 py-2">
-              {item.icon}
-              <span className="font-bold text-xs md:text-sm uppercase tracking-wider">{item.text}</span>
+            <div key={i} className="flex flex-col items-center md:items-start gap-1 text-center md:text-left px-4">
+              <div className="mb-2 p-2 rounded-xl bg-accent/10">{item.icon}</div>
+              <span className="font-black text-sm uppercase tracking-wider">{item.title}</span>
+              <span className="text-xs text-muted-foreground font-medium">{item.desc}</span>
             </div>
           ))}
         </div>
       </div>
 
       {/* Products Section */}
-      <section id="products" className="py-16">
+      <section id="products" className="py-24">
         <div className="container px-4">
-          <div className="mb-12">
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter mb-3 uppercase">Plataformas</h2>
-            <p className="text-muted-foreground text-lg">Escolha sua diversão e comece agora.</p>
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+            <div>
+              <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-4 uppercase leading-none">
+                NOSSAS <span className="text-accent">PLATAFORMAS</span>
+              </h2>
+              <p className="text-muted-foreground text-lg max-w-xl font-medium">
+                Escolha o plano que mais combina com você e comece a maratonar hoje mesmo.
+              </p>
+            </div>
+            <div className="hidden md:block">
+              <div className="flex gap-2">
+                <div className="h-2 w-12 rounded-full bg-accent" />
+                <div className="h-2 w-2 rounded-full bg-accent/20" />
+                <div className="h-2 w-2 rounded-full bg-accent/20" />
+              </div>
+            </div>
           </div>
 
           {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-96 rounded-2xl bg-muted animate-pulse" />
+                <div key={i} className="h-[450px] rounded-[2.5rem] bg-muted animate-pulse" />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {products?.map((product) => (
                 <motion.div
                   key={product.id}
-                  whileHover={{ y: -8 }}
+                  whileHover={{ y: -12 }}
                   className="group"
                 >
-                  <Card className="h-full flex flex-col overflow-hidden bg-card/30 border-border/50 backdrop-blur-sm rounded-2xl transition-all group-hover:border-accent/50 group-hover:shadow-xl group-hover:shadow-accent/10">
+                  <Card className="h-full flex flex-col overflow-hidden bg-card/30 border-border/50 backdrop-blur-sm rounded-[2.5rem] transition-all duration-500 group-hover:border-accent/50 group-hover:shadow-2xl group-hover:shadow-accent/10">
                     {/* Product Image */}
-                    <div className="relative h-48 overflow-hidden bg-gradient-to-br from-accent/10 to-accent/5 flex items-center justify-center">
+                    <div className="relative h-56 overflow-hidden bg-gradient-to-br from-accent/10 to-accent/5 flex items-center justify-center p-8">
                       {product.imageUrl ? (
                         <img
                           src={product.imageUrl}
                           alt={product.name}
-                          className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105"
+                          className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
                         />
                       ) : (
                         <div className="p-8 text-accent/20">
                           {product.category === 'music' ? <Music className="w-full h-full" /> : <Play className="w-full h-full" />}
                         </div>
                       )}
-                      <div className="absolute top-2 right-2 bg-accent/90 text-accent-foreground px-2 py-1 rounded-lg text-xs font-black uppercase tracking-widest backdrop-blur-md">
-                        Premium
+                      <div className="absolute top-4 right-4 bg-accent text-accent-foreground px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
+                        PREMIUM
                       </div>
                     </div>
 
                     {/* Product Info */}
-                    <div className="p-4 flex flex-col flex-grow">
-                      <h3 className="text-lg font-black mb-1 group-hover:text-accent transition-colors line-clamp-2">{product.name}</h3>
-                      <p className="text-muted-foreground text-xs mb-3 line-clamp-2">{product.description}</p>
+                    <div className="p-8 flex flex-col flex-grow">
+                      <h3 className="text-2xl font-black mb-2 group-hover:text-accent transition-colors line-clamp-1">{product.name}</h3>
+                      <p className="text-muted-foreground text-sm mb-6 line-clamp-2 font-medium">{product.description}</p>
                       
                       {/* Price */}
-                      <div className="mb-4 mt-auto">
-                        <div className="flex items-baseline gap-2 mb-1">
-                          <span className="text-2xl font-black text-accent">R$ 5,00</span>
-                          <span className="text-muted-foreground text-xs line-through opacity-50">R$ 10,00</span>
+                      <div className="mb-8 mt-auto">
+                        <div className="flex items-baseline gap-3 mb-1">
+                          <span className="text-4xl font-black text-accent tracking-tighter">R$ 5,00</span>
+                          <span className="text-muted-foreground text-sm line-through opacity-50 font-bold">R$ 10,00</span>
                         </div>
-                        <span className="text-green-500 text-xs font-bold">50% OFF</span>
+                        <div className="inline-block px-2 py-1 rounded bg-green-500/10 text-green-500 text-[10px] font-black uppercase tracking-widest">
+                          ECONOMIZE 50%
+                        </div>
                       </div>
 
                       {/* Add to Cart Button */}
                       <Button
-                        className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-bold py-5 rounded-xl shadow-lg shadow-accent/20 transition-all text-sm"
+                        className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-black py-7 rounded-2xl shadow-xl shadow-accent/20 transition-all text-base active:scale-95"
                         onClick={() => {
                           if (isAuthenticated) {
                             addItem.mutate({ productId: product.id });
@@ -158,8 +192,8 @@ export default function Home() {
                           }
                         }}
                       >
-                        <ShoppingCart className="h-4 w-4 mr-2" />
-                        ADICIONAR
+                        <ShoppingCart className="h-5 w-5 mr-2" />
+                        ADICIONAR AO CARRINHO
                       </Button>
                     </div>
                   </Card>
@@ -171,38 +205,42 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 bg-accent/5 relative overflow-hidden">
+      <section className="py-24 bg-accent/5 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-accent/20 to-transparent" />
         <div className="container px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter mb-3">POR QUE A MOTA?</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">Experiência premium com a segurança que você merece.</p>
+          <div className="text-center mb-20">
+            <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-6 uppercase">
+              POR QUE A <span className="text-accent">MOTA STORE?</span>
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto text-lg font-medium">
+              Não somos apenas uma loja, somos a ponte entre você e o melhor conteúdo do mundo.
+            </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               {
                 title: "Ativação Turbo",
-                desc: "Nada de espera. Comprou, pagou, ativou. Simples assim.",
+                desc: "Esqueça a burocracia. Nosso sistema é focado em velocidade para você não perder nem um segundo.",
                 icon: <Zap className="h-10 w-10 text-accent" />
               },
               {
-                title: "Suporte Humano",
-                desc: "Dúvidas? Nosso time no WhatsApp está pronto para ajudar.",
-                icon: <Star className="h-10 w-10 text-accent" />
+                title: "Suporte Real",
+                desc: "Pessoas de verdade atendendo pessoas de verdade. No WhatsApp, quando você precisar.",
+                icon: <Headphones className="h-10 w-10 text-accent" />
               },
               {
-                title: "100% Oficial",
-                desc: "Acessos originais com garantia de funcionamento total.",
+                title: "Segurança Máxima",
+                desc: "Seus dados e sua compra protegidos pelos melhores protocolos do mercado.",
                 icon: <ShieldCheck className="h-10 w-10 text-accent" />
               }
             ].map((f, i) => (
-              <div key={i} className="flex flex-col items-center text-center space-y-3 p-6 rounded-2xl bg-card/20 border border-border/30">
-                <div className="p-3 rounded-xl bg-accent/10">
+              <div key={i} className="flex flex-col items-center text-center space-y-6 p-10 rounded-[2.5rem] bg-card/20 border border-border/30 hover:border-accent/30 transition-colors">
+                <div className="p-5 rounded-2xl bg-accent/10">
                   {f.icon}
                 </div>
-                <h3 className="text-xl font-black">{f.title}</h3>
-                <p className="text-muted-foreground text-sm font-medium">{f.desc}</p>
+                <h3 className="text-2xl font-black uppercase tracking-tight">{f.title}</h3>
+                <p className="text-muted-foreground text-base font-medium leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -210,23 +248,51 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 border-t border-border/50">
+      <footer className="py-20 border-t border-border/50">
         <div className="container px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-12 mb-16">
             <div className="text-center md:text-left">
-              <h2 className="text-2xl font-black tracking-tighter mb-2">MOTA STORE</h2>
-              <p className="text-muted-foreground text-sm max-w-xs">O melhor do streaming premium ao seu alcance.</p>
+              <div className="flex items-center justify-center md:justify-start gap-3 mb-6">
+                <div className="h-10 w-10 rounded-xl overflow-hidden border border-accent/20">
+                  <img src="/assets/cross-logo.jpg" alt="Mota Store" className="w-full h-full object-cover" />
+                </div>
+                <h2 className="text-3xl font-black tracking-tighter text-accent">MOTA STORE</h2>
+              </div>
+              <p className="text-muted-foreground text-base max-w-xs font-medium">
+                O destino número um para acessos premium com o melhor custo-benefício do Brasil.
+              </p>
             </div>
             
-            <div className="flex gap-6 md:gap-12">
-              <a href="https://wa.me/5591984886473" className="hover:text-accent transition-colors font-bold uppercase tracking-widest text-xs">Suporte</a>
-              <a href="#" className="hover:text-accent transition-colors font-bold uppercase tracking-widest text-xs">Termos</a>
-              <a href="#" className="hover:text-accent transition-colors font-bold uppercase tracking-widest text-xs">Privacidade</a>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-12">
+              <div className="space-y-4">
+                <h4 className="font-black uppercase tracking-widest text-xs text-accent">Loja</h4>
+                <ul className="space-y-2">
+                  <li><a href="#" className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors">Produtos</a></li>
+                  <li><a href="#" className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors">Ofertas</a></li>
+                </ul>
+              </div>
+              <div className="space-y-4">
+                <h4 className="font-black uppercase tracking-widest text-xs text-accent">Suporte</h4>
+                <ul className="space-y-2">
+                  <li><a href="https://wa.me/5591984886473" className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors">WhatsApp</a></li>
+                  <li><a href="#" className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors">Ajuda</a></li>
+                </ul>
+              </div>
+              <div className="space-y-4">
+                <h4 className="font-black uppercase tracking-widest text-xs text-accent">Legal</h4>
+                <ul className="space-y-2">
+                  <li><a href="#" className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors">Termos</a></li>
+                  <li><a href="#" className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors">Privacidade</a></li>
+                </ul>
+              </div>
             </div>
           </div>
           
-          <div className="pt-6 border-t border-border/20 text-center text-xs text-muted-foreground font-medium">
-            &copy; 2026 MOTA STORE. Todos os direitos reservados.
+          <div className="pt-8 border-t border-border/20 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground font-bold uppercase tracking-widest">
+            <span>&copy; 2026 MOTA STORE. Todos os direitos reservados.</span>
+            <div className="flex gap-4">
+              <span>Feito com ❤️ por Mota Store Team</span>
+            </div>
           </div>
         </div>
       </footer>

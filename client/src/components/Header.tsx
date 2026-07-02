@@ -22,13 +22,13 @@ export function Header() {
       <div className="container flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <div 
-          className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+          className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
           onClick={() => navigate("/")}
         >
-          <div className="h-8 w-8 rounded-lg bg-accent flex items-center justify-center shadow-lg shadow-accent/20">
-            <Zap className="h-5 w-5 text-accent-foreground" />
+          <div className="h-10 w-10 rounded-xl overflow-hidden shadow-lg shadow-accent/20 border border-accent/20">
+            <img src="/assets/cross-logo.jpg" alt="Mota Store" className="w-full h-full object-cover" />
           </div>
-          <span className="text-xl font-black text-accent hidden sm:inline">MOTA</span>
+          <span className="text-2xl font-black tracking-tighter text-accent">MOTA STORE</span>
         </div>
 
         {/* Desktop Navigation */}

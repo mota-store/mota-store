@@ -97,6 +97,7 @@ export function registerGoogleOAuthRoutes(app: Express) {
       const googleId = payload.sub;
       const email = payload.email || "";
       const name = payload.name || email;
+      const picture = payload.picture || null;
 
       // Salvar ou atualizar usuário no banco
       await db.upsertUser({
@@ -104,6 +105,7 @@ export function registerGoogleOAuthRoutes(app: Express) {
         name: name || null,
         email: email || null,
         loginMethod: "google",
+        avatarUrl: picture,
         lastSignedIn: new Date(),
       });
 
@@ -117,10 +119,8 @@ export function registerGoogleOAuthRoutes(app: Express) {
         maxAge: ONE_YEAR_MS,
       });
 
-      // Redirecionar para a URL original
-      const redirectUri = state
-        ? Buffer.from(state.toString(), "base64").toString()
-        : "/";
+      // Redirecionar para o perfil se for novo usuário ou login social para conferir dados
+      const redirectUri = "/profile?onboarding=true";
 
       res.redirect(302, redirectUri);
     } catch (error: any) {

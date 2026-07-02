@@ -40,9 +40,11 @@ export default function Checkout() {
   })) || [];
 
   const subtotal = enrichedItems.reduce((acc, item) => acc + (item.product?.price || 0), 0);
-  const originalTotal = subtotal * 1.5;
-  const savings = originalTotal - subtotal;
-  const total = subtotal;
+  // Preço original é R$ 10,00 por item (1000 centavos)
+  const originalTotal = enrichedItems.length * 1000;
+  // Preço promocional é R$ 5,00 por item (500 centavos)
+  const total = enrichedItems.length * 500;
+  const savings = originalTotal - total;
 
   const handleConfirmOrder = async () => {
     setIsSubmitting(true);
@@ -171,8 +173,8 @@ export default function Checkout() {
                       <p className="text-xs text-muted-foreground uppercase tracking-widest">Premium 30 Dias</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-black text-accent">R$ {((item.product?.price || 0) / 100).toFixed(2)}</p>
-                      <p className="text-[10px] text-muted-foreground line-through">R$ {(((item.product?.price || 0) * 1.5) / 100).toFixed(2)}</p>
+                      <p className="font-black text-accent">R$ 5,00</p>
+                      <p className="text-[10px] text-muted-foreground line-through">R$ 10,00</p>
                     </div>
                   </div>
                 ))}

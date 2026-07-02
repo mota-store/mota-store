@@ -55,7 +55,8 @@ export default function Login() {
         });
 
         if (result.success) {
-          window.location.href = "/";
+          // Se for o primeiro login, redirecionar para o perfil para configurar nome/foto
+          window.location.href = "/profile?onboarding=true";
         } else {
           setError(result.error || "Email ou senha inválidos");
         }
