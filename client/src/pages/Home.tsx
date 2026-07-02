@@ -1,258 +1,217 @@
+import React, { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { getLoginUrl } from "@/const";
-import { trpc } from "@/lib/trpc";
-import { ShoppingCart, Music, Play, Zap } from "lucide-react";
+import { ShoppingCart, Zap, Music, Play, CheckCircle2, Star, ShieldCheck, Headphones } from "lucide-react";
 import { useLocation } from "wouter";
-import { useState } from "react";
+import { motion } from "framer-motion";
+import { toast } from "sonner";
+import { getLoginUrl } from "@/const";
 
 export default function Home() {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
-  const { data: products, isLoading } = trpc.products.list.useQuery();
-  const addItem = trpc.cart.addItem.useMutation();
   const [cartCount, setCartCount] = useState(0);
 
+  const { data: products, isLoading } = trpc.products.list.useQuery();
+  const addItem = trpc.cart.addItem.useMutation({
+    onSuccess: () => {
+      setCartCount(prev => prev + 1);
+    }
+  });
+
+  const streamingPlatforms = [
+    { name: "Spotify Premium", icon: <Music className="h-6 w-6" />, color: "bg-[#1DB954]" },
+    { name: "YouTube Premium", icon: <Play className="h-6 w-6" />, color: "bg-[#FF0000]" },
+    { name: "Prime Video", icon: <Play className="h-6 w-6" />, color: "bg-[#00A8E1]" },
+    { name: "YouTube Music", icon: <Headphones className="h-6 w-6" />, color: "bg-[#FF0000]" },
+  ];
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-accent flex items-center justify-center">
-              <Zap className="h-5 w-5 text-accent-foreground" />
-            </div>
-            <span className="text-xl font-bold text-accent">MOTA STORE</span>
-          </div>
-
-          <nav className="hidden md:flex items-center gap-8">
-            <a href="#" className="text-sm font-medium hover:text-accent transition-colors">
-              Ofertas
-            </a>
-            <a href="#" className="text-sm font-medium hover:text-accent transition-colors">
-              Sobre
-            </a>
-            <a href="#" className="text-sm font-medium hover:text-accent transition-colors">
-              Contato
-            </a>
-          </nav>
-
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate("/cart")}
-              className="relative p-2 hover:bg-muted rounded-lg transition-colors"
-            >
-              <ShoppingCart className="h-5 w-5" />
-              {cartCount > 0 && (
-                <span className="absolute top-1 right-1 h-5 w-5 rounded-full bg-accent text-accent-foreground text-xs flex items-center justify-center font-bold">
-                  {cartCount}
-                </span>
-              )}
-            </button>
-
-            {isAuthenticated ? (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">{user?.name}</span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate("/profile")}
-                >
-                  Perfil
-                </Button>
-              </div>
-            ) : (
-              <Button
-                size="sm"
-                onClick={() => navigate("/login")}
-              >
-                Entrar
-              </Button>
-            )}
-          </div>
+    <div className="min-h-screen bg-background text-foreground selection:bg-accent selection:text-accent-foreground overflow-x-hidden">
+      {/* Hero Section with Video Background */}
+      <section className="relative h-[90vh] flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover opacity-40 scale-105"
+          >
+            <source src="/assets/hero-video.mp4" type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/60 to-background z-10" />
         </div>
-      </header>
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 md:py-32">
-        <div className="container relative z-10">
-          <div className="max-w-2xl">
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
-              Os Melhores Testes Gratuitos de Streaming
+        <div className="container relative z-20 text-center px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <h1 className="text-5xl md:text-8xl font-black tracking-tighter mb-6 bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/50">
+              MOTA STORE
             </h1>
-            <p className="text-lg text-muted-foreground mb-8">
-              Acesse 30 dias grátis das principais plataformas de música e vídeo. Sem compromisso, cancele quando quiser.
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-10 font-medium">
+              Sua porta de entrada para o entretenimento premium. Testes gratuitos de 1 mês das maiores plataformas.
             </p>
-            <div className="flex gap-4">
-              <Button size="lg" className="bg-accent hover:bg-accent/90">
-                Explorar Ofertas
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Button
+                size="lg"
+                className="bg-accent hover:bg-accent/90 text-accent-foreground px-8 py-7 text-lg font-bold rounded-2xl shadow-2xl shadow-accent/20 transition-all hover:scale-105"
+                onClick={() => {
+                  document.getElementById("products")?.scrollIntoView({ behavior: "smooth" });
+                }}
+              >
+                Explorar Produtos
               </Button>
-              <Button size="lg" variant="outline">
-                Saiba Mais
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-border/50 backdrop-blur-md px-8 py-7 text-lg font-bold rounded-2xl hover:bg-accent/10 transition-all"
+                onClick={() => (window.location.href = "https://wa.me/5591984886473")}
+              >
+                Falar com Suporte
               </Button>
             </div>
-          </div>
+          </motion.div>
         </div>
-
-        {/* Background gradient */}
-        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-accent/10 to-transparent" />
       </section>
 
-      {/* Products Grid */}
-      <section className="py-20">
+      {/* Trust Badges */}
+      <div className="container -mt-10 relative z-30">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-card/50 backdrop-blur-xl border border-border/50 rounded-3xl shadow-2xl">
+          {[
+            { icon: <Zap className="text-yellow-500" />, text: "Entrega Imediata" },
+            { icon: <ShieldCheck className="text-green-500" />, text: "Compra Segura" },
+            { icon: <Star className="text-orange-500" />, text: "Suporte 24/7" },
+            { icon: <CheckCircle2 className="text-blue-500" />, text: "Garantia Total" },
+          ].map((item, i) => (
+            <div key={i} className="flex items-center justify-center gap-3 py-2">
+              {item.icon}
+              <span className="font-bold text-sm uppercase tracking-wider">{item.text}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Products Section */}
+      <section id="products" className="py-24">
         <div className="container">
-          <h2 className="text-3xl font-bold mb-12">Plataformas Disponíveis</h2>
+          <div className="flex flex-col md:flex-row items-end justify-between mb-16 gap-4">
+            <div>
+              <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-4 uppercase">Plataformas</h2>
+              <p className="text-muted-foreground text-lg">Escolha sua diversão e comece agora.</p>
+            </div>
+            <div className="flex gap-2">
+              {streamingPlatforms.map((p, i) => (
+                <div key={i} className={`${p.color} p-2 rounded-lg text-white shadow-lg`}>
+                  {p.icon}
+                </div>
+              ))}
+            </div>
+          </div>
 
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-80 bg-muted rounded-lg animate-pulse" />
+                <div key={i} className="h-[400px] rounded-3xl bg-muted animate-pulse" />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {products?.map((product) => (
-                <Card
+                <motion.div
                   key={product.id}
-                  className="overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col"
+                  whileHover={{ y: -10 }}
+                  className="group"
                 >
-                  {/* Product Image */}
-                  <div className={`h-48 relative overflow-hidden flex items-center justify-center bg-gradient-to-br ${
-                    product.name.includes("Spotify") ? "from-green-600 to-green-900" :
-                    product.name.includes("YouTube Music") ? "from-red-800 to-black" :
-                    product.name.includes("YouTube") ? "from-red-600 to-red-900" :
-                    "from-blue-800 to-blue-950"
-                  }`}>
-                    {product.imageUrl ? (
-                      <img 
-                        src={product.imageUrl} 
-                        alt={product.name}
-                        className="w-24 h-24 object-contain transition-transform duration-500 hover:scale-110"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
-                        }}
-                      />
-                    ) : (
-                      product.category === "music" ? (
-                        <Music className="h-20 w-20 text-white/40" />
+                  <Card className="h-full flex flex-col overflow-hidden bg-card/30 border-border/50 backdrop-blur-sm rounded-[2rem] transition-all group-hover:border-accent/50 group-hover:shadow-2xl group-hover:shadow-accent/10">
+                    <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-accent/5 to-accent/20 flex items-center justify-center">
+                      {product.imageUrl ? (
+                        <img
+                          src={product.imageUrl}
+                          alt={product.name}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        />
                       ) : (
-                        <Play className="h-20 w-20 text-white/40" />
-                      )
-                    )}
-                    <div className="absolute top-4 right-4">
-                      <div className="bg-accent text-accent-foreground text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider shadow-lg">
-                        {product.trialDays} Dias Grátis
+                        <div className="p-12 text-accent/20">
+                          {product.category === 'music' ? <Music className="w-full h-full" /> : <Play className="w-full h-full" />}
+                        </div>
+                      )}
+                      <div className="absolute top-4 right-4 bg-accent/90 text-accent-foreground px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest backdrop-blur-md">
+                        Premium
                       </div>
                     </div>
-                  </div>
-
-                  {/* Product Info */}
-                  <div className="flex-1 p-6 flex flex-col">
-                    <div className="mb-4">
-                      <h3 className="text-xl font-bold mb-2 group-hover:text-accent transition-colors">{product.name}</h3>
-                      <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
-                        {product.description}
-                      </p>
-                    </div>
-
-                    {/* Price Tag */}
-                    <div className="mb-6">
-                      <div className="flex items-baseline gap-2 mb-2">
-                        <span className="text-sm text-muted-foreground line-through">De R$ {((product.price * 2) / 100).toFixed(2)}</span>
-                      </div>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-black text-accent">Por R$ {(product.price / 100).toFixed(2)}</span>
-                        <span className="text-sm text-muted-foreground">/mês</span>
-                      </div>
-                    </div>
-
-                    {/* Discount Badge */}
-                    <div className="mb-6">
-                      <div className="inline-block bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                        50% OFF
+                    <div className="p-8 flex flex-col flex-grow">
+                      <h3 className="text-2xl font-black mb-2 group-hover:text-accent transition-colors">{product.name}</h3>
+                      <p className="text-muted-foreground text-sm mb-6 line-clamp-2">{product.description}</p>
+                      
+                      <div className="mt-auto space-y-4">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-3xl font-black text-accent">R$ {(product.price / 100).toFixed(2)}</span>
+                          <span className="text-muted-foreground text-sm line-through opacity-50">R$ {((product.price * 1.5) / 100).toFixed(2)}</span>
+                        </div>
+                        
+                        <Button
+                          className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-black py-7 rounded-2xl shadow-lg shadow-accent/20 transition-all"
+                          onClick={() => {
+                            if (isAuthenticated) {
+                              addItem.mutate({ productId: product.id });
+                              toast.success(`${product.name} adicionado!`);
+                            } else {
+                              window.location.href = getLoginUrl();
+                            }
+                          }}
+                        >
+                          <ShoppingCart className="h-5 w-5 mr-2" />
+                          ADQUIRIR AGORA
+                        </Button>
                       </div>
                     </div>
-
-                    {/* Benefits */}
-                    {product.benefits && (
-                      <div className="mb-6 space-y-2">
-                        {JSON.parse(product.benefits).slice(0, 3).map((benefit: string, idx: number) => (
-                          <div key={idx} className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <div className="h-1.5 w-1.5 rounded-full bg-accent" />
-                            <span>{benefit}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Action Buttons */}
-                    <div className="mt-auto flex flex-col gap-2">
-                      <Button
-                        className="w-full bg-accent hover:bg-accent/90 font-bold py-6 shadow-md hover:shadow-accent/20 transition-all"
-                        onClick={() => {
-                          if (isAuthenticated) {
-                            addItem.mutate({ productId: product.id });
-                            setCartCount(prev => prev + 1);
-                          } else {
-                            window.location.href = getLoginUrl();
-                          }
-                        }}
-                      >
-                        <ShoppingCart className="h-5 w-5 mr-2" />
-                        Adicionar ao Carrinho
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        className="w-full text-muted-foreground hover:text-accent font-medium"
-                        onClick={() => {
-                          if (isAuthenticated) {
-                            navigate(`/product/${product.id}`);
-                          } else {
-                            window.location.href = getLoginUrl();
-                          }
-                        }}
-                      >
-                        Ver Detalhes
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
+                  </Card>
+                </motion.div>
               ))}
             </div>
           )}
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 bg-muted/50">
+      {/* Features / Why Us */}
+      <section className="py-24 bg-accent/5 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-accent/20 to-transparent" />
         <div className="container">
-          <h2 className="text-3xl font-bold mb-12 text-center">Por Que Escolher MOTA STORE?</h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-4">POR QUE A MOTA?</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">Experiência premium com a segurança que você merece.</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             {[
               {
-                icon: <Zap className="h-8 w-8" />,
-                title: "Rápido e Fácil",
-                description: "Ative seu teste gratuito em apenas alguns cliques",
+                title: "Ativação Turbo",
+                desc: "Nada de espera. Comprou, pagou, ativou. Simples assim.",
+                icon: <Zap className="h-12 w-12 text-accent" />
               },
               {
-                icon: <ShoppingCart className="h-8 w-8" />,
-                title: "Melhor Preço",
-                description: "Encontre as melhores ofertas de streaming em um só lugar",
+                title: "Suporte Humano",
+                desc: "Dúvidas? Nosso time no WhatsApp está pronto para ajudar.",
+                icon: <Star className="h-12 w-12 text-accent" />
               },
               {
-                icon: <Music className="h-8 w-8" />,
-                title: "Sem Compromisso",
-                description: "Cancele quando quiser, sem taxas ocultas",
-              },
-            ].map((feature, idx) => (
-              <div key={idx} className="text-center">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-accent/10 text-accent mb-4">
-                  {feature.icon}
+                title: "100% Oficial",
+                desc: "Acessos originais com garantia de funcionamento total.",
+                icon: <ShieldCheck className="h-12 w-12 text-accent" />
+              }
+            ].map((f, i) => (
+              <div key={i} className="flex flex-col items-center text-center space-y-4 p-8 rounded-[2rem] bg-card/20 border border-border/30">
+                <div className="p-4 rounded-2xl bg-accent/10 mb-2">
+                  {f.icon}
                 </div>
-                <h3 className="font-semibold mb-2">{feature.title}</h3>
-                <p className="text-sm text-muted-foreground">{feature.description}</p>
+                <h3 className="text-2xl font-black">{f.title}</h3>
+                <p className="text-muted-foreground font-medium">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -260,40 +219,23 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border py-12">
+      <footer className="py-20 border-t border-border/50">
         <div className="container">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <h4 className="font-semibold mb-4">MOTA STORE</h4>
-              <p className="text-sm text-muted-foreground">
-                Sua plataforma de testes gratuitos de streaming
-              </p>
+          <div className="flex flex-col md:flex-row justify-between items-center gap-12">
+            <div className="text-center md:text-left">
+              <h2 className="text-3xl font-black tracking-tighter mb-4">MOTA STORE</h2>
+              <p className="text-muted-foreground max-w-xs">O melhor do streaming premium ao seu alcance.</p>
             </div>
-            <div>
-              <h4 className="font-semibold mb-4">Links</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-accent transition-colors">Sobre</a></li>
-                <li><a href="#" className="hover:text-accent transition-colors">Contato</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-accent transition-colors">Privacidade</a></li>
-                <li><a href="#" className="hover:text-accent transition-colors">Termos</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Suporte</h4>
-              <ul className="space-y-2 text-sm">
-                <li><a href="https://wa.me/5591984886473" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-accent transition-colors">WhatsApp: +55 91 8488-6473</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-accent transition-colors">FAQ</a></li>
-              </ul>
+            
+            <div className="flex gap-8">
+              <a href="https://wa.me/5591984886473" className="hover:text-accent transition-colors font-bold uppercase tracking-widest text-sm">Suporte</a>
+              <a href="#" className="hover:text-accent transition-colors font-bold uppercase tracking-widest text-sm">Termos</a>
+              <a href="#" className="hover:text-accent transition-colors font-bold uppercase tracking-widest text-sm">Privacidade</a>
             </div>
           </div>
-
-          <div className="border-t border-border pt-8 text-center text-sm text-muted-foreground">
-            <p>&copy; 2026 MOTA STORE. Todos os direitos reservados.</p>
+          
+          <div className="mt-20 pt-8 border-t border-border/20 text-center text-sm text-muted-foreground font-medium">
+            &copy; 2026 MOTA STORE. DESIGN BY MANUS.
           </div>
         </div>
       </footer>

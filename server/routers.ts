@@ -75,6 +75,21 @@ export const appRouter = router({
         return createOrder(ctx.user.id, input.totalAmount);
       }),
   }),
+
+  payments: router({
+    createPix: protectedProcedure
+      .input(z.object({ orderId: z.number(), amount: z.number() }))
+      .mutation(async ({ input }) => {
+        const { createInterPix } = await import("./inter-payment");
+        return createInterPix(input.amount, input.orderId);
+      }),
+    checkStatus: protectedProcedure
+      .input(z.object({ txid: z.string() }))
+      .query(async ({ input }) => {
+        const { checkInterPixStatus } = await import("./inter-payment");
+        return checkInterPixStatus(input.txid);
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
