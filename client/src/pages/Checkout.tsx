@@ -82,39 +82,39 @@ export default function Checkout() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4 pt-28">
-      <div className="container max-w-6xl mx-auto">
-        <div className="flex items-center gap-4 mb-12">
-          <Button variant="ghost" onClick={() => step === "payment" ? navigate("/cart") : setStep("payment")} disabled={step === "pix"}>
-            <ArrowLeft className="h-5 w-5 mr-2" />
+    <div className="min-h-screen bg-background pt-20 pb-4 px-4 overflow-hidden">
+      <div className="container max-w-6xl mx-auto h-full">
+        <div className="flex items-center gap-4 mb-6">
+          <Button variant="ghost" size="sm" onClick={() => step === "payment" ? navigate("/cart") : setStep("payment")} disabled={step === "pix"}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
           </Button>
-          <h1 className="text-3xl font-black tracking-tighter">CHECKOUT</h1>
+          <h1 className="text-2xl font-black tracking-tighter">CHECKOUT</h1>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             {step === "payment" && (
-              <Card className="p-8 bg-card/50 backdrop-blur-sm border-border/50 rounded-3xl">
-                <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                  <CheckCircle2 className="h-6 w-6 text-accent" />
+              <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50 rounded-3xl">
+                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-accent" />
                   Confirmar Pedido
                 </h2>
-                <p className="text-muted-foreground mb-8">
+                <p className="text-sm text-muted-foreground mb-4">
                   Seu acesso será enviado para o WhatsApp após a confirmação do pagamento via PIX.
                 </p>
-                <div className="bg-muted/30 p-6 rounded-2xl mb-8 border border-border/50">
-                  <h3 className="font-bold mb-4 uppercase text-xs tracking-widest text-muted-foreground">Resumo do Cliente</h3>
-                  <div className="space-y-2">
-                    <p className="text-sm"><strong>NOME:</strong> {user?.name || "Não informado"}</p>
-                    <p className="text-sm"><strong>EMAIL:</strong> {user?.email || "Não informado"}</p>
+                <div className="bg-muted/30 p-4 rounded-2xl mb-4 border border-border/50">
+                  <h3 className="font-bold mb-2 uppercase text-[10px] tracking-widest text-muted-foreground">Resumo do Cliente</h3>
+                  <div className="space-y-1">
+                    <p className="text-xs"><strong>NOME:</strong> {user?.name || "Não informado"}</p>
+                    <p className="text-xs"><strong>EMAIL:</strong> {user?.email || "Não informado"}</p>
                   </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Button
                     type="button"
                     variant="outline"
-                    className="flex-1 py-7 rounded-2xl font-bold"
+                    className="flex-1 py-4 rounded-2xl font-bold"
                     onClick={() => navigate("/cart")}
                     disabled={isSubmitting}
                   >
@@ -122,7 +122,7 @@ export default function Checkout() {
                   </Button>
                   <Button 
                     onClick={handleConfirmOrder} 
-                    className="flex-1 bg-accent hover:bg-accent/90 py-7 text-lg font-black rounded-2xl shadow-lg shadow-accent/20"
+                    className="flex-1 bg-accent hover:bg-accent/90 py-4 text-base font-black rounded-2xl shadow-lg shadow-accent/20"
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
@@ -133,7 +133,7 @@ export default function Checkout() {
             )}
 
             {step === "pix" && pixData && orderId && (
-              <div className="space-y-8">
+              <div className="space-y-6">
                 <PixPayment 
                   pixCode={pixData.pixCode}
                   qrCodeBase64={pixData.qrCodeBase64}
@@ -163,27 +163,27 @@ export default function Checkout() {
           </div>
 
           <div className="lg:col-span-1">
-            <Card className="p-8 sticky top-20 bg-card/30 backdrop-blur-sm border-border/50 rounded-[2rem]">
-              <h2 className="text-xl font-black mb-8 uppercase tracking-tighter">Resumo do Pedido</h2>
-              <div className="space-y-4 mb-8 pb-8 border-b border-border/50">
+            <Card className="p-6 sticky top-20 bg-card/30 backdrop-blur-sm border-border/50 rounded-[2rem]">
+              <h2 className="text-lg font-black mb-4 uppercase tracking-tighter">Resumo do Pedido</h2>
+              <div className="space-y-3 mb-4 pb-4 border-b border-border/50">
                 {enrichedItems.map((item, idx) => (
                   <div key={idx} className="flex justify-between items-start">
                     <div className="space-y-1">
-                      <p className="font-bold text-sm leading-none">{item.product?.name}</p>
-                      <p className="text-xs text-muted-foreground uppercase tracking-widest">Premium 30 Dias</p>
+                      <p className="font-bold text-xs leading-none">{item.product?.name}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Premium 30 Dias</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-black text-accent">R$ 5,00</p>
-                      <p className="text-[10px] text-muted-foreground line-through">R$ 10,00</p>
+                      <p className="font-black text-accent text-sm">R$ 5,00</p>
+                      <p className="text-[9px] text-muted-foreground line-through">R$ 10,00</p>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="pt-6 border-t border-border/50">
+              <div className="pt-4 border-t border-border/50">
                 <div className="flex justify-between items-end">
-                  <span className="text-sm font-black uppercase tracking-widest text-muted-foreground">Total a Pagar</span>
-                  <span className="text-4xl font-black text-accent tracking-tighter">R$ {(total / 100).toFixed(2)}</span>
+                  <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Total a Pagar</span>
+                  <span className="text-3xl font-black text-accent tracking-tighter">R$ {(total / 100).toFixed(2)}</span>
                 </div>
               </div>
             </Card>
