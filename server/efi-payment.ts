@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import * as fs from "fs";
-import * as path from "path";
+import * as https from "https";
 
 /**
  * Integração com API de PIX da Efí (Gerencianet)
@@ -52,11 +52,11 @@ class EfiPaymentService {
       try {
         const certBuffer = Buffer.from(process.env.EFI_CERT_BASE64, "base64");
         const keyBuffer = Buffer.from(process.env.EFI_KEY_BASE64, "base64");
-        httpsAgent = {
+        httpsAgent = new https.Agent({
           cert: certBuffer,
           key: keyBuffer,
           rejectUnauthorized: false,
-        };
+        });
         console.log("✅ Certificado carregado de Base64");
       } catch (error) {
         console.warn("⚠️ Erro ao decodificar certificado Base64:", error);
@@ -66,11 +66,11 @@ class EfiPaymentService {
     else if (process.env.EFI_CERT_PATH && process.env.EFI_KEY_PATH) {
       try {
         if (fs.existsSync(process.env.EFI_CERT_PATH) && fs.existsSync(process.env.EFI_KEY_PATH)) {
-          httpsAgent = {
+          httpsAgent = new https.Agent({
             cert: fs.readFileSync(process.env.EFI_CERT_PATH),
             key: fs.readFileSync(process.env.EFI_KEY_PATH),
             rejectUnauthorized: false,
-          };
+          });
           console.log("✅ Certificado carregado de arquivo");
         }
       } catch (error) {

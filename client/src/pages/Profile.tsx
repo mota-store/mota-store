@@ -220,7 +220,7 @@ export default function Profile() {
                             }}
                             className="w-full h-10 bg-accent text-accent-foreground font-black text-[10px] uppercase tracking-widest rounded-lg"
                           >
-                            {updateProfile.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "CONFIRMAR NOVA SENHA"}
+                            {updateProfile.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "ATUALIZAR SENHA"}
                           </Button>
                         </div>
                       </div>

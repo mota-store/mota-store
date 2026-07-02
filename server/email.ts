@@ -1,11 +1,11 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY || 're_gV9N4FqA_7VUMWRFJVfEABVTeYHk3mwjX');
 
 export async function sendWelcomeEmail(email: string, name: string) {
   try {
     const { data, error } = await resend.emails.send({
-      from: 'Mota Store <onboarding@resend.dev>',
+      from: 'onboarding@resend.dev',
       to: [email],
       subject: `⚡ Bem-vindo à MOTA STORE, ${name.split(' ')[0]}!`,
       html: `
@@ -18,7 +18,7 @@ export async function sendWelcomeEmail(email: string, name: string) {
           <h2 style="font-size: 24px; font-weight: 900; margin-bottom: 20px;">Olá, ${name}!</h2>
           
           <p style="color: #cbd5e1; line-height: 1.6; font-size: 16px; margin-bottom: 30px;">
-            É um prazer ter você com a gente na <b>MOTA STORE</b>. Agora você faz parte da elite que não aceita pagar caro para ter o melhor do entretenimento.
+            Agora você faz parte da elite que não aceita pagar caro para ter o melhor do entretenimento.
           </p>
           
           <div style="background-color: #1e293b; padding: 20px; border-radius: 16px; margin-bottom: 30px;">
@@ -31,11 +31,11 @@ export async function sendWelcomeEmail(email: string, name: string) {
           </div>
           
           <div style="text-align: center;">
-            <a href="https://mota-store.onrender.com/profile" style="display: inline-block; background-color: #3b82f6; color: #ffffff; font-weight: 900; padding: 16px 32px; border-radius: 12px; text-decoration: none; text-transform: uppercase; font-size: 14px;">Acessar Meu Perfil</a>
+            <a href="https://mota-store.onrender.com/profile" style="display: inline-block; background-color: #3b82f6; color: #ffffff; font-weight: 900; padding: 16px 32px; border-radius: 12px; text-decoration: none; text-transform: uppercase; font-size: 14px;">ÁREA DO CLIENTE</a>
           </div>
           
           <p style="color: #94a3b8; font-size: 12px; text-align: center; margin-top: 40px;">
-            Qualquer dúvida, chame nosso suporte no WhatsApp: +55 91 8488-6473.
+            Qualquer dúvida, chame nosso suporte no WhatsApp: <a href="https://wa.me/5591984886473" style="color: #3b82f6; text-decoration: none;">+55 91 8488-6473</a>.
           </p>
         </div>
       `,
@@ -58,7 +58,7 @@ export async function sendPasswordResetEmail(email: string, name: string, token:
   
   try {
     const { data, error } = await resend.emails.send({
-      from: 'Mota Store <onboarding@resend.dev>',
+      from: 'onboarding@resend.dev',
       to: [email],
       subject: '🔒 Recuperação de Senha - Mota Store',
       html: `
