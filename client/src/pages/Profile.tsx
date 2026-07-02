@@ -63,16 +63,13 @@ export default function Profile() {
     updateProfile.mutate({ name });
   };
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-muted-foreground mb-4">Você precisa estar logado</p>
-          <Button onClick={() => navigate("/")}>Voltar para Home</Button>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
+
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-background text-foreground">

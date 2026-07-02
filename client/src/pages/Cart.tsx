@@ -16,14 +16,8 @@ export default function Cart() {
   const [removedItems, setRemovedItems] = useState<number[]>([]);
 
   if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-muted-foreground mb-4">Você precisa estar logado para acessar o carrinho</p>
-          <Button onClick={() => navigate("/")}>Voltar para Home</Button>
-        </div>
-      </div>
-    );
+    navigate("/");
+    return null;
   }
 
   const enrichedItems = cartItems?.map(item => {
