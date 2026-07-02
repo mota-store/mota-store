@@ -78,12 +78,17 @@ class EfiPaymentService {
         
         const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, false, p12Password);
         
-        // Extrair chave privada
+        // Extrair chave privada (pode estar em diferentes tipos de bags)
         const keyBags = p12.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag });
-        const bag = keyBags[forge.pki.oids.pkcs8ShroudedKeyBag]?.[0];
+        const pkcs8Bags = p12.getBags({ bagType: forge.pki.oids.keyBag });
+        
+        const bag = keyBags[forge.pki.oids.pkcs8ShroudedKeyBag]?.[0] || pkcs8Bags[forge.pki.oids.keyBag]?.[0];
+        
         if (!bag || !bag.key) {
           throw new Error("Chave privada não encontrada no arquivo .p12");
         }
+        
+        // Converter para RSA Private Key PEM (formato mais compatível)
         const privateKeyPem = forge.pki.privateKeyToPem(bag.key);
         
         // Extrair certificado
@@ -110,13 +115,21 @@ class EfiPaymentService {
     // 2. Fallback: Certificado e Chave separados em Base64 (PEM)
     if (process.env.EFI_CERT_BASE64 && process.env.EFI_KEY_BASE64) {
       try {
-        console.log("🛠️ Carregando certificados PEM de EFI_CERT_BASE64 e EFI_KEY_BASE64...");
-        const certBuffer = Buffer.from(process.env.EFI_CERT_BASE64, "base64");
-        const keyBuffer = Buffer.from(process.env.EFI_KEY_BASE64, "base64");
+        console.log("🛠️ Carregando certificados PEM de EFI_CERT_BASE64 e EFI_KEY_BASE64 via node-forge...");
+        const certPemRaw = Buffer.from(process.env.EFI_CERT_BASE64, "base64").toString("utf-8");
+        const keyPemRaw = Buffer.from(process.env.EFI_KEY_BASE64, "base64").toString("utf-8");
         
+        const extractPem = (pem: string, type: string) => {
+          const match = pem.match(new RegExp(`-----BEGIN ${type}-----[\\s\\S]+-----END ${type}-----`));
+          return match ? match[0] : pem;
+        };
+
+        const certPem = extractPem(certPemRaw, "CERTIFICATE");
+        const keyPem = extractPem(keyPemRaw, "PRIVATE KEY");
+
         return new https.Agent({
-          cert: certBuffer,
-          key: keyBuffer,
+          cert: Buffer.from(certPem),
+          key: Buffer.from(keyPem),
           rejectUnauthorized: false,
           minVersion: 'TLSv1.2'
         });
@@ -186,6 +199,7 @@ class EfiPaymentService {
       
       if (error.message.includes("unsupported")) {
         console.error("💡 Dica: O erro 'unsupported' geralmente indica que o Node.js não suporta o formato do certificado. Use EFI_CERT_P12_BASE64 para conversão automática.");
+        if (error.stack) console.error("STACK TRACE:", error.stack);
       }
       
       throw new Error(`Falha na autenticação com Efí: ${error.message}`);
@@ -199,24 +213,25 @@ class EfiPaymentService {
     try {
       this.initializeClient();
       const token = await this.getAccessToken();
-      const txid = `MOTA${orderId}${Date.now().toString().slice(-4)}`;
+      // Gerar TXID aleatório de 26 a 35 caracteres alfanuméricos conforme padrão Pix
+      const timestamp = Date.now().toString();
+      const randomPart = Math.random().toString(36).substring(2, 15).toUpperCase();
+      const txid = `MOTA${timestamp}${randomPart}`.substring(0, 35);
 
       const payload = {
         calendario: {
-          expiracao: 1800,
-        },
-        devedor: {
-          cpf: "00000000000",
-          nome: "Cliente Mota Store",
+          expiracao: 3600,
         },
         valor: {
-          original: (amount / 100).toFixed(2),
+          original: Number(amount).toFixed(2),
         },
         chave: this.pixKey,
-        solicitacaoPagador: description || `MOTA STORE - Pedido #${orderId}`,
+        solicitacaoPagador: description || `Pedido #${orderId}`,
       };
 
-      const response = await this.client.post(
+      console.log("🛠️ Enviando payload para Efí:", JSON.stringify(payload));
+
+      const response = await this.client.put(
         `/v2/cob/${txid}`,
         payload,
         {
