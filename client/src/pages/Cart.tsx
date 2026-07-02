@@ -125,14 +125,7 @@ export default function Cart() {
                     <span className="text-muted-foreground">Com Desconto</span>
                     <span className="font-semibold text-accent">R$ {(subtotal / 100).toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Economia</span>
-                    <span className="font-semibold text-green-600">-R$ {(savings / 100).toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Frete</span>
-                    <span className="font-semibold text-green-600">Grátis</span>
-                  </div>
+
                 </div>
 
                 <div className="border-t border-border pt-4 mb-6">

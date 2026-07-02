@@ -46,6 +46,7 @@ export default function Home() {
       <Header />
 
       {/* Hero Section - Professional Store Look */}
+      {!isAuthenticated && (
       <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
@@ -89,9 +90,10 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* Trust Badges - More Professional */}
-      <div className="container px-4 relative z-30 -mt-16">
+      )}
+	
+	      {/* Trust Badges - More Professional */}
+	      <div className={`container px-4 relative z-30 ${!isAuthenticated ? "-mt-16" : "mt-12"}`}>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-8 bg-card border border-border/50 rounded-[2.5rem] shadow-2xl">
           {[
             { icon: <Zap className="text-accent h-6 w-6" />, title: "Entrega Imediata", desc: "Acesso na hora" },

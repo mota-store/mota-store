@@ -179,16 +179,7 @@ export default function Checkout() {
                   </div>
                 ))}
               </div>
-              <div className="space-y-3 mb-8">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground font-medium">Economia Total</span>
-                  <span className="text-green-500 font-bold">-R$ {(savings / 100).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground font-medium">Ativação</span>
-                  <span className="text-green-500 font-bold uppercase text-[10px]">Grátis</span>
-                </div>
-              </div>
+
               <div className="pt-6 border-t border-border/50">
                 <div className="flex justify-between items-end">
                   <span className="text-sm font-black uppercase tracking-widest text-muted-foreground">Total a Pagar</span>
