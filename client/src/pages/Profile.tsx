@@ -114,12 +114,12 @@ export default function Profile() {
             <Card className="p-8 sticky top-24 bg-card/30 backdrop-blur-sm border-border/50 rounded-[2.5rem] shadow-2xl">
               <div className="flex flex-col items-center text-center">
                 <div className="relative mb-6">
-                  <div className="h-24 w-24 rounded-[2rem] bg-accent/10 flex items-center justify-center overflow-hidden border-2 border-accent/20">
-                    {user.avatarUrl ? (
-                      <img src={user.avatarUrl} alt={user.name || "Avatar"} className="w-full h-full object-cover" />
-                    ) : (
-                      <UserIcon className="h-10 w-10 text-accent" />
-                    )}
+                    <div className="h-24 w-24 rounded-[2rem] bg-accent/10 flex items-center justify-center overflow-hidden border-2 border-accent/20">
+                    <img 
+                      src={user.avatarUrl || "/assets/default-avatar.jpg"} 
+                      alt={user.name || "Avatar"} 
+                      className="w-full h-full object-cover" 
+                    />
                   </div>
                   <button 
                     onClick={() => setIsEditing(!isEditing)}

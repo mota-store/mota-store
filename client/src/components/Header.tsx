@@ -66,9 +66,15 @@ export function Header() {
           <div className="hidden sm:flex items-center gap-2">
             {isAuthenticated ? (
               <>
-                <div className="flex items-center gap-2 px-3 py-1 bg-muted/50 rounded-lg">
-                  <User className="h-4 w-4 text-accent" />
-                  <span className="text-sm font-bold">{user?.name?.split(" ")[0]}</span>
+                <div className="flex items-center gap-2 px-2 py-1 bg-muted/50 rounded-xl border border-border/50">
+                  <div className="h-6 w-6 rounded-full overflow-hidden border border-accent/20">
+                    <img 
+                      src={user?.avatarUrl || "/assets/default-avatar.jpg"} 
+                      alt="Avatar" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <span className="text-sm font-bold pr-1">{user?.name?.split(" ")[0]}</span>
                 </div>
                 <Button
                   size="sm"
