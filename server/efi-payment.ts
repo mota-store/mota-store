@@ -41,19 +41,27 @@ class EfiPaymentService {
     this.account = process.env.EFI_ACCOUNT || "";
     this.pixKey = process.env.EFI_PIX_KEY || "";
 
-    // Validar credenciais básicas
+    // O Axios será inicializado no primeiro uso para garantir que as variáveis de ambiente do .env estejam carregadas
+    this.client = axios.create({
+      baseURL: "https://pix.api.efipay.com.br",
+      timeout: 30000,
+    });
+  }
+
+  private initializeClient() {
+    if (this.client.defaults.httpsAgent) return;
+
+    this.clientId = process.env.EFI_CLIENT_ID || this.clientId;
+    this.clientSecret = process.env.EFI_CLIENT_SECRET || this.clientSecret;
+    this.account = process.env.EFI_ACCOUNT || this.account;
+    this.pixKey = process.env.EFI_PIX_KEY || this.pixKey;
+
+    const httpsAgent = this.setupHttpsAgent();
+    this.client.defaults.httpsAgent = httpsAgent;
+
     if (!this.clientId || !this.clientSecret || !this.pixKey) {
       console.warn("⚠️ Credenciais da Efí não configuradas completamente (ID, Secret ou Chave PIX)");
     }
-
-    // Configurar httpsAgent com certificado
-    const httpsAgent = this.setupHttpsAgent();
-
-    this.client = axios.create({
-      baseURL: "https://api-pix.gerencianet.com.br",
-      httpsAgent: httpsAgent,
-      timeout: 15000,
-    });
   }
 
   /**
@@ -142,6 +150,8 @@ class EfiPaymentService {
    * Obter token de acesso OAuth2
    */
   private async getAccessToken(): Promise<string> {
+    this.initializeClient();
+    
     if (this.accessToken && Date.now() < this.tokenExpiry) {
       return this.accessToken;
     }
@@ -168,6 +178,11 @@ class EfiPaymentService {
     } catch (error: any) {
       const errorMsg = error.response?.data ? JSON.stringify(error.response.data) : error.message;
       console.error("❌ Erro ao obter token Efí:", errorMsg);
+      console.error("DEBUG - Configurações usadas:", {
+        baseURL: this.client.defaults.baseURL,
+        clientId: this.clientId.substring(0, 10) + "...",
+        hasAgent: !!this.client.defaults.httpsAgent
+      });
       
       if (error.message.includes("unsupported")) {
         console.error("💡 Dica: O erro 'unsupported' geralmente indica que o Node.js não suporta o formato do certificado. Use EFI_CERT_P12_BASE64 para conversão automática.");
@@ -182,6 +197,7 @@ class EfiPaymentService {
    */
   async createPix(amount: number, orderId: number, description: string = ""): Promise<PixResponse> {
     try {
+      this.initializeClient();
       const token = await this.getAccessToken();
       const txid = `MOTA${orderId}${Date.now().toString().slice(-4)}`;
 
@@ -231,7 +247,10 @@ class EfiPaymentService {
     } catch (error: any) {
       const errorMsg = error.response?.data ? JSON.stringify(error.response.data) : error.message;
       console.error("❌ Erro ao criar PIX:", errorMsg);
-      throw new Error("Falha ao gerar PIX");
+      if (error.response?.status === 401) {
+        throw new Error("Falha na autenticação com a Efí. Verifique se o Client_Id e Client_Secret são válidos e se o certificado corresponde a essas credenciais.");
+      }
+      throw new Error(`Falha ao gerar PIX: ${error.message}`);
     }
   }
 
