@@ -84,11 +84,10 @@ export default function ResetPassword() {
     <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
       <div className="absolute inset-0 z-0">
         <img src="/assets/login-bg.gif" className="w-full h-full object-cover opacity-100" />
-        <div className="absolute inset-0 bg-background/20 z-10" />
       </div>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative z-20 w-full max-w-md">
-        <Card className="p-8 bg-card/40 backdrop-blur-2xl border-border/50 shadow-2xl rounded-[2.5rem]">
+        <Card className="p-8 bg-card border-border/50 shadow-2xl rounded-[2.5rem]">
           <div className="text-center mb-8">
             <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/20 text-accent mb-6">
               <Lock className="h-8 w-8" />

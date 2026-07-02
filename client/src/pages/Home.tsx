@@ -28,7 +28,6 @@ export default function Home() {
       {/* Hero Section - Professional Store Look */}
       <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent z-10" />
           <img 
             src="/assets/home-bg.gif" 
             alt="Mota Store Banner" 
@@ -73,7 +72,7 @@ export default function Home() {
 
       {/* Trust Badges - More Professional */}
       <div className="container px-4 relative z-30 -mt-16">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-8 bg-card/40 backdrop-blur-2xl border border-border/50 rounded-[2.5rem] shadow-2xl">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-8 bg-card border border-border/50 rounded-[2.5rem] shadow-2xl">
           {[
             { icon: <Zap className="text-accent h-6 w-6" />, title: "Entrega Imediata", desc: "Acesso na hora" },
             { icon: <ShieldCheck className="text-accent h-6 w-6" />, title: "Compra Segura", desc: "Pagamento via PIX" },

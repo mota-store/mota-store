@@ -79,7 +79,6 @@ export default function Login() {
           alt="Login Background" 
           className="w-full h-full object-cover opacity-100"
         />
-        <div className="absolute inset-0 bg-background/20 z-10" />
       </div>
 
       <motion.div
@@ -96,7 +95,7 @@ export default function Login() {
           Voltar para Home
         </Button>
 
-        <Card className="p-8 bg-card/40 backdrop-blur-2xl border-border/50 shadow-2xl rounded-[2.5rem]">
+        <Card className="p-8 bg-card border-border/50 shadow-2xl rounded-[2.5rem]">
           <div className="text-center mb-8">
             <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/20 text-accent mb-6 shadow-xl shadow-accent/10">
               <Zap className="h-8 w-8" />
