@@ -7,6 +7,7 @@ import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { Mail, Lock, User, ArrowLeft, Zap, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 
 export default function Login() {
   const [, navigate] = useLocation();
@@ -22,6 +23,7 @@ export default function Login() {
 
   const loginMutation = trpc.auth.login.useMutation();
   const registerMutation = trpc.auth.register.useMutation();
+  const requestReset = trpc.auth.requestPasswordReset.useMutation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -203,6 +205,32 @@ export default function Login() {
             >
               {loading ? "PROCESSANDO..." : isRegister ? "CRIAR CONTA" : "ENTRAR"}
             </Button>
+
+            {!isRegister && (
+              <div className="text-center mt-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!email) {
+                      setError("Digite seu e-mail primeiro");
+                      return;
+                    }
+                    try {
+                      setLoading(true);
+                      await requestReset.mutateAsync({ email });
+                      toast.success("E-mail de recuperação enviado!");
+                    } catch (err: any) {
+                      toast.error("Erro ao solicitar recuperação");
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  className="text-xs font-bold text-muted-foreground hover:text-accent transition-colors"
+                >
+                  ESQUECI MINHA SENHA
+                </button>
+              </div>
+            )}
           </form>
 
           <div className="relative my-8">

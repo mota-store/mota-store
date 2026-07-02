@@ -107,9 +107,43 @@ export const appRouter = router({
 
         const { url: s3Url } = (await presignResp.json()) as { url: string };
         return { 
-          uploadUrl: s3Url, 
           publicUrl: `/manus-storage/${key}` 
         };
+      }),
+    requestPasswordReset: publicProcedure
+      .input(z.object({ email: z.string().email() }))
+      .mutation(async ({ input }) => {
+        const { getUserByEmail, setResetToken } = await import("./db");
+        const { sendPasswordResetEmail } = await import("./email");
+        const crypto = await import("crypto");
+        
+        const user = await getUserByEmail(input.email);
+        if (!user) return { success: true }; // Don't reveal user existence
+
+        const token = crypto.randomBytes(32).toString("hex");
+        const expires = new Date(Date.now() + 3600000); // 1 hour
+
+        await setResetToken(user.id, token, expires);
+        await sendPasswordResetEmail(user.email!, user.name || "Cliente", token);
+        
+        return { success: true };
+      }),
+    resetPassword: publicProcedure
+      .input(z.object({ token: z.string(), password: z.string().min(6) }))
+      .mutation(async ({ input }) => {
+        const { getUserByResetToken, updatePassword } = await import("./db");
+        // @ts-ignore
+        const bcrypt = await import("bcryptjs");
+        
+        const user = await getUserByResetToken(input.token);
+        if (!user || !user.resetTokenExpires || user.resetTokenExpires < new Date()) {
+          return { success: false, error: "Token inválido ou expirado" };
+        }
+
+        const passwordHash = await bcrypt.hash(input.password, 10);
+        await updatePassword(user.id, passwordHash);
+        
+        return { success: true };
       }),
   }),
 

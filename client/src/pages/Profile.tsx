@@ -86,10 +86,11 @@ export default function Profile() {
       setIsUploading(true);
       
       // 1. Obter URL de upload
-      const { uploadUrl, publicUrl } = await getUploadUrl.mutateAsync({
+      const result = await getUploadUrl.mutateAsync({
         filename: file.name,
         contentType: file.type,
       });
+      const { uploadUrl, publicUrl } = result as any;
 
       // 2. Upload direto para o S3
       const uploadResp = await fetch(uploadUrl, {

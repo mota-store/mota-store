@@ -21,6 +21,8 @@ export const users = mysqlTable("users", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
+  resetToken: varchar("resetToken", { length: 255 }),
+  resetTokenExpires: timestamp("resetTokenExpires"),
 });
 
 export type User = typeof users.$inferSelect;

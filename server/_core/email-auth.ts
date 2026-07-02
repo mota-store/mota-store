@@ -50,13 +50,13 @@ export async function registerUser(
       lastSignedIn: new Date(),
     });
 
-    // Enviar e-mail de boas-vindas (Desativado temporariamente até configurar serviço real)
-    /*
-    await notifyOwner({
-      title: `Novo Cadastro: ${finalName}`,
-      content: `O usuário ${finalName} (${email}) acabou de se cadastrar na Mota Store!`,
-    });
-    */
+    // Enviar e-mail de boas-vindas real via Resend
+    try {
+      const { sendWelcomeEmail } = await import("../email");
+      await sendWelcomeEmail(email, finalName);
+    } catch (err) {
+      console.error("[Email Auth] Failed to send welcome email:", err);
+    }
 
     return { success: true, userId: (result as any).insertId };
   } catch (error) {

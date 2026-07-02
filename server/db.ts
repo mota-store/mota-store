@@ -89,6 +89,36 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function getUserByEmail(email: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getUserByResetToken(token: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.resetToken, token)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updatePassword(userId: number, passwordHash: string) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users)
+    .set({ passwordHash, resetToken: null, resetTokenExpires: null })
+    .where(eq(users.id, userId));
+}
+
+export async function setResetToken(userId: number, token: string, expires: Date) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users)
+    .set({ resetToken: token, resetTokenExpires: expires })
+    .where(eq(users.id, userId));
+}
+
 export async function getProducts() {
   const db = await getDb();
   if (!db) return [];
