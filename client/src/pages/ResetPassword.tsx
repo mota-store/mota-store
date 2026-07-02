@@ -83,8 +83,8 @@ export default function ResetPassword() {
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
       <div className="absolute inset-0 z-0">
-        <img src="/assets/login-bg.gif" className="w-full h-full object-cover opacity-80" />
-        <div className="absolute inset-0 bg-background/40 z-10" />
+        <img src="/assets/login-bg.gif" className="w-full h-full object-cover opacity-100" />
+        <div className="absolute inset-0 bg-background/20 z-10" />
       </div>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative z-20 w-full max-w-md">

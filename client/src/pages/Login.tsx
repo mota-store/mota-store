@@ -77,9 +77,9 @@ export default function Login() {
         <img 
           src="/assets/login-bg.gif" 
           alt="Login Background" 
-          className="w-full h-full object-cover opacity-80"
+          className="w-full h-full object-cover opacity-100"
         />
-        <div className="absolute inset-0 bg-background/40 z-10" />
+        <div className="absolute inset-0 bg-background/20 z-10" />
       </div>
 
       <motion.div
