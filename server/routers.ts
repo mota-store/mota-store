@@ -81,9 +81,20 @@ export const appRouter = router({
         return result;
       }),
     updateProfile: protectedProcedure
-      .input(z.object({ name: z.string().optional(), avatarUrl: z.string().optional() }))
+      .input(z.object({ 
+        name: z.string().optional(), 
+        avatarUrl: z.string().optional(),
+        password: z.string().min(6).optional()
+      }))
       .mutation(async ({ ctx, input }) => {
-        await updateUser(ctx.user.id, input);
+        const updateData: any = { name: input.name, avatarUrl: input.avatarUrl };
+        
+        if (input.password) {
+          const bcrypt = await import("bcrypt");
+          updateData.password = await bcrypt.hash(input.password, 10);
+        }
+        
+        await updateUser(ctx.user.id, updateData);
         return { success: true };
       }),
     getUploadUrl: protectedProcedure

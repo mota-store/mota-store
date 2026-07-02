@@ -99,6 +99,10 @@ export function registerGoogleOAuthRoutes(app: Express) {
       const name = payload.name || email;
       const picture = payload.picture || null;
 
+      // Verificar se o usuário já existe para saber se é um novo cadastro
+      const existingUser = await db.getUserByOpenId(googleId);
+      const isNewUser = !existingUser;
+
       // Salvar ou atualizar usuário no banco
       await db.upsertUser({
         openId: googleId,
@@ -108,6 +112,16 @@ export function registerGoogleOAuthRoutes(app: Express) {
         avatarUrl: picture,
         lastSignedIn: new Date(),
       });
+
+      // Se for um novo usuário, enviar e-mail de boas-vindas
+      if (isNewUser && email) {
+        try {
+          const { sendWelcomeEmail } = await import("../email");
+          await sendWelcomeEmail(email, name || "Cliente");
+        } catch (emailError) {
+          console.error("[Google OAuth] Failed to send welcome email:", emailError);
+        }
+      }
 
       // Criar token de sessão
       const sessionToken = await createSessionToken(googleId, name, email);

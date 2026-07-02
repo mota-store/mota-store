@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
-import { ArrowLeft, LogOut, ShoppingBag, Moon, Sun, Camera, Check, Loader2, Upload } from "lucide-react";
+import { ArrowLeft, LogOut, ShoppingBag, Moon, Sun, Camera, Check, Loader2, Upload, Lock, Eye, EyeOff } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 
@@ -12,8 +12,6 @@ export default function Profile() {
   const { user, logout } = useAuth();
   const [, navigate] = useLocation();
   const utils = trpc.useUtils();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  
   const searchParams = new URLSearchParams(window.location.search);
   const isOnboarding = searchParams.get("onboarding") === "true";
 
@@ -29,12 +27,12 @@ export default function Profile() {
     }
   });
 
-  const getUploadUrl = trpc.auth.getUploadUrl.useMutation();
-
   const [isDark, setIsDark] = useState(false);
   const [name, setName] = useState(user?.name || "");
-  const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || "");
-  const [isUploading, setIsUploading] = useState(false);
+  const [showPasswordFields, setShowPasswordFields] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
   useEffect(() => {
     const isDarkMode = document.documentElement.classList.contains("dark");
@@ -44,7 +42,6 @@ export default function Profile() {
   useEffect(() => {
     if (user) {
       setName(user.name || "");
-      setAvatarUrl(user.avatarUrl || "");
     }
   }, [user]);
 
@@ -63,55 +60,7 @@ export default function Profile() {
 
   const handleUpdateProfile = (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfile.mutate({ name, avatarUrl });
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validar tipo de arquivo
-    if (!file.type.startsWith("image/")) {
-      toast.error("Por favor, selecione uma imagem válida.");
-      return;
-    }
-
-    // Validar tamanho (máx 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("A imagem deve ter no máximo 5MB.");
-      return;
-    }
-
-    try {
-      setIsUploading(true);
-      
-      // 1. Obter URL de upload
-      const result = await getUploadUrl.mutateAsync({
-        filename: file.name,
-        contentType: file.type,
-      });
-      const { uploadUrl, publicUrl } = result as any;
-
-      // 2. Upload direto para o S3
-      const uploadResp = await fetch(uploadUrl, {
-        method: "PUT",
-        headers: { "Content-Type": file.type },
-        body: file,
-      });
-
-      if (!uploadResp.ok) throw new Error("Falha no upload");
-
-      // 3. Atualizar estado e banco
-      setAvatarUrl(publicUrl);
-      updateProfile.mutate({ avatarUrl: publicUrl });
-      
-      toast.success("Foto atualizada!");
-    } catch (err) {
-      console.error(err);
-      toast.error("Erro ao fazer upload da foto.");
-    } finally {
-      setIsUploading(false);
-    }
+    updateProfile.mutate({ name });
   };
 
   if (!user) {
@@ -165,34 +114,14 @@ export default function Profile() {
           <div className="lg:col-span-1">
             <Card className="p-8 sticky top-24 bg-card/30 backdrop-blur-sm border-border/50 rounded-[2.5rem] shadow-2xl">
               <div className="flex flex-col items-center text-center">
-                <div className="relative mb-8 group">
-                  <div className="h-32 w-32 rounded-[2.5rem] bg-accent/10 flex items-center justify-center overflow-hidden border-2 border-accent/20 relative">
+                <div className="relative mb-8">
+                  <div className="h-32 w-32 rounded-[2.5rem] bg-accent/10 flex items-center justify-center overflow-hidden border-2 border-accent/20">
                     <img 
-                      src={avatarUrl || "/assets/default-avatar.jpg"} 
+                      src={user.avatarUrl || "/assets/default-avatar.jpg"} 
                       alt={user.name || "Avatar"} 
-                      className={`w-full h-full object-cover transition-opacity ${isUploading ? 'opacity-30' : 'opacity-100'}`} 
+                      className="w-full h-full object-cover" 
                     />
-                    {isUploading && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <Loader2 className="h-8 w-8 text-accent animate-spin" />
-                      </div>
-                    )}
                   </div>
-                  <button 
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading}
-                    className="absolute -bottom-2 -right-2 p-3 bg-accent text-accent-foreground rounded-2xl shadow-xl hover:scale-110 transition-transform active:scale-95 disabled:opacity-50"
-                    title="Trocar Foto"
-                  >
-                    <Camera className="h-5 w-5" />
-                  </button>
-                  <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    onChange={handleFileChange} 
-                    accept="image/*" 
-                    className="hidden" 
-                  />
                 </div>
 
                 <form onSubmit={handleUpdateProfile} className="w-full space-y-6">
@@ -222,6 +151,83 @@ export default function Profile() {
                       <p className="font-bold text-sm truncate">{user.email}</p>
                     </div>
 
+                    {!showPasswordFields ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowPasswordFields(true)}
+                        className="w-full h-12 rounded-xl border-accent/20 text-accent font-bold text-xs uppercase tracking-widest hover:bg-accent/10"
+                      >
+                        <Lock className="h-4 w-4 mr-2" />
+                        Alterar Senha
+                      </Button>
+                    ) : (
+                      <div className="space-y-4 p-4 rounded-2xl bg-accent/5 border border-accent/20 animate-in fade-in slide-in-from-top-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-accent">Nova Senha</span>
+                          <button 
+                            type="button" 
+                            onClick={() => setShowPasswordFields(false)}
+                            className="text-[10px] font-black text-muted-foreground hover:text-foreground"
+                          >
+                            CANCELAR
+                          </button>
+                        </div>
+                        
+                        <div className="space-y-3">
+                          <div className="relative">
+                            <Input
+                              type={showNewPassword ? "text" : "password"}
+                              placeholder="Nova senha (min. 6 caracteres)"
+                              value={newPassword}
+                              onChange={(e) => setNewPassword(e.target.value)}
+                              className="h-10 rounded-lg bg-background/50 border-border/50 text-sm"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowNewPassword(!showNewPassword)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                            >
+                              {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                          </div>
+                          
+                          <Input
+                            type="password"
+                            placeholder="Confirme a nova senha"
+                            value={confirmNewPassword}
+                            onChange={(e) => setConfirmNewPassword(e.target.value)}
+                            className="h-10 rounded-lg bg-background/50 border-border/50 text-sm"
+                          />
+                          
+                          <Button
+                            type="button"
+                            disabled={updateProfile.isPending}
+                            onClick={async () => {
+                              if (newPassword.length < 6) {
+                                toast.error("A senha deve ter pelo menos 6 caracteres.");
+                                return;
+                              }
+                              if (newPassword !== confirmNewPassword) {
+                                toast.error("As senhas não conferem.");
+                                return;
+                              }
+                              updateProfile.mutate({ password: newPassword }, {
+                                onSuccess: () => {
+                                  setShowPasswordFields(false);
+                                  setNewPassword("");
+                                  setConfirmNewPassword("");
+                                  toast.success("Senha atualizada com sucesso!");
+                                }
+                              });
+                            }}
+                            className="w-full h-10 bg-accent text-accent-foreground font-black text-[10px] uppercase tracking-widest rounded-lg"
+                          >
+                            {updateProfile.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "CONFIRMAR NOVA SENHA"}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <Button

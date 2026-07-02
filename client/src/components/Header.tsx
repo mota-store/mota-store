@@ -64,40 +64,37 @@ export function Header() {
             </button>
           )}
 
-          {/* Auth Buttons - Desktop */}
-          <div className="hidden sm:flex items-center gap-2">
+          {/* Auth Buttons - Desktop & Mobile Avatar */}
+          <div className="flex items-center gap-2">
             {isAuthenticated ? (
-              <>
+              <div className="flex items-center gap-4">
                 <div 
-                  className="flex items-center gap-2 px-2 py-1 bg-muted/50 rounded-xl border border-border/50 cursor-pointer hover:bg-muted transition-colors"
+                  className="h-10 w-10 rounded-full overflow-hidden border-2 border-accent/50 cursor-pointer hover:scale-105 transition-transform shadow-lg shadow-accent/20"
                   onClick={() => navigate("/profile")}
                 >
-                  <div className="h-6 w-6 rounded-full overflow-hidden border border-accent/20">
-                    <img 
-                      src={user?.avatarUrl || "/assets/default-avatar.jpg"} 
-                      alt="Avatar" 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <span className="text-sm font-bold pr-1">{user?.name?.split(" ")[0]}</span>
+                  <img 
+                    src={user?.avatarUrl || "/assets/default-avatar.jpg"} 
+                    alt="Avatar" 
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <Button
                   size="sm"
                   variant="ghost"
                   onClick={handleLogout}
-                  className="font-bold text-destructive hover:text-destructive"
+                  className="hidden sm:flex font-black uppercase tracking-widest text-[10px] text-destructive hover:text-destructive hover:bg-destructive/10"
                 >
                   <LogOut className="h-4 w-4 mr-1" />
                   Sair
                 </Button>
-              </>
+              </div>
             ) : (
               <Button
                 size="sm"
-                className="bg-accent hover:bg-accent/90 font-black uppercase tracking-widest px-6"
+                className="bg-accent hover:bg-accent/90 font-black uppercase tracking-widest px-6 rounded-xl"
                 onClick={() => navigate("/login")}
               >
-                Entrar / Cadastro
+                Entrar
               </Button>
             )}
           </div>
@@ -140,54 +137,39 @@ export function Header() {
               <div className="border-t border-border/50 pt-3 space-y-2">
                 {isAuthenticated ? (
                   <>
-                    <div className="px-4 py-2 text-sm font-bold">
-                      Olá, {user?.name?.split(" ")[0]}!
-                    </div>
                     <Button
-                      size="sm"
-                      variant="outline"
+                      size="lg"
+                      variant="ghost"
                       onClick={() => {
                         navigate("/profile");
                         setMobileMenuOpen(false);
                       }}
-                      className="w-full font-bold"
+                      className="w-full font-black uppercase tracking-widest text-sm justify-start"
                     >
-                      Perfil
+                      <User className="h-5 w-5 mr-3 text-accent" />
+                      Meu Perfil
                     </Button>
                     <Button
-                      size="sm"
+                      size="lg"
                       variant="ghost"
                       onClick={handleLogout}
-                      className="w-full font-bold text-destructive"
+                      className="w-full font-black uppercase tracking-widest text-sm justify-start text-destructive"
                     >
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Sair
+                      <LogOut className="h-5 w-5 mr-3" />
+                      Sair da Conta
                     </Button>
                   </>
                 ) : (
-                  <>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        navigate("/login");
-                        setMobileMenuOpen(false);
-                      }}
-                      className="w-full font-bold"
-                    >
-                      Entrar
-                    </Button>
-                    <Button
-                      size="sm"
-                      className="w-full bg-accent hover:bg-accent/90 font-bold"
-                      onClick={() => {
-                        navigate("/login");
-                        setMobileMenuOpen(false);
-                      }}
-                    >
-                      Cadastro
-                    </Button>
-                  </>
+                  <Button
+                    size="lg"
+                    className="w-full bg-accent hover:bg-accent/90 font-black uppercase tracking-widest"
+                    onClick={() => {
+                      navigate("/login");
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    Entrar / Cadastro
+                  </Button>
                 )}
               </div>
             </div>
