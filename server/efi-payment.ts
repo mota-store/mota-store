@@ -68,7 +68,7 @@ class EfiPaymentService {
         const p12Asn1 = forge.asn1.fromDer(p12Buffer.toString("binary"));
         const p12Password = process.env.EFI_P12_PASSWORD || "";
         
-        const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, p12Password);
+        const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, false, p12Password);
         
         // Extrair chave privada
         const keyBags = p12.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag });
@@ -86,7 +86,7 @@ class EfiPaymentService {
         }
         const certPem = forge.pki.certificateToPem(certBag.cert);
 
-        console.log("✅ Certificado .p12 decodificado com sucesso via node-forge");
+        console.log("✅ Certificado .p12 decodificado com sucesso via node-forge (Modo Base64)");
         
         return new https.Agent({
           cert: certPem,
