@@ -58,6 +58,31 @@ export const appRouter = router({
         await updateUser(ctx.user.id, input);
         return { success: true };
       }),
+    getUploadUrl: protectedProcedure
+      .input(z.object({ filename: z.string(), contentType: z.string() }))
+      .mutation(async ({ input }) => {
+        const { ENV } = await import("./_core/env");
+        const forgeUrl = ENV.forgeApiUrl?.replace(/\/+$/, "");
+        const forgeKey = ENV.forgeApiKey;
+        
+        if (!forgeUrl || !forgeKey) {
+          throw new Error("Storage service not configured");
+        }
+
+        const key = `avatars/${Date.now()}_${input.filename}`;
+        const presignUrl = new URL("v1/storage/presign/put", forgeUrl + "/");
+        presignUrl.searchParams.set("path", key);
+
+        const presignResp = await fetch(presignUrl, {
+          headers: { Authorization: `Bearer ${forgeKey}` },
+        });
+
+        const { url: s3Url } = (await presignResp.json()) as { url: string };
+        return { 
+          uploadUrl: s3Url, 
+          publicUrl: `/manus-storage/${key}` 
+        };
+      }),
   }),
 
   products: router({

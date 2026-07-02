@@ -4,34 +4,37 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
-import { ArrowLeft, LogOut, ShoppingBag, Moon, Sun, User as UserIcon, Camera, Check, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowLeft, LogOut, ShoppingBag, Moon, Sun, Camera, Check, Loader2, Upload } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 
 export default function Profile() {
   const { user, logout } = useAuth();
-  const [location, navigate] = useLocation();
+  const [, navigate] = useLocation();
   const utils = trpc.useUtils();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const searchParams = new URLSearchParams(window.location.search);
   const isOnboarding = searchParams.get("onboarding") === "true";
-  
+
   const { data: orders } = trpc.orders.list.useQuery();
+  
   const updateProfile = trpc.auth.updateProfile.useMutation({
     onSuccess: () => {
       toast.success("Perfil atualizado com sucesso!");
       utils.auth.me.invalidate();
-      setIsEditing(false);
     },
     onError: () => {
       toast.error("Erro ao atualizar perfil.");
     }
   });
 
+  const getUploadUrl = trpc.auth.getUploadUrl.useMutation();
+
   const [isDark, setIsDark] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(user?.name || "");
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || "");
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     const isDarkMode = document.documentElement.classList.contains("dark");
@@ -63,6 +66,53 @@ export default function Profile() {
     updateProfile.mutate({ name, avatarUrl });
   };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validar tipo de arquivo
+    if (!file.type.startsWith("image/")) {
+      toast.error("Por favor, selecione uma imagem válida.");
+      return;
+    }
+
+    // Validar tamanho (máx 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 5MB.");
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      
+      // 1. Obter URL de upload
+      const { uploadUrl, publicUrl } = await getUploadUrl.mutateAsync({
+        filename: file.name,
+        contentType: file.type,
+      });
+
+      // 2. Upload direto para o S3
+      const uploadResp = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+
+      if (!uploadResp.ok) throw new Error("Falha no upload");
+
+      // 3. Atualizar estado e banco
+      setAvatarUrl(publicUrl);
+      updateProfile.mutate({ avatarUrl: publicUrl });
+      
+      toast.success("Foto atualizada!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao fazer upload da foto.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -81,6 +131,7 @@ export default function Profile() {
           Bem-vindo! Por favor, confirme seu nome e foto de perfil abaixo.
         </div>
       )}
+      
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border/50 bg-background/95 backdrop-blur-xl">
         <div className="container flex h-16 items-center justify-between px-4">
@@ -113,91 +164,75 @@ export default function Profile() {
           <div className="lg:col-span-1">
             <Card className="p-8 sticky top-24 bg-card/30 backdrop-blur-sm border-border/50 rounded-[2.5rem] shadow-2xl">
               <div className="flex flex-col items-center text-center">
-                <div className="relative mb-6">
-                    <div className="h-24 w-24 rounded-[2rem] bg-accent/10 flex items-center justify-center overflow-hidden border-2 border-accent/20">
+                <div className="relative mb-8 group">
+                  <div className="h-32 w-32 rounded-[2.5rem] bg-accent/10 flex items-center justify-center overflow-hidden border-2 border-accent/20 relative">
                     <img 
-                      src={user.avatarUrl || "/assets/default-avatar.jpg"} 
+                      src={avatarUrl || "/assets/default-avatar.jpg"} 
                       alt={user.name || "Avatar"} 
-                      className="w-full h-full object-cover" 
+                      className={`w-full h-full object-cover transition-opacity ${isUploading ? 'opacity-30' : 'opacity-100'}`} 
                     />
+                    {isUploading && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Loader2 className="h-8 w-8 text-accent animate-spin" />
+                      </div>
+                    )}
                   </div>
                   <button 
-                    onClick={() => setIsEditing(!isEditing)}
-                    className="absolute -bottom-2 -right-2 p-2 bg-accent text-accent-foreground rounded-xl shadow-lg hover:scale-110 transition-transform"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                    className="absolute -bottom-2 -right-2 p-3 bg-accent text-accent-foreground rounded-2xl shadow-xl hover:scale-110 transition-transform active:scale-95 disabled:opacity-50"
+                    title="Trocar Foto"
                   >
-                    <Camera className="h-4 w-4" />
+                    <Camera className="h-5 w-5" />
                   </button>
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    onChange={handleFileChange} 
+                    accept="image/*" 
+                    className="hidden" 
+                  />
                 </div>
 
-                {isEditing ? (
-                  <form onSubmit={handleUpdateProfile} className="w-full space-y-4">
-                    <div className="space-y-2 text-left">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Seu Nome</label>
+                <form onSubmit={handleUpdateProfile} className="w-full space-y-6">
+                  <div className="space-y-2 text-left">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Seu Nome de Exibição</label>
+                    <div className="relative">
                       <Input 
                         value={name} 
                         onChange={(e) => setName(e.target.value)} 
-                        className="h-12 rounded-xl bg-background/50 border-border/50"
+                        className="h-14 rounded-2xl bg-background/50 border-border/50 pl-4 pr-12 font-bold text-lg focus:ring-accent"
                         placeholder="Como quer ser chamado?"
                       />
-                    </div>
-                    <div className="space-y-2 text-left">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">URL da Foto</label>
-                      <Input 
-                        value={avatarUrl} 
-                        onChange={(e) => setAvatarUrl(e.target.value)} 
-                        className="h-12 rounded-xl bg-background/50 border-border/50"
-                        placeholder="https://link-da-sua-foto.jpg"
-                      />
-                    </div>
-                    <div className="flex gap-2 pt-2">
-                      <Button 
-                        type="button" 
-                        variant="ghost" 
-                        className="flex-1 rounded-xl font-bold"
-                        onClick={() => setIsEditing(false)}
+                      <button 
+                        type="submit"
+                        disabled={updateProfile.isPending || name === user.name}
+                        className="absolute right-2 top-2 h-10 w-10 flex items-center justify-center bg-accent/10 text-accent rounded-xl hover:bg-accent hover:text-accent-foreground transition-all disabled:opacity-0"
                       >
-                        Cancelar
-                      </Button>
-                      <Button 
-                        type="submit" 
-                        className="flex-1 bg-accent hover:bg-accent/90 rounded-xl font-black"
-                        disabled={updateProfile.isPending}
-                      >
-                        {updateProfile.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}
-                        SALVAR
-                      </Button>
+                        {updateProfile.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-5 w-5" />}
+                      </button>
                     </div>
-                  </form>
-                ) : (
-                  <>
-                    <h2 className="text-2xl font-black tracking-tight mb-1">{user.name}</h2>
-                    <p className="text-sm text-muted-foreground mb-8 font-medium">{user.email}</p>
+                    <p className="text-[10px] text-muted-foreground ml-1 font-medium">O nome será atualizado automaticamente ao clicar no check.</p>
+                  </div>
 
-                    <div className="w-full space-y-4 mb-8 text-left">
-                      <div className="p-4 rounded-2xl bg-muted/30 border border-border/50">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Membro desde</span>
-                        <p className="font-bold text-sm">
-                          {new Date(user.createdAt).toLocaleDateString("pt-BR", { day: 'numeric', month: 'long', year: 'numeric' })}
-                        </p>
-                      </div>
-                      <div className="p-4 rounded-2xl bg-muted/30 border border-border/50">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Método de Login</span>
-                        <p className="font-bold text-sm uppercase tracking-tighter">
-                          {user.loginMethod === "google" ? "Google Account" : "E-mail & Senha"}
-                        </p>
-                      </div>
+                  <div className="w-full space-y-4 pt-4 text-left">
+                    <div className="p-4 rounded-2xl bg-muted/30 border border-border/50">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">E-mail da Conta</span>
+                      <p className="font-bold text-sm truncate">{user.email}</p>
                     </div>
 
-                    <Button
-                      variant="outline"
-                      className="w-full h-12 rounded-xl border-destructive/20 text-destructive hover:bg-destructive/10 hover:text-destructive font-black transition-all"
-                      onClick={logout}
-                    >
-                      <LogOut className="h-4 w-4 mr-2" />
-                      SAIR DA CONTA
-                    </Button>
-                  </>
-                )}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    type="button"
+                    className="w-full h-14 rounded-2xl border-destructive/20 text-destructive hover:bg-destructive/10 hover:text-destructive font-black transition-all mt-4"
+                    onClick={logout}
+                  >
+                    <LogOut className="h-5 w-5 mr-2" />
+                    ENCERRAR SESSÃO
+                  </Button>
+                </form>
               </div>
             </Card>
           </div>
