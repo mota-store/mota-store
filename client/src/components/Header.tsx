@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Menu, X, User, LogOut, Zap } from "lucide-react";
+import { useCart } from "@/contexts/CartContext";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { getLoginUrl } from "@/const";
@@ -10,7 +11,18 @@ export function Header() {
   const { isAuthenticated, user } = useAuth();
   const [, navigate] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [cartCount, setCartCount] = useState(0);
+  const { cartCount } = useCart();
+  const [isPulsing, setIsPulsing] = useState(false);
+  const [prevCount, setPrevCount] = useState(cartCount);
+
+  React.useEffect(() => {
+    if (cartCount > prevCount) {
+      setIsPulsing(true);
+      const timer = setTimeout(() => setIsPulsing(false), 600);
+      return () => clearTimeout(timer);
+    }
+    setPrevCount(cartCount);
+  }, [cartCount, prevCount]);
 
   const handleLogout = async () => {
     await fetch("/api/logout", { method: "POST" });
@@ -51,17 +63,30 @@ export function Header() {
         <div className="flex items-center gap-4">
           {/* Cart - Only visible when authenticated */}
           {isAuthenticated && (
-            <button
+            <motion.button
+              id="cart-icon"
               onClick={() => navigate("/cart")}
               className="relative p-2 hover:bg-muted rounded-lg transition-colors"
+              animate={isPulsing ? { scale: [1, 1.3, 1] } : {}}
+              transition={{ duration: 0.6 }}
             >
               <ShoppingCart className="h-5 w-5" />
-              {cartCount > 0 && (
-                <span className="absolute top-1 right-1 h-5 w-5 rounded-full bg-accent text-accent-foreground text-xs flex items-center justify-center font-bold">
-                  {cartCount}
-                </span>
+              <AnimatePresence>
+                {cartCount > 0 && (
+                  <motion.span
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0 }}
+                    className="absolute top-1 right-1 h-5 w-5 rounded-full bg-accent text-accent-foreground text-[10px] flex items-center justify-center font-black"
+                  >
+                    {cartCount > 99 ? "99+" : cartCount}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+              {isPulsing && (
+                <span className="absolute inset-0 rounded-lg bg-accent/20 animate-ping pointer-events-none" />
               )}
-            </button>
+            </motion.button>
           )}
 
           {/* Auth Buttons - Desktop & Mobile Avatar */}

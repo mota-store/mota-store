@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Header } from "@/components/Header";
 import { ShoppingCart, Zap, Music, Play, CheckCircle2, Star, ShieldCheck, Headphones, ArrowRight, Sparkles } from "lucide-react";
+import { useCart } from "@/contexts/CartContext";
+import { FlyAnimationsContainer } from "@/components/FlyToCart";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -15,11 +17,29 @@ export default function Home() {
   const [, navigate] = useLocation();
 
   const { data: products, isLoading } = trpc.products.list.useQuery();
+  const { triggerFlyAnimation, invalidateCart, flyAnimations, removeFlyAnimation } = useCart();
   const addItem = trpc.cart.addItem.useMutation({
     onSuccess: () => {
+      invalidateCart();
       toast.success("Produto adicionado ao carrinho!");
     }
   });
+
+  const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>, productId: number) => {
+    if (!isAuthenticated) {
+      window.location.href = getLoginUrl();
+      return;
+    }
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const startPos = {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
+    };
+
+    triggerFlyAnimation(startPos);
+    addItem.mutate({ productId });
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-accent selection:text-accent-foreground overflow-x-hidden pt-16">
@@ -158,20 +178,14 @@ export default function Home() {
                         </div>
                       </div>
 
-                      {/* Add to Cart Button */}
-                      <Button
-                        className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-black py-7 rounded-2xl shadow-xl shadow-accent/20 transition-all text-base active:scale-95"
-                        onClick={() => {
-                          if (isAuthenticated) {
-                            addItem.mutate({ productId: product.id });
-                          } else {
-                            window.location.href = getLoginUrl();
-                          }
-                        }}
-                      >
-                        <ShoppingCart className="h-5 w-5 mr-2" />
-                        ADICIONAR AO CARRINHO
-                      </Button>
+	                      {/* Add to Cart Button */}
+	                      <Button
+	                        className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-black py-7 rounded-2xl shadow-xl shadow-accent/20 transition-all text-base active:scale-95"
+	                        onClick={(e) => handleAddToCart(e, product.id)}
+	                      >
+	                        <ShoppingCart className="h-5 w-5 mr-2" />
+	                        ADICIONAR AO CARRINHO
+	                      </Button>
                     </div>
                   </Card>
                 </motion.div>
@@ -273,6 +287,10 @@ export default function Home() {
           </div>
         </div>
       </footer>
+      <FlyAnimationsContainer 
+        animations={flyAnimations} 
+        onRemove={removeFlyAnimation} 
+      />
     </div>
   );
 }
