@@ -80,14 +80,14 @@ export const appRouter = router({
     createPix: protectedProcedure
       .input(z.object({ orderId: z.number(), amount: z.number() }))
       .mutation(async ({ input }) => {
-        const { createInterPix } = await import("./inter-payment");
-        return createInterPix(input.amount, input.orderId);
+        const { createPixPayment } = await import("./efi-payment");
+        return createPixPayment(input.amount, input.orderId);
       }),
     checkStatus: protectedProcedure
       .input(z.object({ txid: z.string() }))
       .query(async ({ input }) => {
-        const { checkInterPixStatus } = await import("./inter-payment");
-        return checkInterPixStatus(input.txid);
+        const { checkPixPaymentStatus } = await import("./efi-payment");
+        return checkPixPaymentStatus(input.txid);
       }),
   }),
 });
