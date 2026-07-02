@@ -3,8 +3,6 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { ShoppingBag, ArrowLeft, Loader2, CheckCircle2, Zap } from "lucide-react";
 import { useLocation } from "wouter";
 import { PixPayment } from "@/components/PixPayment";
@@ -13,16 +11,10 @@ import { toast } from "sonner";
 export default function Checkout() {
   const { user, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
-  const [step, setStep] = useState<"shipping" | "payment" | "pix">("shipping");
+  const [step, setStep] = useState<"payment" | "pix">("payment");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pixData, setPixData] = useState<{ pixCode: string; qrCodeBase64: string; txid: string; expiresIn: number } | null>(null);
   const [orderId, setOrderId] = useState<number | null>(null);
-
-  const [formData, setFormData] = useState({
-    fullName: user?.name || "",
-    email: user?.email || "",
-    phone: "",
-  });
 
   const { data: cartItems, isLoading: cartLoading } = trpc.cart.getItems.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -51,11 +43,6 @@ export default function Checkout() {
   const originalTotal = subtotal * 1.5;
   const savings = originalTotal - subtotal;
   const total = subtotal;
-
-  const handleShippingSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setStep("payment");
-  };
 
   const handleConfirmOrder = async () => {
     setIsSubmitting(true);
@@ -96,7 +83,7 @@ export default function Checkout() {
     <div className="min-h-screen bg-background py-12 px-4">
       <div className="container max-w-6xl mx-auto">
         <div className="flex items-center gap-4 mb-12">
-          <Button variant="ghost" onClick={() => step === "shipping" ? navigate("/cart") : setStep("shipping")} disabled={step === "pix"}>
+          <Button variant="ghost" onClick={() => step === "payment" ? navigate("/cart") : setStep("payment")} disabled={step === "pix"}>
             <ArrowLeft className="h-5 w-5 mr-2" />
             Voltar
           </Button>
@@ -105,68 +92,20 @@ export default function Checkout() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
           <div className="lg:col-span-2">
-            {step === "shipping" && (
-              <Card className="p-8 bg-card/50 backdrop-blur-sm border-border/50 rounded-3xl">
-                <h2 className="text-2xl font-bold mb-8 flex items-center gap-2">
-                  <Zap className="h-6 w-6 text-accent" />
-                  Dados de Entrega
-                </h2>
-                <form onSubmit={handleShippingSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="fullName" className="font-bold uppercase text-xs tracking-widest text-muted-foreground">Nome Completo</Label>
-                      <Input
-                        id="fullName"
-                        value={formData.fullName}
-                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                        placeholder="Nome Sobrenome"
-                        className="h-12 rounded-xl bg-background/50"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email" className="font-bold uppercase text-xs tracking-widest text-muted-foreground">E-mail</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        placeholder="seu@email.com"
-                        className="h-12 rounded-xl bg-background/50"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone" className="font-bold uppercase text-xs tracking-widest text-muted-foreground">WhatsApp (para receber o acesso)</Label>
-                    <Input
-                      id="phone"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="(91) 98488-6473"
-                      className="h-12 rounded-xl bg-background/50"
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full bg-accent hover:bg-accent/90 py-7 text-lg font-black rounded-2xl shadow-lg shadow-accent/20 transition-all">
-                    CONTINUAR PARA PAGAMENTO
-                  </Button>
-                </form>
-              </Card>
-            )}
-
             {step === "payment" && (
               <Card className="p-8 bg-card/50 backdrop-blur-sm border-border/50 rounded-3xl">
-                <h2 className="text-2xl font-bold mb-6">Confirmar Pedido</h2>
+                <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                  <CheckCircle2 className="h-6 w-6 text-accent" />
+                  Confirmar Pedido
+                </h2>
                 <p className="text-muted-foreground mb-8">
-                  Seu acesso será enviado para o WhatsApp informado após a confirmação do pagamento via PIX.
+                  Seu acesso será enviado para o WhatsApp após a confirmação do pagamento via PIX.
                 </p>
                 <div className="bg-muted/30 p-6 rounded-2xl mb-8 border border-border/50">
                   <h3 className="font-bold mb-4 uppercase text-xs tracking-widest text-muted-foreground">Resumo do Cliente</h3>
                   <div className="space-y-2">
-                    <p className="text-sm"><strong>NOME:</strong> {formData.fullName}</p>
-                    <p className="text-sm"><strong>EMAIL:</strong> {formData.email}</p>
-                    <p className="text-sm"><strong>WHATSAPP:</strong> {formData.phone}</p>
+                    <p className="text-sm"><strong>NOME:</strong> {user?.name || "Não informado"}</p>
+                    <p className="text-sm"><strong>EMAIL:</strong> {user?.email || "Não informado"}</p>
                   </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-4">
@@ -174,10 +113,10 @@ export default function Checkout() {
                     type="button"
                     variant="outline"
                     className="flex-1 py-7 rounded-2xl font-bold"
-                    onClick={() => setStep("shipping")}
+                    onClick={() => navigate("/cart")}
                     disabled={isSubmitting}
                   >
-                    Corrigir Dados
+                    Voltar ao Carrinho
                   </Button>
                   <Button 
                     onClick={handleConfirmOrder} 
@@ -191,7 +130,7 @@ export default function Checkout() {
               </Card>
             )}
 
-            {step === "pix" && pixData && (
+            {step === "pix" && pixData && orderId && (
               <div className="space-y-8">
                 <PixPayment 
                   pixCode={pixData.pixCode}
@@ -206,7 +145,11 @@ export default function Checkout() {
                     variant="link" 
                     className="text-muted-foreground hover:text-accent"
                     onClick={() => {
-                      const message = `Olá! Acabei de fazer o pedido #${orderId} na Mota Store e gostaria de agilizar a ativação.`;
+                      const productNames = enrichedItems
+                        .map(item => item.product?.name)
+                        .filter(Boolean)
+                        .join(", ");
+                      const message = `Olá! Acabei de pagar o pedido #${orderId} na Mota Store. Comprei: ${productNames}. Total: R$ ${(total / 100).toFixed(2)}. Aguardo a ativação!`;
                       window.location.href = `https://wa.me/5591984886473?text=${encodeURIComponent(message)}`;
                     }}
                   >

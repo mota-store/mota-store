@@ -115,13 +115,13 @@ export default function Home() {
                   className="group"
                 >
                   <Card className="h-full flex flex-col overflow-hidden bg-card/30 border-border/50 backdrop-blur-sm rounded-2xl transition-all group-hover:border-accent/50 group-hover:shadow-xl group-hover:shadow-accent/10">
-                    {/* Product Image - Smaller */}
-                    <div className="relative h-40 overflow-hidden bg-gradient-to-br from-accent/10 to-accent/5 flex items-center justify-center">
+                    {/* Product Image */}
+                    <div className="relative h-48 overflow-hidden bg-gradient-to-br from-accent/10 to-accent/5 flex items-center justify-center">
                       {product.imageUrl ? (
                         <img
                           src={product.imageUrl}
                           alt={product.name}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105"
                         />
                       ) : (
                         <div className="p-8 text-accent/20">
@@ -141,8 +141,8 @@ export default function Home() {
                       {/* Price */}
                       <div className="mb-4 mt-auto">
                         <div className="flex items-baseline gap-2 mb-1">
-                          <span className="text-2xl font-black text-accent">R$ {(product.price / 100).toFixed(2)}</span>
-                          <span className="text-muted-foreground text-xs line-through opacity-50">R$ {((product.price * 1.5) / 100).toFixed(2)}</span>
+                          <span className="text-2xl font-black text-accent">R$ 5,00</span>
+                          <span className="text-muted-foreground text-xs line-through opacity-50">R$ 10,00</span>
                         </div>
                         <span className="text-green-500 text-xs font-bold">50% OFF</span>
                       </div>

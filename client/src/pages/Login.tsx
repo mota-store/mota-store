@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
-import { Mail, Lock, User, ArrowLeft, Zap } from "lucide-react";
+import { Mail, Lock, User, ArrowLeft, Zap, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Login() {
@@ -17,6 +17,8 @@ export default function Login() {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const loginMutation = trpc.auth.login.useMutation();
   const registerMutation = trpc.auth.register.useMutation();
@@ -141,14 +143,21 @@ export default function Login() {
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  type="password"
-                  className="pl-12 bg-background/50 border-border/50 h-12 rounded-xl focus:ring-accent"
+                  type={showPassword ? "text" : "password"}
+                  className="pl-12 pr-12 bg-background/50 border-border/50 h-12 rounded-xl focus:ring-accent"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={6}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
             </div>
 
@@ -158,13 +167,20 @@ export default function Login() {
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    type="password"
-                    className="pl-12 bg-background/50 border-border/50 h-12 rounded-xl focus:ring-accent"
+                    type={showConfirmPassword ? "text" : "password"}
+                    className="pl-12 pr-12 bg-background/50 border-border/50 h-12 rounded-xl focus:ring-accent"
                     placeholder="••••••••"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required={isRegister}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
               </div>
             )}
