@@ -21,8 +21,36 @@ export const appRouter = router({
     }),
     register: publicProcedure
       .input(z.object({ email: z.string().email(), password: z.string().min(6), name: z.string() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         const result = await registerUser(input.email, input.password, input.name);
+        
+        if (result.success && result.userId) {
+          // Login automático após o registro
+          const { getUserByOpenId } = await import("./db");
+          const user = await getUserByOpenId(`email_${input.email}`);
+          
+          if (user) {
+            const secret = new TextEncoder().encode(process.env.JWT_SECRET || "secret");
+            const issuedAt = Date.now();
+            const expirationSeconds = Math.floor((issuedAt + ONE_YEAR_MS) / 1000);
+            const token = await new SignJWT({
+              openId: user.openId,
+              appId: process.env.VITE_APP_ID || "mota-store",
+              name: user.name || input.name,
+            })
+              .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+              .setExpirationTime(expirationSeconds)
+              .sign(secret);
+            
+            const cookieOptions = getSessionCookieOptions(ctx.req);
+            ctx.res.cookie(COOKIE_NAME, token, {
+              ...cookieOptions,
+              maxAge: ONE_YEAR_MS,
+            });
+            
+            return { success: true, user };
+          }
+        }
         return result;
       }),
     login: publicProcedure

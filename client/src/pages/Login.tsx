@@ -43,10 +43,10 @@ export default function Login() {
         });
 
         if (result.success) {
-          setIsRegister(false);
-          setError("Conta criada com sucesso! Faça login.");
+          // Login automático após o registro
+          window.location.href = "/profile?onboarding=true";
         } else {
-          setError(result.error || "Erro ao registrar");
+          setError((result as any).error || "Erro ao registrar");
         }
       } else {
         const result = await loginMutation.mutateAsync({
