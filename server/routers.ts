@@ -107,6 +107,7 @@ export const appRouter = router({
 
         const { url: s3Url } = (await presignResp.json()) as { url: string };
         return { 
+          uploadUrl: s3Url,
           publicUrl: `/manus-storage/${key}` 
         };
       }),
@@ -132,8 +133,7 @@ export const appRouter = router({
       .input(z.object({ token: z.string(), password: z.string().min(6) }))
       .mutation(async ({ input }) => {
         const { getUserByResetToken, updatePassword } = await import("./db");
-        // @ts-ignore
-        const bcrypt = await import("bcryptjs");
+        const bcrypt = await import("bcrypt");
         
         const user = await getUserByResetToken(input.token);
         if (!user || !user.resetTokenExpires || user.resetTokenExpires < new Date()) {
