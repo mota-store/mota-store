@@ -147,7 +147,7 @@ export async function addToCart(userId: number, productId: number, quantity: num
 export async function removeFromCart(cartItemId: number) {
   const db = await getDb();
   if (!db) return;
-  // Note: deleteFrom is available in drizzle-orm
+  await db.delete(cartItems).where(eq(cartItems.id, cartItemId));
 }
 
 export async function getUserOrders(userId: number) {

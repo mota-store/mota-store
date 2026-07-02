@@ -13,7 +13,12 @@ export default function Cart() {
     enabled: isAuthenticated,
   });
   const { data: products } = trpc.products.list.useQuery();
-  const [removedItems, setRemovedItems] = useState<number[]>([]);
+  const utils = trpc.useUtils();
+  const removeItem = trpc.cart.removeItem.useMutation({
+    onSuccess: () => {
+      utils.cart.getItems.invalidate();
+    }
+  });
 
   if (!isAuthenticated) {
     navigate("/");
@@ -23,7 +28,7 @@ export default function Cart() {
   const enrichedItems = cartItems?.map(item => {
     const product = products?.find(p => p.id === item.productId);
     return { ...item, product };
-  }).filter(item => !removedItems.includes(item.id)) || [];
+  }) || [];
 
   const subtotal = enrichedItems.reduce((sum, item) => sum + (item.product?.price || 0) * (item.quantity || 1), 0);
   const originalTotal = subtotal * 2; // Preço original (sem desconto)
@@ -96,8 +101,9 @@ export default function Cart() {
                     <p className="font-bold text-accent">R$ {(((item.product?.price || 0) * (item.quantity || 1)) / 100).toFixed(2)}</p>
                   </div>
                   <button
-                    onClick={() => setRemovedItems([...removedItems, item.id])}
-                    className="p-2 hover:bg-destructive/10 rounded-lg transition-colors text-destructive"
+                    onClick={() => removeItem.mutate(item.id)}
+                    disabled={removeItem.isPending}
+                    className="p-2 hover:bg-destructive/10 rounded-lg transition-colors text-destructive disabled:opacity-50"
                   >
                     <Trash2 className="h-5 w-5" />
                   </button>

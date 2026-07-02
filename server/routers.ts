@@ -168,6 +168,13 @@ export const appRouter = router({
     addItem: protectedProcedure
       .input(z.object({ productId: z.number(), quantity: z.number().optional() }))
       .mutation(({ ctx, input }) => addToCart(ctx.user.id, input.productId, input.quantity || 1)),
+    removeItem: protectedProcedure
+      .input(z.number())
+      .mutation(async ({ ctx, input }) => {
+        const { removeFromCart } = await import("./db");
+        await removeFromCart(input);
+        return { success: true };
+      }),
   }),
 
   orders: router({

@@ -79,6 +79,7 @@ export default function Login() {
           alt="Login Background" 
           className="w-full h-full object-cover opacity-100"
         />
+        <div className="absolute inset-0 bg-background/60 backdrop-blur-xl z-10" />
       </div>
 
       <motion.div

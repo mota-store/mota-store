@@ -136,7 +136,7 @@ class EfiPaymentService {
           nome: "Cliente Mota Store",
         },
         valor: {
-          original: amount.toFixed(2),
+          original: (amount / 100).toFixed(2),
         },
         chave: this.pixKey,
         solicitacaoPagador: description || `MOTA STORE - Pedido #${orderId}`,
