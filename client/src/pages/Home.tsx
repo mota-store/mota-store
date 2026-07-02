@@ -22,7 +22,7 @@ export default function Home() {
   });
 
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-accent selection:text-accent-foreground overflow-x-hidden">
+    <div className="min-h-screen bg-background text-foreground selection:bg-accent selection:text-accent-foreground overflow-x-hidden pt-16">
       <Header />
 
       {/* Hero Section - Professional Store Look */}

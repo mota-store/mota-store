@@ -36,9 +36,9 @@ export default function Cart() {
   const total = subtotal;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground pt-16">
       {/* Header */}
-      <header className="border-b border-border bg-background/95 backdrop-blur">
+      <header className="fixed top-0 left-0 right-0 z-[100] border-b border-border bg-background/95 backdrop-blur">
         <div className="container flex h-16 items-center justify-between">
           <button
             onClick={() => navigate("/")}

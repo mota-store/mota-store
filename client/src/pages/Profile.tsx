@@ -72,7 +72,7 @@ export default function Profile() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground pt-16">
       {isOnboarding && (
         <div className="bg-accent text-accent-foreground py-3 px-4 text-center font-black uppercase tracking-widest text-xs animate-pulse">
           Bem-vindo! Por favor, confirme seu nome e foto de perfil abaixo.
@@ -80,7 +80,7 @@ export default function Profile() {
       )}
       
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/50 bg-background/95 backdrop-blur-xl">
+      <header className="fixed top-0 left-0 right-0 z-[100] border-b border-border/50 bg-background/95 backdrop-blur-xl">
         <div className="container flex h-16 items-center justify-between px-4">
           <button
             onClick={() => navigate("/")}

@@ -82,7 +82,7 @@ export default function Checkout() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4">
+    <div className="min-h-screen bg-background py-12 px-4 pt-28">
       <div className="container max-w-6xl mx-auto">
         <div className="flex items-center gap-4 mb-12">
           <Button variant="ghost" onClick={() => step === "payment" ? navigate("/cart") : setStep("payment")} disabled={step === "pix"}>
