@@ -73,11 +73,11 @@ export default function Login() {
       {/* Background Image with Pixel Art */}
       <div className="absolute inset-0 z-0">
         <img 
-          src="/assets/login-bg.jpg" 
+          src="/assets/login-bg.gif" 
           alt="Login Background" 
-          className="w-full h-full object-cover opacity-60 grayscale-[0.2]"
+          className="w-full h-full object-cover opacity-50"
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-background/90 via-background/40 to-background/90 z-10" />
+        <div className="absolute inset-0 bg-gradient-to-br from-background/80 via-background/20 to-background/80 z-10" />
       </div>
 
       <motion.div

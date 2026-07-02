@@ -28,11 +28,11 @@ export default function Home() {
       {/* Hero Section - Professional Store Look */}
       <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-gradient-to-b from-background/0 via-background/40 to-background z-10" />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/0 via-background/60 to-background z-10" />
           <img 
-            src="/assets/hero-banner.jpg" 
+            src="/assets/home-bg.gif" 
             alt="Mota Store Banner" 
-            className="w-full h-full object-cover opacity-60"
+            className="w-full h-full object-cover opacity-50"
           />
         </div>
 

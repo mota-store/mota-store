@@ -49,24 +49,29 @@ export function Header() {
 
         {/* Right Side - Auth & Cart */}
         <div className="flex items-center gap-4">
-          {/* Cart */}
-          <button
-            onClick={() => navigate("/cart")}
-            className="relative p-2 hover:bg-muted rounded-lg transition-colors"
-          >
-            <ShoppingCart className="h-5 w-5" />
-            {cartCount > 0 && (
-              <span className="absolute top-1 right-1 h-5 w-5 rounded-full bg-accent text-accent-foreground text-xs flex items-center justify-center font-bold">
-                {cartCount}
-              </span>
-            )}
-          </button>
+          {/* Cart - Only visible when authenticated */}
+          {isAuthenticated && (
+            <button
+              onClick={() => navigate("/cart")}
+              className="relative p-2 hover:bg-muted rounded-lg transition-colors"
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {cartCount > 0 && (
+                <span className="absolute top-1 right-1 h-5 w-5 rounded-full bg-accent text-accent-foreground text-xs flex items-center justify-center font-bold">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+          )}
 
           {/* Auth Buttons - Desktop */}
           <div className="hidden sm:flex items-center gap-2">
             {isAuthenticated ? (
               <>
-                <div className="flex items-center gap-2 px-2 py-1 bg-muted/50 rounded-xl border border-border/50">
+                <div 
+                  className="flex items-center gap-2 px-2 py-1 bg-muted/50 rounded-xl border border-border/50 cursor-pointer hover:bg-muted transition-colors"
+                  onClick={() => navigate("/profile")}
+                >
                   <div className="h-6 w-6 rounded-full overflow-hidden border border-accent/20">
                     <img 
                       src={user?.avatarUrl || "/assets/default-avatar.jpg"} 
@@ -78,14 +83,6 @@ export function Header() {
                 </div>
                 <Button
                   size="sm"
-                  variant="outline"
-                  onClick={() => navigate("/profile")}
-                  className="font-bold"
-                >
-                  Perfil
-                </Button>
-                <Button
-                  size="sm"
                   variant="ghost"
                   onClick={handleLogout}
                   className="font-bold text-destructive hover:text-destructive"
@@ -95,23 +92,13 @@ export function Header() {
                 </Button>
               </>
             ) : (
-              <>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => navigate("/login")}
-                  className="font-bold"
-                >
-                  Entrar
-                </Button>
-                <Button
-                  size="sm"
-                  className="bg-accent hover:bg-accent/90 font-bold"
-                  onClick={() => navigate("/login")}
-                >
-                  Cadastro
-                </Button>
-              </>
+              <Button
+                size="sm"
+                className="bg-accent hover:bg-accent/90 font-black uppercase tracking-widest px-6"
+                onClick={() => navigate("/login")}
+              >
+                Entrar / Cadastro
+              </Button>
             )}
           </div>
 
