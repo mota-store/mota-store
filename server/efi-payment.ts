@@ -5,6 +5,10 @@ import * as path from "path";
 /**
  * Integração com API de PIX da Efí (Gerencianet)
  * Documentação: https://dev.efipay.com.br/docs/api-pix
+ * 
+ * Suporta dois modos:
+ * 1. Arquivo: EFI_CERT_PATH e EFI_KEY_PATH (desenvolvimento local)
+ * 2. Base64: EFI_CERT_BASE64 e EFI_KEY_BASE64 (Render/produção)
  */
 
 interface PixResponse {
@@ -26,8 +30,6 @@ class EfiPaymentService {
   private clientSecret: string;
   private account: string;
   private pixKey: string;
-  private certificatePath: string;
-  private keyPath: string;
   private accessToken: string | null = null;
   private tokenExpiry: number = 0;
 
@@ -36,8 +38,6 @@ class EfiPaymentService {
     this.clientSecret = process.env.EFI_CLIENT_SECRET || "";
     this.account = process.env.EFI_ACCOUNT || "";
     this.pixKey = process.env.EFI_PIX_KEY || "";
-    this.certificatePath = process.env.EFI_CERT_PATH || "";
-    this.keyPath = process.env.EFI_KEY_PATH || "";
 
     // Validar credenciais
     if (!this.clientId || !this.clientSecret || !this.pixKey) {
@@ -45,17 +45,42 @@ class EfiPaymentService {
     }
 
     // Configurar axios com certificado
-    const httpsAgent = this.certificatePath && this.keyPath && fs.existsSync(this.certificatePath)
-      ? {
-          cert: fs.readFileSync(this.certificatePath),
-          key: fs.readFileSync(this.keyPath),
+    let httpsAgent: any = undefined;
+    
+    // Tentar carregar certificado de Base64 (Render/produção)
+    if (process.env.EFI_CERT_BASE64 && process.env.EFI_KEY_BASE64) {
+      try {
+        const certBuffer = Buffer.from(process.env.EFI_CERT_BASE64, "base64");
+        const keyBuffer = Buffer.from(process.env.EFI_KEY_BASE64, "base64");
+        httpsAgent = {
+          cert: certBuffer,
+          key: keyBuffer,
           rejectUnauthorized: false,
+        };
+        console.log("✅ Certificado carregado de Base64");
+      } catch (error) {
+        console.warn("⚠️ Erro ao decodificar certificado Base64:", error);
+      }
+    }
+    // Tentar carregar certificado de arquivo (desenvolvimento local)
+    else if (process.env.EFI_CERT_PATH && process.env.EFI_KEY_PATH) {
+      try {
+        if (fs.existsSync(process.env.EFI_CERT_PATH) && fs.existsSync(process.env.EFI_KEY_PATH)) {
+          httpsAgent = {
+            cert: fs.readFileSync(process.env.EFI_CERT_PATH),
+            key: fs.readFileSync(process.env.EFI_KEY_PATH),
+            rejectUnauthorized: false,
+          };
+          console.log("✅ Certificado carregado de arquivo");
         }
-      : undefined;
+      } catch (error) {
+        console.warn("⚠️ Erro ao carregar certificado de arquivo:", error);
+      }
+    }
 
     this.client = axios.create({
       baseURL: "https://api-pix.gerencianet.com.br",
-      httpsAgent: httpsAgent as any,
+      httpsAgent: httpsAgent,
       timeout: 10000,
     });
   }
