@@ -77,7 +77,7 @@ export default function Home() {
     addItem.mutate({ productId });
   };
 
-  // Lógica de Scroll Snap Programático
+  // Lógica de Scroll Snap Programático Refinada
   useEffect(() => {
     if (isAuthenticated) return;
 
@@ -85,38 +85,86 @@ export default function Home() {
     if (!container) return;
 
     let lastScrollTop = 0;
+    let touchStartY = 0;
 
-    const handleScroll = () => {
-      if (isScrolling.current) return;
-
-      const scrollTop = container.scrollTop;
-      const heroHeight = heroRef.current?.offsetHeight || window.innerHeight;
-      const direction = scrollTop > lastScrollTop ? 'down' : 'up';
+    const performSnap = (target: HTMLElement | null) => {
+      if (!target || isScrolling.current) return;
       
-      // Margem de erro para detectar se o usuário está "na seção de produtos"
-      // Estamos considerando que ele está na seção de produtos se o scroll estiver próximo do heroHeight
-      const isNearProductsTop = Math.abs(scrollTop - heroHeight) < 50;
-
-      // 1. Se estiver no Hero e começar a descer -> Snap para Produtos
-      if (direction === 'down' && scrollTop > 20 && scrollTop < heroHeight - 100) {
-        isScrolling.current = true;
-        productsRef.current?.scrollIntoView({ behavior: 'smooth' });
-        setTimeout(() => { isScrolling.current = false; }, 1000);
-      }
+      isScrolling.current = true;
+      target.scrollIntoView({ behavior: 'smooth' });
       
-      // 2. Se estiver na seção de Produtos (topo) e começar a subir -> Snap para Hero
-      // O snap só ativa se o usuário estiver de fato parado/estabilizado no topo dos produtos
-      if (direction === 'up' && isNearProductsTop && scrollTop > 100) {
-        isScrolling.current = true;
-        heroRef.current?.scrollIntoView({ behavior: 'smooth' });
-        setTimeout(() => { isScrolling.current = false; }, 1000);
-      }
-
-      lastScrollTop = scrollTop;
+      // Tempo para o scroll suave completar e estabilizar
+      setTimeout(() => {
+        isScrolling.current = false;
+      }, 800);
     };
 
+    const handleWheel = (e: WheelEvent) => {
+      if (isScrolling.current) return;
+      
+      const scrollTop = container.scrollTop;
+      const heroHeight = heroRef.current?.offsetHeight || window.innerHeight;
+      
+      // 1. Snap para baixo: Do Hero para Produtos
+      // Ativa se estiver no topo do Hero e rolar para baixo
+      if (e.deltaY > 0 && scrollTop < 50) {
+        e.preventDefault();
+        performSnap(productsRef.current);
+      }
+      
+      // 2. Snap para cima: De Produtos para Hero
+      // Ativa se estiver EXATAMENTE no topo dos produtos (ou muito perto) e rolar para cima
+      // A margem de 10px garante que capturamos a intenção assim que o movimento começa
+      const isAtProductsTop = Math.abs(scrollTop - heroHeight) <= 10;
+      if (e.deltaY < 0 && isAtProductsTop) {
+        e.preventDefault();
+        performSnap(heroRef.current);
+      }
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (isScrolling.current) return;
+      
+      const touchCurrentY = e.touches[0].clientY;
+      const deltaY = touchStartY - touchCurrentY; // positivo = deslizar para cima (scroll down)
+      const scrollTop = container.scrollTop;
+      const heroHeight = heroRef.current?.offsetHeight || window.innerHeight;
+
+      // 1. Snap para baixo (Hero -> Produtos)
+      if (deltaY > 10 && scrollTop < 50) {
+        if (e.cancelable) e.preventDefault();
+        performSnap(productsRef.current);
+      }
+
+      // 2. Snap para cima (Produtos -> Hero)
+      const isAtProductsTop = Math.abs(scrollTop - heroHeight) <= 10;
+      if (deltaY < -10 && isAtProductsTop) {
+        if (e.cancelable) e.preventDefault();
+        performSnap(heroRef.current);
+      }
+    };
+
+    // Mantemos o handleScroll apenas para atualizar o lastScrollTop se necessário,
+    // mas a lógica principal agora reside nos eventos de entrada para maior precisão.
+    const handleScroll = () => {
+      lastScrollTop = container.scrollTop;
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: false });
     container.addEventListener('scroll', handleScroll, { passive: true });
-    return () => container.removeEventListener('scroll', handleScroll);
+
+    return () => {
+      container.removeEventListener('wheel', handleWheel);
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('scroll', handleScroll);
+    };
   }, [isAuthenticated]);
 
   return (
@@ -175,7 +223,7 @@ export default function Home() {
         </div>
       </section>
       )}
-			
+				
       {/* Trust Badges */}
       {!isAuthenticated && (
         <div className="container px-4 relative z-30 -mt-[362px] sm:-mt-[138px]">
@@ -327,57 +375,27 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="py-20 border-t border-border/50">
+      <footer className="py-12 border-t border-border/50">
         <div className="container px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-12 mb-16">
-            <div className="text-center md:text-left">
-              <div className="flex items-center justify-center md:justify-start gap-3 mb-6">
-                <div className="h-10 w-10 rounded-xl overflow-hidden border border-accent/20">
-                  <img src="/assets/cross-logo.jpg" alt="Mota Store" className="w-full h-full object-cover" />
-                </div>
-                <h2 className="text-3xl font-black tracking-tighter text-accent">MOTA STORE</h2>
-              </div>
-              <p className="text-muted-foreground text-base max-w-xs font-medium">
-                O destino número um para acessos premium com o melhor custo-benefício do Brasil.
-              </p>
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center font-black text-accent-foreground text-xl">M</div>
+              <span className="text-2xl font-black tracking-tighter uppercase">MOTA STORE</span>
             </div>
             
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-12">
-              <div className="space-y-4">
-                <h4 className="font-black uppercase tracking-widest text-xs text-accent">Loja</h4>
-                <ul className="space-y-2">
-                  <li><a href="#" className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors">Produtos</a></li>
-                  <li><a href="#" className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors">Ofertas</a></li>
-                </ul>
-              </div>
-              <div className="space-y-4">
-                <h4 className="font-black uppercase tracking-widest text-xs text-accent">Suporte</h4>
-                <ul className="space-y-2">
-                  <li><a href="https://wa.me/5591984886473" className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors">WhatsApp</a></li>
-                  <li><a href="#" className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors">Ajuda</a></li>
-                </ul>
-              </div>
-              <div className="space-y-4">
-                <h4 className="font-black uppercase tracking-widest text-xs text-accent">Legal</h4>
-                <ul className="space-y-2">
-                  <li><a href="#" className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors">Termos</a></li>
-                  <li><a href="#" className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors">Privacidade</a></li>
-                </ul>
-              </div>
-            </div>
-          </div>
-          <div className="pt-8 border-t border-border/20 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground font-bold uppercase tracking-widest">
-            <span>&copy; 2026 MOTA STORE. Todos os direitos reservados.</span>
-            <div className="flex gap-4">
-              <span>Feito com ❤️ por Mota Store Team</span>
+            <p className="text-muted-foreground text-sm font-medium">
+              © 2024 MOTA STORE. Todos os direitos reservados.
+            </p>
+
+            <div className="flex gap-6">
+              <a href="#" className="text-muted-foreground hover:text-accent transition-colors text-sm font-bold uppercase tracking-wider">Termos</a>
+              <a href="#" className="text-muted-foreground hover:text-accent transition-colors text-sm font-bold uppercase tracking-wider">Privacidade</a>
             </div>
           </div>
         </div>
       </footer>
-      <FlyAnimationsContainer 
-        animations={flyAnimations} 
-        onRemove={removeFlyAnimation} 
-      />
+
+      <FlyAnimationsContainer animations={flyAnimations} onRemove={removeFlyAnimation} />
     </div>
   );
 }
