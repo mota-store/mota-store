@@ -81,7 +81,7 @@ export default function Login() {
       {/* Background Image with Pixel Art */}
       <div className="absolute inset-0 z-0">
         <img 
-          src="/assets/login-bg.gif" 
+          src="/assets/login-bg-new.gif" 
           alt="Login Background" 
           className="w-full h-full object-cover opacity-100"
         />
