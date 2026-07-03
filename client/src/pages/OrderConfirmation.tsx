@@ -1,19 +1,37 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useLocation } from "wouter";
-import { CheckCircle, MessageCircle, ArrowLeft } from "lucide-react";
+import { CheckCircle, MessageCircle, ArrowLeft, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function OrderConfirmation() {
   const [, navigate] = useLocation();
   const [orderData, setOrderData] = useState<any>(null);
+  const [redirecting, setRedirecting] = useState(true);
 
   useEffect(() => {
     const data = sessionStorage.getItem("lastOrder");
     if (data) {
-      setOrderData(JSON.parse(data));
+      const parsedData = JSON.parse(data);
+      setOrderData(parsedData);
+
+      // Redirecionamento automático após 3 segundos
+      const timer = setTimeout(() => {
+        const orderNumber = parsedData.id.toString().padStart(4, '0');
+        const whatsappNumber = "5591984886473";
+        const now = new Date().toLocaleString('pt-BR');
+        
+        const message = `Olá! Acabei de realizar o pedido #${orderNumber} na MOTA STORE.
+Produto(s): ${parsedData.items.map((i: any) => i.name).join(", ")}
+Total: R$ ${(parsedData.total / 100).toFixed(2)}
+Horário: ${now}
+Aguardo a ativação! 😊`;
+
+        window.location.href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+      }, 3000);
+
+      return () => clearTimeout(timer);
     } else {
-      // Se não houver dados, volta para a home
       navigate("/");
     }
   }, [navigate]);
@@ -57,9 +75,17 @@ Aguardo a ativação! 😊`;
             </div>
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-black mb-4">Pedido realizado com sucesso!</h1>
+          <h1 className="text-3xl md:text-4xl font-black mb-4">Pagamento Confirmado!</h1>
+          
+          {redirecting && (
+            <div className="flex flex-col items-center gap-2 mb-8 text-accent">
+              <Loader2 className="h-6 w-6 animate-spin" />
+              <p className="font-bold animate-pulse">Redirecionando para o WhatsApp do vendedor...</p>
+            </div>
+          )}
+
           <p className="text-muted-foreground text-lg mb-8">
-            Seu pedido foi processado. Agora, entre em contato com nosso suporte para ativar seu acesso.
+            Seu pedido foi processado. Estamos te enviando para o suporte para ativar seu acesso.
           </p>
 
           <div className="bg-muted/50 rounded-2xl p-6 mb-8 text-left border border-border">
@@ -87,10 +113,10 @@ Aguardo a ativação! 😊`;
             <Button 
               size="lg" 
               className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-8 text-xl shadow-xl shadow-green-600/20"
-              onClick={() => window.open(whatsappLink, '_blank')}
+              onClick={() => window.location.href = whatsappLink}
             >
               <MessageCircle className="h-6 w-6 mr-2" />
-              Falar com Suporte no WhatsApp
+              Falar com Suporte agora
             </Button>
             
             <Button 

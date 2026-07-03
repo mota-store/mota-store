@@ -4,7 +4,6 @@ import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { ArrowLeft, Trash2, ShoppingCart } from "lucide-react";
-import { useState } from "react";
 
 export default function Cart() {
   const { isAuthenticated } = useAuth();
@@ -32,7 +31,6 @@ export default function Cart() {
 
   const subtotal = enrichedItems.reduce((sum, item) => sum + (item.product?.price || 0) * (item.quantity || 1), 0);
   const originalTotal = subtotal * 2; // Preço original (sem desconto)
-  const savings = originalTotal - subtotal; // Economia
   const total = subtotal;
 
   return (
@@ -137,7 +135,7 @@ export default function Cart() {
 
                 <Button
                   className="w-full bg-accent hover:bg-accent/90 mb-3"
-                  onClick={() => navigate("/checkout")}
+                  onClick={() => navigate("/checkout?direct=true")}
                 >
                   Ir para Checkout
                 </Button>

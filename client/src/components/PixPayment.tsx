@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
-import { Copy, CheckCircle2, Clock, QrCode } from "lucide-react";
+import { Copy, CheckCircle2, Clock, QrCode, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 interface PixPaymentProps {
@@ -19,6 +19,7 @@ export function PixPayment({
 }: PixPaymentProps) {
   const [timeLeft, setTimeLeft] = useState(expiresIn);
   const [copied, setCopied] = useState(false);
+  const [isChecking, setIsChecking] = useState(false);
 
   useEffect(() => {
     if (timeLeft <= 0) return;
@@ -27,6 +28,30 @@ export function PixPayment({
     }, 1000);
     return () => clearInterval(timer);
   }, [timeLeft]);
+
+  // Polling para verificar se o pagamento foi confirmado
+  useEffect(() => {
+    const pollInterval = setInterval(async () => {
+      setIsChecking(true);
+      try {
+        // Aqui você pode adicionar uma chamada à API para verificar o status do pagamento
+        // Por enquanto, apenas simulamos a verificação
+        // const response = await fetch(`/api/payments/check-pix-status`);
+        // if (response.ok) {
+        //   const data = await response.json();
+        //   if (data.confirmed) {
+        //     onPaymentConfirmed?.();
+        //   }
+        // }
+      } catch (err) {
+        console.error("Erro ao verificar pagamento:", err);
+      } finally {
+        setIsChecking(false);
+      }
+    }, 5000); // Verifica a cada 5 segundos
+
+    return () => clearInterval(pollInterval);
+  }, [onPaymentConfirmed]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -116,6 +141,12 @@ export function PixPayment({
         <div className="space-y-2">
           <h3 className="text-xl font-bold text-foreground">Pagamento via PIX</h3>
           <p className="text-sm text-muted-foreground">Escaneie o QR Code ou copie o código abaixo</p>
+          {isChecking && (
+            <div className="flex items-center justify-center gap-1 text-xs text-accent animate-pulse">
+              <RefreshCw className="w-3 h-3" />
+              <span>Verificando pagamento...</span>
+            </div>
+          )}
         </div>
 
         {/* QR Code Placeholder/Real */}
@@ -142,6 +173,11 @@ export function PixPayment({
             <div className="absolute -top-3 -right-3 bg-accent text-accent-foreground px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
               <Clock className="w-3 h-3" />
               {formatTime(timeLeft)}
+            </div>
+          )}
+          {timeLeft <= 0 && (
+            <div className="absolute -top-3 -right-3 bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
+              Expirado
             </div>
           )}
         </div>
