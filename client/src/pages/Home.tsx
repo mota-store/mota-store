@@ -110,7 +110,7 @@ export default function Home() {
                 O MELHOR DO <br />
                 <span className="text-accent">STREAMING</span> AQUI.
               </h1>
-              <p className="text-xl md:text-2xl text-white/80 max-w-2xl mx-auto mb-12 font-bold leading-relaxed drop-shadow-md">
+              <p className="text-xl md:text-2xl text-white/80 max-w-2xl mx-auto mb-8 font-bold leading-relaxed drop-shadow-md">
                 Compre Spotify, YouTube, Prime Video e muito mais por um preço que você nunca viu. Entrega instantânea via WhatsApp.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
@@ -133,8 +133,8 @@ export default function Home() {
 		
       {/* Trust Badges - Only show when NOT authenticated */}
       {!isAuthenticated && (
-        <div className="container px-4 relative z-30 -mt-20">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-8 bg-card border border-border/50 rounded-[2.5rem] shadow-2xl">
+        <div className="container px-4 relative z-30 -mt-32">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-8 bg-card/20 backdrop-blur-xl border border-white/10 rounded-[2.5rem] shadow-2xl">
             {[
               { icon: <Zap className="text-accent h-6 w-6" />, title: "Entrega Imediata", desc: "Acesso na hora" },
               { icon: <ShieldCheck className="text-accent h-6 w-6" />, title: "Compra Segura", desc: "Pagamento via PIX" },
