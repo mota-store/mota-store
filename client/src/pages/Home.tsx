@@ -236,10 +236,10 @@ export default function Home() {
         <div className="container px-4">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
             <div>
-              <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-4 uppercase leading-none">
+              <h2 className={`text-4xl md:text-6xl font-black tracking-tighter uppercase leading-none ${isAuthenticated ? "mt-[15px] mb-4" : "mb-4"}`}>
                 NOSSAS <span className="text-accent">PLATAFORMAS</span>
               </h2>
-              <p className="text-muted-foreground text-lg max-w-xl font-medium">
+              <p className={`text-muted-foreground text-lg max-w-xl font-medium ${isAuthenticated ? "mt-[10px]" : ""}`}>
                 Escolha o plano que mais combina com você e comece a maratonar hoje mesmo.
               </p>
             </div>
