@@ -169,12 +169,18 @@ export async function createOrder(userId: number, totalAmount: number) {
   const [result] = await db.insert(orders).values({
     userId,
     totalAmount,
-    status: "completed",
-    paymentMethod: "automatic",
+    status: "pending",
+    paymentMethod: "pix",
   });
 
   // Clear cart after order
   await db.delete(cartItems).where(eq(cartItems.userId, userId));
 
   return { id: result.insertId };
+}
+
+export async function updateOrderStatus(orderId: number, status: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(orders).set({ status: status as any }).where(eq(orders.id, orderId));
 }

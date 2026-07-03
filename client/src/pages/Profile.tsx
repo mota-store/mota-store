@@ -15,7 +15,8 @@ export default function Profile() {
   const searchParams = new URLSearchParams(window.location.search);
   const isOnboarding = searchParams.get("onboarding") === "true";
 
-  const { data: orders } = trpc.orders.list.useQuery();
+  const { data: allOrders } = trpc.orders.list.useQuery();
+  const orders = allOrders?.filter(order => order.status === "completed");
   
   const updateProfile = trpc.auth.updateProfile.useMutation({
     onSuccess: () => {

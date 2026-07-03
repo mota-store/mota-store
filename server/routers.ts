@@ -185,6 +185,17 @@ export const appRouter = router({
         const { createOrder } = await import("./db");
         return createOrder(ctx.user.id, input.totalAmount);
       }),
+
+    updateStatus: protectedProcedure
+      .input(z.object({
+        orderId: z.number(),
+        status: z.enum(["pending", "completed", "failed", "cancelled"])
+      }))
+      .mutation(async ({ input }) => {
+        const { updateOrderStatus } = await import("./db");
+        await updateOrderStatus(input.orderId, input.status);
+        return { success: true };
+      }),
   }),
 
   payments: router({
