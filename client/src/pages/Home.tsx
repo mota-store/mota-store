@@ -93,15 +93,20 @@ export default function Home() {
       const heroHeight = heroRef.current?.offsetHeight || window.innerHeight;
       const direction = scrollTop > lastScrollTop ? 'down' : 'up';
       
-      // Se estiver no Hero e scrollar para baixo
-      if (direction === 'down' && scrollTop > 50 && scrollTop < heroHeight - 100) {
+      // Margem de erro para detectar se o usuário está "na seção de produtos"
+      // Estamos considerando que ele está na seção de produtos se o scroll estiver próximo do heroHeight
+      const isNearProductsTop = Math.abs(scrollTop - heroHeight) < 50;
+
+      // 1. Se estiver no Hero e começar a descer -> Snap para Produtos
+      if (direction === 'down' && scrollTop > 20 && scrollTop < heroHeight - 100) {
         isScrolling.current = true;
         productsRef.current?.scrollIntoView({ behavior: 'smooth' });
         setTimeout(() => { isScrolling.current = false; }, 1000);
       }
       
-      // Se estiver no topo de Produtos e scrollar para cima
-      if (direction === 'up' && scrollTop < heroHeight - 50 && scrollTop > 100) {
+      // 2. Se estiver na seção de Produtos (topo) e começar a subir -> Snap para Hero
+      // O snap só ativa se o usuário estiver de fato parado/estabilizado no topo dos produtos
+      if (direction === 'up' && isNearProductsTop && scrollTop > 100) {
         isScrolling.current = true;
         heroRef.current?.scrollIntoView({ behavior: 'smooth' });
         setTimeout(() => { isScrolling.current = false; }, 1000);
