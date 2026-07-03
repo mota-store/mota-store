@@ -85,7 +85,7 @@ export default function Login() {
           alt="Login Background" 
           className="w-full h-full object-cover opacity-100"
         />
-        <div className="absolute inset-0 bg-background/60 backdrop-blur-xl z-10" />
+        <div className="absolute inset-0 bg-black/40 z-10" />
       </div>
 
       <motion.div
@@ -95,22 +95,22 @@ export default function Login() {
       >
         <Button
           variant="ghost"
-          className="absolute -top-12 left-0 text-muted-foreground hover:text-foreground mb-4"
+          className="absolute -top-12 left-0 text-white/70 hover:text-white mb-4"
           onClick={() => navigate("/")}
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Voltar para Home
         </Button>
 
-        <Card className="p-8 bg-card border-border/50 shadow-2xl rounded-[2.5rem]">
+        <div className="p-8 bg-transparent shadow-none rounded-[2.5rem]">
           <div className="text-center mb-8">
             <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/20 text-accent mb-6 shadow-xl shadow-accent/10">
               <Zap className="h-8 w-8" />
             </div>
-            <h1 className="text-3xl font-black tracking-tighter">
+            <h1 className="text-3xl font-black tracking-tighter text-white">
               {isRegister ? "CRIAR CONTA" : "BEM-VINDO"}
             </h1>
-            <p className="text-muted-foreground mt-2 font-medium">
+            <p className="text-white/70 mt-2 font-medium">
               {isRegister ? "Junte-se à Mota Store" : "Acesse sua conta premium"}
             </p>
           </div>
@@ -118,11 +118,11 @@ export default function Login() {
           <form onSubmit={handleSubmit} className="space-y-5">
             {isRegister && (
               <div className="space-y-2">
-                <label className="text-xs font-black uppercase tracking-widest ml-1 text-muted-foreground">Nome Completo</label>
+                <label className="text-xs font-black uppercase tracking-widest ml-1 text-white/50">Nome Completo</label>
                 <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
                   <Input
-                    className="pl-12 bg-background/50 border-border/50 h-12 rounded-xl focus:ring-accent"
+                    className="pl-12 bg-white/10 border-white/20 text-white placeholder:text-white/30 h-12 rounded-xl focus:ring-accent backdrop-blur-md"
                     placeholder="Como podemos te chamar?"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -133,12 +133,12 @@ export default function Login() {
             )}
 
             <div className="space-y-2">
-              <label className="text-xs font-black uppercase tracking-widest ml-1 text-muted-foreground">E-mail</label>
+              <label className="text-xs font-black uppercase tracking-widest ml-1 text-white/50">E-mail</label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
                 <Input
                   type="email"
-                  className="pl-12 bg-background/50 border-border/50 h-12 rounded-xl focus:ring-accent"
+                  className="pl-12 bg-white/10 border-white/20 text-white placeholder:text-white/30 h-12 rounded-xl focus:ring-accent backdrop-blur-md"
                   placeholder="seu@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -148,12 +148,12 @@ export default function Login() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-black uppercase tracking-widest ml-1 text-muted-foreground">Senha</label>
+              <label className="text-xs font-black uppercase tracking-widest ml-1 text-white/50">Senha</label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
                 <Input
                   type={showPassword ? "text" : "password"}
-                  className="pl-12 pr-12 bg-background/50 border-border/50 h-12 rounded-xl focus:ring-accent"
+                  className="pl-12 pr-12 bg-white/10 border-white/20 text-white placeholder:text-white/30 h-12 rounded-xl focus:ring-accent backdrop-blur-md"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -163,7 +163,7 @@ export default function Login() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -172,12 +172,12 @@ export default function Login() {
 
             {isRegister && (
               <div className="space-y-2">
-                <label className="text-xs font-black uppercase tracking-widest ml-1 text-muted-foreground">Confirmar Senha</label>
+                <label className="text-xs font-black uppercase tracking-widest ml-1 text-white/50">Confirmar Senha</label>
                 <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
                   <Input
                     type={showConfirmPassword ? "text" : "password"}
-                    className="pl-12 pr-12 bg-background/50 border-border/50 h-12 rounded-xl focus:ring-accent"
+                    className="pl-12 pr-12 bg-white/10 border-white/20 text-white placeholder:text-white/30 h-12 rounded-xl focus:ring-accent backdrop-blur-md"
                     placeholder="••••••••"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -186,7 +186,7 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors"
                   >
                     {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -198,7 +198,7 @@ export default function Login() {
               <motion.div 
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-4 bg-destructive/10 border border-destructive/20 text-destructive rounded-xl text-sm font-medium"
+                className="p-4 bg-destructive/20 border border-destructive/40 text-white rounded-xl text-sm font-medium backdrop-blur-md"
               >
                 {error}
               </motion.div>
@@ -214,11 +214,11 @@ export default function Login() {
 
             {!isRegister && (
               <div className="text-center mt-2 flex flex-col items-center">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Não sabe sua senha?</span>
+                <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1">Não sabe sua senha?</span>
                 <button
                   type="button"
                   onClick={() => navigate("/reset-password")}
-                  className="text-xs font-bold text-blue-500 hover:text-blue-600 transition-colors uppercase tracking-widest"
+                  className="text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors uppercase tracking-widest"
                 >
                   Esqueci minha senha
                 </button>
@@ -228,17 +228,17 @@ export default function Login() {
 
           <div className="relative my-8">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border/50" />
+              <div className="w-full border-t border-white/10" />
             </div>
             <div className="relative flex justify-center text-xs uppercase font-black tracking-widest">
-              <span className="px-4 bg-transparent text-muted-foreground -mt-[30px]">ou continue com</span>
+              <span className="px-4 bg-transparent text-white/50 -mt-[30px]">ou continue com</span>
             </div>
           </div>
 
           <Button
             onClick={() => (window.location.href = getLoginUrl())}
             variant="outline"
-            className="w-full h-14 rounded-xl border-2 border-white bg-transparent backdrop-blur-sm font-bold hover:bg-white/10 transition-all -mt-[65px] text-white"
+            className="w-full h-14 rounded-xl border-2 border-white/20 bg-white/5 backdrop-blur-md font-bold hover:bg-white/10 transition-all -mt-[65px] text-white"
           >
             <svg className="h-5 w-5 mr-3" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -260,7 +260,7 @@ export default function Login() {
               <span className={`${isRegister ? "-mt-[335px]" : "-mt-[115px]"} inline-block`}>{isRegister ? "Já tenho uma conta" : "Criar nova conta"}</span>
             </button>
           </div>
-        </Card>
+        </div>
       </motion.div>
     </div>
   );
