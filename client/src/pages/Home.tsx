@@ -86,7 +86,7 @@ export default function Home() {
 
       {/* Hero Section - Professional Store Look */}
       {!isAuthenticated && (
-      <section className="relative min-h-[75vh] flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[73vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
             src="/assets/home-bg.gif" 
