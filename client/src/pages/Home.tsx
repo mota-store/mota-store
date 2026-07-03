@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,6 @@ import { FlyAnimationsContainer } from "@/components/FlyToCart";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { getLoginUrl } from "@/const";
 
 export default function Home() {
   const { isAuthenticated } = useAuth();
@@ -19,15 +18,16 @@ export default function Home() {
   const { data: products, isLoading } = trpc.products.list.useQuery();
   const { triggerFlyAnimation, invalidateCart, flyAnimations, removeFlyAnimation } = useCart();
   const utils = trpc.useUtils();
+  
+  const containerRef = useRef<HTMLDivElement>(null);
+  const heroRef = useRef<HTMLElement>(null);
+  const productsRef = useRef<HTMLElement>(null);
+  const isScrolling = useRef(false);
+
   const addItem = trpc.cart.addItem.useMutation({
     onMutate: async (newItem) => {
-      // Cancela refetches em andamento para não sobrescrever o update otimista
       await utils.cart.getItems.cancel();
-
-      // Snapshot do estado anterior
       const previousItems = utils.cart.getItems.getData();
-
-      // Atualiza o cache otimisticamente
       utils.cart.getItems.setData(undefined, (old) => {
         const existingItem = old?.find(item => item.productId === newItem.productId);
         if (existingItem) {
@@ -41,22 +41,19 @@ export default function Home() {
           productId: newItem.productId, 
           quantity: 1, 
           id: Math.random(),
-          userId: 0, // Dummy value for TS
-          addedAt: new Date() // Dummy value for TS
+          userId: 0,
+          addedAt: new Date()
         }];
       });
-
       return { previousItems };
     },
     onError: (err, newItem, context) => {
-      // Reverte para o estado anterior em caso de erro
       if (context?.previousItems) {
         utils.cart.getItems.setData(undefined, context.previousItems);
       }
       toast.error("Erro ao adicionar ao carrinho");
     },
     onSettled: () => {
-      // Invalida para sincronizar com o servidor
       invalidateCart();
     },
     onSuccess: () => {
@@ -80,13 +77,56 @@ export default function Home() {
     addItem.mutate({ productId });
   };
 
+  // Lógica de Scroll Snap Programático
+  useEffect(() => {
+    if (isAuthenticated) return;
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    let lastScrollTop = 0;
+
+    const handleScroll = () => {
+      if (isScrolling.current) return;
+
+      const scrollTop = container.scrollTop;
+      const heroHeight = heroRef.current?.offsetHeight || window.innerHeight;
+      const direction = scrollTop > lastScrollTop ? 'down' : 'up';
+      
+      // Se estiver no Hero e scrollar para baixo
+      if (direction === 'down' && scrollTop > 50 && scrollTop < heroHeight - 100) {
+        isScrolling.current = true;
+        productsRef.current?.scrollIntoView({ behavior: 'smooth' });
+        setTimeout(() => { isScrolling.current = false; }, 1000);
+      }
+      
+      // Se estiver no topo de Produtos e scrollar para cima
+      if (direction === 'up' && scrollTop < heroHeight - 50 && scrollTop > 100) {
+        isScrolling.current = true;
+        heroRef.current?.scrollIntoView({ behavior: 'smooth' });
+        setTimeout(() => { isScrolling.current = false; }, 1000);
+      }
+
+      lastScrollTop = scrollTop;
+    };
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [isAuthenticated]);
+
   return (
-    <div className="h-screen bg-background text-foreground selection:bg-accent selection:text-accent-foreground overflow-x-hidden overflow-y-auto scroll-smooth snap-y snap-proximity scroll-pt-16">
+    <div 
+      ref={containerRef}
+      className="h-screen bg-background text-foreground selection:bg-accent selection:text-accent-foreground overflow-x-hidden overflow-y-auto scroll-smooth"
+    >
       <Header />
 
-      {/* Hero Section - Professional Store Look */}
+      {/* Hero Section */}
       {!isAuthenticated && (
-      <section className="relative w-full h-screen flex items-center justify-center overflow-hidden snap-start snap-always">
+      <section 
+        ref={heroRef}
+        className="relative w-full h-screen flex items-center justify-center overflow-hidden"
+      >
         <div className="absolute inset-0 z-0">
           <img 
             src="/assets/home-bg.gif" 
@@ -130,8 +170,8 @@ export default function Home() {
         </div>
       </section>
       )}
-		
-      {/* Trust Badges - Only show when NOT authenticated */}
+			
+      {/* Trust Badges */}
       {!isAuthenticated && (
         <div className="container px-4 relative z-30 -mt-[362px] sm:-mt-[138px]">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-8 bg-transparent border-2 border-accent/20 rounded-[2.5rem] shadow-2xl shadow-accent/5">
@@ -152,7 +192,11 @@ export default function Home() {
       )}
 
       {/* Products Section */}
-      <section id="products" className={`py-24 ${isAuthenticated ? "pt-12" : "min-h-screen flex flex-col justify-center"} snap-start snap-always`}>
+      <section 
+        ref={productsRef}
+        id="products" 
+        className={`py-24 ${isAuthenticated ? "pt-12" : "min-h-screen flex flex-col justify-center"}`}
+      >
         <div className="container px-4">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
             <div>
@@ -187,7 +231,6 @@ export default function Home() {
                   className="group"
                 >
                   <Card className="h-full flex flex-col overflow-hidden bg-card/30 border-border/50 backdrop-blur-sm rounded-[2.5rem] transition-all duration-500 group-hover:border-accent/50 group-hover:shadow-2xl group-hover:shadow-accent/10">
-                    {/* Product Image */}
                     <div className="relative h-56 overflow-hidden bg-gradient-to-br from-accent/10 to-accent/5 flex items-center justify-center p-8">
                       {product.imageUrl ? (
                         <img
@@ -205,12 +248,10 @@ export default function Home() {
                       </div>
                     </div>
 
-                    {/* Product Info */}
                     <div className="p-8 flex flex-col flex-grow">
                       <h3 className="text-2xl font-black mb-2 group-hover:text-accent transition-colors line-clamp-1">{product.name}</h3>
                       <p className="text-muted-foreground text-sm mb-6 line-clamp-2 font-medium">{product.description}</p>
                       
-                      {/* Price */}
                       <div className="mb-8 mt-auto">
                         <div className="flex items-baseline gap-3 mb-1">
                           <span className="text-4xl font-black text-accent tracking-tighter">R$ 5,00</span>
@@ -221,7 +262,6 @@ export default function Home() {
                         </div>
                       </div>
 
-                      {/* Add to Cart Button */}
                       <Button
                         className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-black py-7 rounded-2xl shadow-xl shadow-accent/20 transition-all text-base active:scale-95"
                         onClick={(e) => handleAddToCart(e, product.id)}
@@ -239,7 +279,7 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="py-24 bg-accent/5 relative overflow-hidden snap-align-none">
+      <section className="py-24 bg-accent/5 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-accent/20 to-transparent" />
         <div className="container px-4">
           <div className="text-center mb-20">
@@ -282,7 +322,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="py-20 border-t border-border/50 snap-align-none">
+      <footer className="py-20 border-t border-border/50">
         <div className="container px-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-12 mb-16">
             <div className="text-center md:text-left">
@@ -321,7 +361,6 @@ export default function Home() {
               </div>
             </div>
           </div>
-          
           <div className="pt-8 border-t border-border/20 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground font-bold uppercase tracking-widest">
             <span>&copy; 2026 MOTA STORE. Todos os direitos reservados.</span>
             <div className="flex gap-4">
