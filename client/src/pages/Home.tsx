@@ -102,7 +102,7 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 border border-accent/30 text-accent text-sm font-black mt-0 mb-8 backdrop-blur-md">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 border border-accent/30 text-accent text-sm font-black mt-[5px] mb-8 backdrop-blur-md">
                 <Sparkles className="h-4 w-4" />
                 <span>OFERTA DE LANÇAMENTO: 50% OFF EM TODO O SITE</span>
               </div>
