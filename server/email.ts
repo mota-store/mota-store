@@ -1,217 +1,217 @@
+
 import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const APP_URL = process.env.APP_URL || 'https://mota-store.onrender.com';
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 
-const THEME = {
-  background: '#0a0a0a',
+const baseStyles = {
+  bodyBg: '#0a0a0a',
   cardBg: '#111111',
-  accent: '#3b82f6', // Azul vibrante do projeto
-  text: '#ffffff',
-  textMuted: '#94a3b8',
-  border: '#1e293b'
+  accentColor: '#3b82f6',
+  textColor: '#ffffff',
+  mutedTextColor: '#94a3b8',
+  borderColor: '#1e293b',
+  cardBorderRadius: '24px',
+  buttonBorderRadius: '14px',
+  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
 };
 
-const commonStyles = `
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background-color: ${THEME.background};
-  color: ${THEME.text};
-  margin: 0;
-  padding: 0;
-  -webkit-font-smoothing: antialiased;
+const renderHeader = () => `
+  <table width="100%" border="0" cellspacing="0" cellpadding="0">
+    <tr>
+      <td align="center" style="padding: 20px 0;">
+        <table border="0" cellspacing="0" cellpadding="0">
+          <tr>
+            <td style="font-family: ${baseStyles.fontFamily}; color: ${baseStyles.accentColor}; font-size: 28px; font-weight: 900; text-transform: uppercase; line-height: 1;">
+              MOTA STORE
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="font-family: ${baseStyles.fontFamily}; color: ${baseStyles.mutedTextColor}; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; padding-top: 5px;">
+              Premium Streaming Services
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 `;
 
-export async function sendWelcomeEmail(email: string, name: string) {
+const renderFooter = () => `
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: rgba(255,255,255,0.02); border-top: 1px solid ${baseStyles.borderColor}; margin-top: 40px;">
+    <tr>
+      <td align="center" style="padding: 20px 0;">
+        <table border="0" cellspacing="0" cellpadding="0">
+          <tr>
+            <td align="center" style="font-family: ${baseStyles.fontFamily}; color: ${baseStyles.mutedTextColor}; font-size: 12px; line-height: 18px;">
+              &copy; 2026 MOTA STORE. Todos os direitos reservados.
+              <br/>
+              Suporte via WhatsApp: +55 91 8488-6473
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+`;
+
+const renderButton = (text: string, href: string) => `
+  <table border="0" cellspacing="0" cellpadding="0" style="margin: 30px auto 0 auto;">
+    <tr>
+      <td align="center" style="border-radius: ${baseStyles.buttonBorderRadius}; background-color: ${baseStyles.accentColor}; box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);">
+        <a href="${href}" target="_blank" style="font-size: 15px; font-family: ${baseStyles.fontFamily}; color: ${baseStyles.textColor}; text-decoration: none; font-weight: 900; text-transform: uppercase; padding: 18px 36px; border-radius: ${baseStyles.buttonBorderRadius}; display: inline-block;">
+          ${text}
+        </a>
+      </td>
+    </tr>
+  </table>
+`;
+
+export async function sendWelcomeEmail(email: string, firstName: string) {
   if (!process.env.RESEND_API_KEY) {
-    console.warn('[Email] RESEND_API_KEY not defined. Skipping welcome email.');
+    console.warn('RESEND_API_KEY is not defined. Skipping email send.');
     return { success: false, error: 'API Key missing' };
   }
 
-  const firstName = name.split(' ')[0];
+  const emailHtml = `
+    <body style="background-color: ${baseStyles.bodyBg}; margin: 0; padding: 0;">
+      <center>
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: ${baseStyles.bodyBg};">
+          <tr>
+            <td align="center" style="padding: 20px;">
+              <table class="main" width="600" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: ${baseStyles.cardBg}; border-radius: ${baseStyles.cardBorderRadius};">
+                <tr>
+                  <td style="padding: 0px 20px;">
+                    ${renderHeader()}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 20px 40px 40px 40px; font-family: ${baseStyles.fontFamily}; color: ${baseStyles.textColor};">
+                    <h1 style="font-size: 32px; font-weight: 900; margin: 0 0 15px 0;">Bem-vindo, ${firstName}! 🚀</h1>
+                    <p style="font-size: 16px; line-height: 24px; color: ${baseStyles.mutedTextColor}; margin: 0 0 30px 0;">
+                      Sua conta foi criada com sucesso. Agora você tem acesso a Spotify, YouTube, Prime Video e muito mais por preços incríveis.
+                    </p>
+
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: ${baseStyles.bodyBg}; border: 1px solid ${baseStyles.borderColor}; border-radius: 16px; padding: 20px;">
+                      <tr>
+                        <td style="font-family: ${baseStyles.fontFamily}; color: ${baseStyles.accentColor}; font-size: 12px; font-weight: 700; text-transform: uppercase; padding-bottom: 10px;">
+                          O que você ganha agora:
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="font-family: ${baseStyles.fontFamily}; color: ${baseStyles.textColor}; font-size: 16px; line-height: 28px;">
+                          <ul>
+                            <li style="margin-bottom: 8px;">🎵 Spotify Premium — Música sem anúncios</li>
+                            <li style="margin-bottom: 8px;">🎬 YouTube Premium — Vídeos em segundo plano</li>
+                            <li style="margin-bottom: 8px;">🎮 Xbox Game Pass — Centenas de jogos</li>
+                            <li>🍿 Prime Video & Netflix — As melhores séries</li>
+                          </ul>
+                        </td>
+                      </tr>
+                    </table>
+
+                    ${renderButton('ACESSAR A LOJA', APP_URL)}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 0px 20px;">
+                    ${renderFooter()}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </center>
+    </body>
+  `;
 
   try {
     const { data, error } = await resend.emails.send({
-      from: `Mota Store <${FROM_EMAIL}>`,
+      from: `Mota Store <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
       to: [email],
       subject: 'Bem-vindo à Mota Store! 🎉',
-      html: `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Bem-vindo à Mota Store</title>
-          </head>
-          <body style="${commonStyles}">
-            <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: ${THEME.background}; padding: 40px 20px;">
-              <tr>
-                <td align="center">
-                  <table width="100%" max-width="600" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: ${THEME.cardBg}; border: 1px solid ${THEME.border}; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);">
-                    <!-- Header -->
-                    <tr>
-                      <td style="padding: 40px 40px 20px 40px; text-align: center;">
-                        <h1 style="color: ${THEME.accent}; font-size: 28px; font-weight: 900; margin: 0; letter-spacing: -1px; text-transform: uppercase;">MOTA STORE</h1>
-                        <p style="color: ${THEME.textMuted}; font-size: 12px; font-weight: 700; margin: 5px 0 0 0; letter-spacing: 2px; text-transform: uppercase;">Premium Streaming Services</p>
-                      </td>
-                    </tr>
-                    
-                    <!-- Hero Section -->
-                    <tr>
-                      <td style="padding: 20px 40px; text-align: center;">
-                        <h2 style="font-size: 32px; font-weight: 900; margin: 0; line-height: 1.2;">Bem-vindo, ${firstName}! 🚀</h2>
-                        <p style="color: ${THEME.textMuted}; font-size: 16px; margin: 15px 0 0 0; line-height: 1.5;">
-                          Sua conta foi criada com sucesso. Agora você tem acesso a Spotify, YouTube, Prime Video e muito mais por preços incríveis.
-                        </p>
-                      </td>
-                    </tr>
-
-                    <!-- Benefits -->
-                    <tr>
-                      <td style="padding: 20px 40px;">
-                        <div style="background-color: ${THEME.background}; border: 1px solid ${THEME.border}; border-radius: 16px; padding: 25px;">
-                          <p style="margin: 0 0 15px 0; font-weight: 700; color: ${THEME.accent}; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">O que você ganha agora:</p>
-                          <table width="100%" border="0" cellspacing="0" cellpadding="0">
-                            <tr>
-                              <td style="padding-bottom: 12px; font-size: 15px; color: ${THEME.text};">🎵 <b>Spotify Premium</b> - Música sem anúncios</td>
-                            </tr>
-                            <tr>
-                              <td style="padding-bottom: 12px; font-size: 15px; color: ${THEME.text};">🎬 <b>YouTube Premium</b> - Vídeos em segundo plano</td>
-                            </tr>
-                            <tr>
-                              <td style="padding-bottom: 12px; font-size: 15px; color: ${THEME.text};">🎮 <b>Xbox Game Pass</b> - Centenas de jogos</td>
-                            </tr>
-                            <tr>
-                              <td style="font-size: 15px; color: ${THEME.text};">🍿 <b>Prime Video & Netflix</b> - As melhores séries</td>
-                            </tr>
-                          </table>
-                        </div>
-                      </td>
-                    </tr>
-
-                    <!-- CTA -->
-                    <tr>
-                      <td style="padding: 30px 40px 40px 40px; text-align: center;">
-                        <a href="${APP_URL}" style="display: inline-block; background-color: ${THEME.accent}; color: #ffffff; font-weight: 900; padding: 18px 36px; border-radius: 14px; text-decoration: none; text-transform: uppercase; font-size: 15px; letter-spacing: 1px; box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);">ACESSAR A LOJA</a>
-                      </td>
-                    </tr>
-
-                    <!-- Footer -->
-                    <tr>
-                      <td style="padding: 30px 40px; background-color: rgba(255,255,255,0.02); border-top: 1px solid ${THEME.border}; text-align: center;">
-                        <p style="color: ${THEME.textMuted}; font-size: 12px; margin: 0;">
-                          © 2026 MOTA STORE. Todos os direitos reservados.<br>
-                          Qualquer dúvida, chame nosso suporte no WhatsApp.
-                        </p>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
-            </table>
-          </body>
-        </html>
-      `,
+      html: emailHtml,
     });
 
     if (error) {
-      console.error('[Email] Error sending welcome email:', error);
-      return { success: false, error };
+      console.error('Error sending welcome email:', error);
+      return { success: false, error: error.message };
     }
 
+    console.log('Welcome email sent:', data);
     return { success: true, data };
-  } catch (err) {
-    console.error('[Email] Unexpected error:', err);
-    return { success: false, error: err };
+  } catch (error: any) {
+    console.error('Exception sending welcome email:', error);
+    return { success: false, error: error.message };
   }
 }
 
-export async function sendPasswordResetEmail(email: string, name: string, token: string) {
+export async function sendPasswordResetEmail(email: string, firstName: string, token: string) {
   if (!process.env.RESEND_API_KEY) {
-    console.warn('[Email] RESEND_API_KEY not defined. Skipping reset email.');
+    console.warn('RESEND_API_KEY is not defined. Skipping email send.');
     return { success: false, error: 'API Key missing' };
   }
 
   const resetLink = `${APP_URL}/reset-password?token=${token}`;
-  const firstName = name.split(' ')[0];
+
+  const emailHtml = `
+    <body style="background-color: ${baseStyles.bodyBg}; margin: 0; padding: 0;">
+      <center>
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: ${baseStyles.bodyBg};">
+          <tr>
+            <td align="center" style="padding: 20px;">
+              <table class="main" width="600" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: ${baseStyles.cardBg}; border-radius: ${baseStyles.cardBorderRadius};">
+                <tr>
+                  <td style="padding: 0px 20px;">
+                    ${renderHeader()}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 20px 40px 40px 40px; font-family: ${baseStyles.fontFamily}; color: ${baseStyles.textColor};">
+                    <h1 style="font-size: 24px; font-weight: 900; margin: 0 0 15px 0;">Redefinir sua senha</h1>
+                    <p style="font-size: 16px; line-height: 24px; color: ${baseStyles.mutedTextColor}; margin: 0 0 30px 0;">
+                      Olá, ${firstName}! Recebemos uma solicitação para redefinir a senha da sua conta. Clique no botão abaixo para criar uma nova senha. <strong style="color: ${baseStyles.textColor};">Este link expira em 1 hora.</strong>
+                    </p>
+
+                    ${renderButton('REDEFINIR MINHA SENHA', resetLink)}
+
+                    <p style="font-size: 14px; line-height: 20px; color: ${baseStyles.mutedTextColor}; margin-top: 40px;">
+                      Se você não solicitou a redefinição de senha, ignore este e-mail.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 0px 20px;">
+                    ${renderFooter()}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </center>
+    </body>
+  `;
 
   try {
     const { data, error } = await resend.emails.send({
-      from: `Mota Store <${FROM_EMAIL}>`,
+      from: `Mota Store <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
       to: [email],
       subject: 'Redefinição de senha — Mota Store',
-      html: `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Redefinir Senha - Mota Store</title>
-          </head>
-          <body style="${commonStyles}">
-            <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: ${THEME.background}; padding: 40px 20px;">
-              <tr>
-                <td align="center">
-                  <table width="100%" max-width="600" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: ${THEME.cardBg}; border: 1px solid ${THEME.border}; border-radius: 24px; overflow: hidden;">
-                    <!-- Header -->
-                    <tr>
-                      <td style="padding: 40px 40px 20px 40px; text-align: center;">
-                        <h1 style="color: ${THEME.accent}; font-size: 28px; font-weight: 900; margin: 0; letter-spacing: -1px; text-transform: uppercase;">MOTA STORE</h1>
-                      </td>
-                    </tr>
-                    
-                    <!-- Content -->
-                    <tr>
-                      <td style="padding: 20px 40px; text-align: center;">
-                        <h2 style="font-size: 24px; font-weight: 900; margin: 0;">Redefinir sua senha</h2>
-                        <p style="color: ${THEME.textMuted}; font-size: 16px; margin: 20px 0; line-height: 1.6;">
-                          Olá, ${firstName}! Recebemos uma solicitação para redefinir a senha da sua conta. Clique no botão abaixo para criar uma nova senha. <b>Este link expira em 1 hora.</b>
-                        </p>
-                      </td>
-                    </tr>
-
-                    <!-- CTA -->
-                    <tr>
-                      <td style="padding: 10px 40px 30px 40px; text-align: center;">
-                        <a href="${resetLink}" style="display: inline-block; background-color: ${THEME.accent}; color: #ffffff; font-weight: 900; padding: 18px 36px; border-radius: 14px; text-decoration: none; text-transform: uppercase; font-size: 15px; letter-spacing: 1px;">REDEFINIR MINHA SENHA</a>
-                      </td>
-                    </tr>
-
-                    <!-- Notice -->
-                    <tr>
-                      <td style="padding: 0 40px 30px 40px; text-align: center;">
-                        <p style="color: ${THEME.textMuted}; font-size: 13px; margin: 0;">
-                          Se você não solicitou a redefinição de senha, ignore este e-mail.
-                        </p>
-                      </td>
-                    </tr>
-
-                    <!-- Footer -->
-                    <tr>
-                      <td style="padding: 30px 40px; background-color: rgba(255,255,255,0.02); border-top: 1px solid ${THEME.border}; text-align: center;">
-                        <p style="color: ${THEME.textMuted}; font-size: 12px; margin: 0;">
-                          © 2026 MOTA STORE. Todos os direitos reservados.
-                        </p>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
-            </table>
-          </body>
-        </html>
-      `,
+      html: emailHtml,
     });
 
     if (error) {
-      console.error('[Email] Error sending reset email:', error);
-      return { success: false, error };
+      console.error('Error sending password reset email:', error);
+      return { success: false, error: error.message };
     }
 
+    console.log('Password reset email sent:', data);
     return { success: true, data };
-  } catch (err) {
-    console.error('[Email] Unexpected error:', err);
-    return { success: false, error: err };
+  } catch (error: any) {
+    console.error('Exception sending password reset email:', error);
+    return { success: false, error: error.message };
   }
 }

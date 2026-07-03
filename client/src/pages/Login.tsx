@@ -23,7 +23,6 @@ export default function Login() {
 
   const loginMutation = trpc.auth.login.useMutation();
   const registerMutation = trpc.auth.register.useMutation();
-  const requestReset = trpc.auth.requestPasswordReset.useMutation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
