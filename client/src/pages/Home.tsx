@@ -86,12 +86,12 @@ export default function Home() {
 
       {/* Hero Section - Professional Store Look */}
       {!isAuthenticated && (
-      <section className="relative min-h-[73vh] flex items-center justify-center overflow-hidden">
+      <section className="relative w-full aspect-[19/6] min-h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
             src="/assets/home-bg.gif" 
             alt="Mota Store Banner" 
-            className="w-full h-full object-cover object-top opacity-100"
+            className="w-full h-full object-cover object-center opacity-100"
           />
         </div>
 
