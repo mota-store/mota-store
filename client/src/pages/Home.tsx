@@ -84,7 +84,6 @@ export default function Home() {
     const container = containerRef.current;
     if (!container) return;
 
-    let lastScrollTop = 0;
     let touchStartY = 0;
 
     const performSnap = (target: HTMLElement | null) => {
@@ -106,19 +105,28 @@ export default function Home() {
       const heroHeight = heroRef.current?.offsetHeight || window.innerHeight;
       
       // 1. Snap para baixo: Do Hero para Produtos
-      // Ativa se estiver no topo do Hero e rolar para baixo
       if (e.deltaY > 0 && scrollTop < 50) {
         e.preventDefault();
         performSnap(productsRef.current);
+        return;
       }
       
-      // 2. Snap para cima: De Produtos para Hero
-      // Ativa se estiver EXATAMENTE no topo dos produtos (ou muito perto) e rolar para cima
-      // A margem de 10px garante que capturamos a intenção assim que o movimento começa
-      const isAtProductsTop = Math.abs(scrollTop - heroHeight) <= 10;
-      if (e.deltaY < 0 && isAtProductsTop) {
-        e.preventDefault();
-        performSnap(heroRef.current);
+      // 2. Comportamento subindo de baixo
+      if (e.deltaY < 0) {
+        // Se estiver abaixo de Produtos e o próximo movimento for entrar na zona de Produtos
+        // Nós deixamos o scroll livre, mas se ele tentar "pular" para o Hero, nós travamos.
+        const isAtProductsTop = Math.abs(scrollTop - heroHeight) <= 20;
+        
+        if (isAtProductsTop) {
+          // Se já está estabilizado no topo dos produtos, faz o snap pro Hero
+          e.preventDefault();
+          performSnap(heroRef.current);
+        } else if (scrollTop < heroHeight && scrollTop > 50) {
+          // Se o scroll "vazar" para cima dos produtos sem ser um snap intencional (ex: scroll rápido)
+          // Nós forçamos ele a voltar/parar no topo dos produtos
+          e.preventDefault();
+          performSnap(productsRef.current);
+        }
       }
     };
 
@@ -138,32 +146,32 @@ export default function Home() {
       if (deltaY > 10 && scrollTop < 50) {
         if (e.cancelable) e.preventDefault();
         performSnap(productsRef.current);
+        return;
       }
 
-      // 2. Snap para cima (Produtos -> Hero)
-      const isAtProductsTop = Math.abs(scrollTop - heroHeight) <= 10;
-      if (deltaY < -10 && isAtProductsTop) {
-        if (e.cancelable) e.preventDefault();
-        performSnap(heroRef.current);
+      // 2. Comportamento subindo de baixo
+      if (deltaY < -10) {
+        const isAtProductsTop = Math.abs(scrollTop - heroHeight) <= 20;
+        
+        if (isAtProductsTop) {
+          if (e.cancelable) e.preventDefault();
+          performSnap(heroRef.current);
+        } else if (scrollTop < heroHeight && scrollTop > 50) {
+          // Bloqueia o "vazamento" para o Hero
+          if (e.cancelable) e.preventDefault();
+          performSnap(productsRef.current);
+        }
       }
-    };
-
-    // Mantemos o handleScroll apenas para atualizar o lastScrollTop se necessário,
-    // mas a lógica principal agora reside nos eventos de entrada para maior precisão.
-    const handleScroll = () => {
-      lastScrollTop = container.scrollTop;
     };
 
     container.addEventListener('wheel', handleWheel, { passive: false });
     container.addEventListener('touchstart', handleTouchStart, { passive: true });
     container.addEventListener('touchmove', handleTouchMove, { passive: false });
-    container.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
       container.removeEventListener('wheel', handleWheel);
       container.removeEventListener('touchstart', handleTouchStart);
       container.removeEventListener('touchmove', handleTouchMove);
-      container.removeEventListener('scroll', handleScroll);
     };
   }, [isAuthenticated]);
 
