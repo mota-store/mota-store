@@ -210,24 +210,10 @@ export default function Login() {
               <div className="text-center mt-2">
                 <button
                   type="button"
-                  onClick={async () => {
-                    if (!email) {
-                      setError("Digite seu e-mail primeiro");
-                      return;
-                    }
-                    try {
-                      setLoading(true);
-                      await requestReset.mutateAsync({ email });
-                      toast.success("E-mail de recuperação enviado!");
-                    } catch (err: any) {
-                      toast.error("Erro ao solicitar recuperação");
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                  className="text-xs font-bold text-muted-foreground hover:text-accent transition-colors"
+                  onClick={() => navigate("/reset-password")}
+                  className="text-xs font-bold text-muted-foreground hover:text-accent transition-colors uppercase tracking-widest"
                 >
-                  ESQUECI MINHA SENHA
+                  Esqueci minha senha
                 </button>
               </div>
             )}
