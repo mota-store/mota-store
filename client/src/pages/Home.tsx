@@ -81,7 +81,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-accent selection:text-accent-foreground overflow-x-hidden pt-16">
+    <div className="min-h-screen bg-background text-foreground selection:bg-accent selection:text-accent-foreground overflow-x-hidden">
       <Header />
 
       {/* Hero Section - Professional Store Look */}
@@ -95,7 +95,7 @@ export default function Home() {
           />
         </div>
 
-        <div className="container relative z-20 px-4 pt-20">
+        <div className="container relative z-20 px-4 pt-0">
           <div className="max-w-4xl mx-auto text-center">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
