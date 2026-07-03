@@ -81,12 +81,12 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-accent selection:text-accent-foreground overflow-x-hidden scroll-smooth">
+    <div className="h-screen bg-background text-foreground selection:bg-accent selection:text-accent-foreground overflow-x-hidden overflow-y-auto scroll-smooth snap-y snap-proximity scroll-pt-16">
       <Header />
 
       {/* Hero Section - Professional Store Look */}
       {!isAuthenticated && (
-      <section className="relative w-full h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative w-full h-screen flex items-center justify-center overflow-hidden snap-start snap-always">
         <div className="absolute inset-0 z-0">
           <img 
             src="/assets/home-bg.gif" 
@@ -152,7 +152,7 @@ export default function Home() {
       )}
 
       {/* Products Section */}
-      <section id="products" className={`py-24 ${isAuthenticated ? "pt-12" : "min-h-screen flex flex-col justify-center"}`}>
+      <section id="products" className={`py-24 ${isAuthenticated ? "pt-12" : "min-h-screen flex flex-col justify-center"} snap-start snap-always`}>
         <div className="container px-4">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
             <div>
@@ -239,7 +239,7 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="py-24 bg-accent/5 relative overflow-hidden">
+      <section className="py-24 bg-accent/5 relative overflow-hidden snap-align-none">
         <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-accent/20 to-transparent" />
         <div className="container px-4">
           <div className="text-center mb-20">
@@ -282,7 +282,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="py-20 border-t border-border/50">
+      <footer className="py-20 border-t border-border/50 snap-align-none">
         <div className="container px-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-12 mb-16">
             <div className="text-center md:text-left">
