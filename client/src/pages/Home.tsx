@@ -91,27 +91,29 @@ export default function Home() {
         </div>
       </section>
       )}
-	
-	      {/* Trust Badges - More Professional */}
-	      <div className={`container px-4 relative z-30 ${!isAuthenticated ? "-mt-16" : "mt-12"}`}>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-8 bg-card border border-border/50 rounded-[2.5rem] shadow-2xl">
-          {[
-            { icon: <Zap className="text-accent h-6 w-6" />, title: "Entrega Imediata", desc: "Acesso na hora" },
-            { icon: <ShieldCheck className="text-accent h-6 w-6" />, title: "Compra Segura", desc: "Pagamento via PIX" },
-            { icon: <Star className="text-accent h-6 w-6" />, title: "Suporte 24/7", desc: "Via WhatsApp" },
-            { icon: <CheckCircle2 className="text-accent h-6 w-6" />, title: "Garantia Total", desc: "Satisfação ou Reembolso" },
-          ].map((item, i) => (
-            <div key={i} className="flex flex-col items-center md:items-start gap-1 text-center md:text-left px-4">
-              <div className="mb-2 p-2 rounded-xl bg-accent/10">{item.icon}</div>
-              <span className="font-black text-sm uppercase tracking-wider">{item.title}</span>
-              <span className="text-xs text-muted-foreground font-medium">{item.desc}</span>
-            </div>
-          ))}
+		
+      {/* Trust Badges - Only show when NOT authenticated */}
+      {!isAuthenticated && (
+        <div className="container px-4 relative z-30 -mt-16">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-8 bg-card border border-border/50 rounded-[2.5rem] shadow-2xl">
+            {[
+              { icon: <Zap className="text-accent h-6 w-6" />, title: "Entrega Imediata", desc: "Acesso na hora" },
+              { icon: <ShieldCheck className="text-accent h-6 w-6" />, title: "Compra Segura", desc: "Pagamento via PIX" },
+              { icon: <Star className="text-accent h-6 w-6" />, title: "Suporte 24/7", desc: "Via WhatsApp" },
+              { icon: <CheckCircle2 className="text-accent h-6 w-6" />, title: "Garantia Total", desc: "Satisfação ou Reembolso" },
+            ].map((item, i) => (
+              <div key={i} className="flex flex-col items-center md:items-start gap-1 text-center md:text-left px-4">
+                <div className="mb-2 p-2 rounded-xl bg-accent/10">{item.icon}</div>
+                <span className="font-black text-sm uppercase tracking-wider">{item.title}</span>
+                <span className="text-xs text-muted-foreground font-medium">{item.desc}</span>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Products Section */}
-      <section id="products" className="py-24">
+      <section id="products" className={`py-24 ${isAuthenticated ? "pt-12" : ""}`}>
         <div className="container px-4">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
             <div>
@@ -180,14 +182,14 @@ export default function Home() {
                         </div>
                       </div>
 
-	                      {/* Add to Cart Button */}
-	                      <Button
-	                        className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-black py-7 rounded-2xl shadow-xl shadow-accent/20 transition-all text-base active:scale-95"
-	                        onClick={(e) => handleAddToCart(e, product.id)}
-	                      >
-	                        <ShoppingCart className="h-5 w-5 mr-2" />
-	                        ADICIONAR AO CARRINHO
-	                      </Button>
+                      {/* Add to Cart Button */}
+                      <Button
+                        className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-black py-7 rounded-2xl shadow-xl shadow-accent/20 transition-all text-base active:scale-95"
+                        onClick={(e) => handleAddToCart(e, product.id)}
+                      >
+                        <ShoppingCart className="h-5 w-5 mr-2" />
+                        ADICIONAR AO CARRINHO
+                      </Button>
                     </div>
                   </Card>
                 </motion.div>
