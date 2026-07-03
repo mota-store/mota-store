@@ -143,8 +143,8 @@ export default function Home() {
             ].map((item, i) => (
               <div key={i} className="flex flex-col items-center md:items-start gap-1 text-center md:text-left px-4">
                 <div className="mb-2 p-2 rounded-xl bg-accent/10">{item.icon}</div>
-                <span className="font-black text-sm uppercase tracking-wider">{item.title}</span>
-                <span className="text-xs text-muted-foreground font-medium">{item.desc}</span>
+                <span className="font-black text-sm uppercase tracking-wider text-white">{item.title}</span>
+                <span className="text-xs text-white/70 font-medium">{item.desc}</span>
               </div>
             ))}
           </div>
