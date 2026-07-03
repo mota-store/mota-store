@@ -231,14 +231,14 @@ export default function Login() {
               <div className="w-full border-t border-border/50" />
             </div>
             <div className="relative flex justify-center text-xs uppercase font-black tracking-widest">
-              <span className="px-4 bg-transparent text-muted-foreground -mt-[15px]">ou continue com</span>
+              <span className="px-4 bg-transparent text-muted-foreground -mt-[30px]">ou continue com</span>
             </div>
           </div>
 
           <Button
             onClick={() => (window.location.href = getLoginUrl())}
             variant="outline"
-            className="w-full h-14 rounded-xl border-2 border-white bg-transparent backdrop-blur-sm font-bold hover:bg-white/10 transition-all -mt-[45px] text-white"
+            className="w-full h-14 rounded-xl border-2 border-white bg-transparent backdrop-blur-sm font-bold hover:bg-white/10 transition-all -mt-[65px] text-white"
           >
             <svg className="h-5 w-5 mr-3" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -257,7 +257,7 @@ export default function Login() {
               }}
               className="text-sm font-black text-accent hover:underline uppercase tracking-widest"
             >
-              <span className={`${isRegister ? "-mt-[205px]" : "-mt-[115px]"} inline-block`}>{isRegister ? "Já tenho uma conta" : "Criar nova conta"}</span>
+              <span className={`${isRegister ? "-mt-[255px]" : "-mt-[115px]"} inline-block`}>{isRegister ? "Já tenho uma conta" : "Criar nova conta"}</span>
             </button>
           </div>
         </Card>
