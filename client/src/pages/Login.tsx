@@ -257,7 +257,7 @@ export default function Login() {
               }}
               className="text-sm font-black text-accent hover:underline uppercase tracking-widest"
             >
-              <span className={`${isRegister ? "-mt-[225px]" : "-mt-[115px]"} inline-block`}>{isRegister ? "Já tenho uma conta" : "Criar nova conta"}</span>
+              <span className={`${isRegister ? "-mt-[255px]" : "-mt-[115px]"} inline-block`}>{isRegister ? "Já tenho uma conta" : "Criar nova conta"}</span>
             </button>
           </div>
         </Card>
