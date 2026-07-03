@@ -118,7 +118,7 @@ export default function Home() {
                   size="lg"
                   className="w-full sm:w-auto bg-transparent hover:bg-white/10 border-2 border-accent text-white px-12 py-8 text-xl font-black rounded-[2rem] shadow-2xl shadow-accent/20 transition-all hover:scale-105 active:scale-95"
                   onClick={() => {
-                    document.getElementById("products")?.scrollIntoView({ behavior: "smooth" });
+                    window.location.href = "/login";
                   }}
                 >
                   GARANTIR MEU ACESSO
