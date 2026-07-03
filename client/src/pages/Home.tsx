@@ -106,11 +106,11 @@ export default function Home() {
                 <Sparkles className="h-4 w-4" />
                 <span>OFERTA DE LANÇAMENTO: 50% OFF EM TODO O SITE</span>
               </div>
-              <h1 className="text-5xl md:text-8xl font-black tracking-tighter mb-6 leading-[0.8] text-white drop-shadow-2xl">
+              <h1 className="text-6xl md:text-8xl font-black tracking-tighter mb-8 leading-[0.8] text-white drop-shadow-2xl">
                 O MELHOR DO <br />
                 <span className="text-accent">STREAMING</span> AQUI.
               </h1>
-              <p className="text-lg md:text-2xl text-white/80 max-w-2xl mx-auto mb-6 font-bold leading-relaxed drop-shadow-md">
+              <p className="text-xl md:text-2xl text-white/80 max-w-2xl mx-auto mb-8 font-bold leading-relaxed drop-shadow-md">
                 Compre Spotify, YouTube, Prime Video e muito mais por um preço que você nunca viu. Entrega instantânea via WhatsApp.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
