@@ -111,7 +111,7 @@ export default function Home() {
                 <span className="text-accent">STREAMING</span> AQUI.
               </h1>
               <p className="text-xl md:text-2xl text-white/80 max-w-2xl mx-auto mb-12 font-bold leading-relaxed drop-shadow-md">
-                Acesse Spotify, YouTube, Prime Video e muito mais por um preço que você nunca viu. Entrega instantânea via WhatsApp.
+                Compre Spotify, YouTube, Prime Video e muito mais por um preço que você nunca viu. Entrega instantânea via WhatsApp.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
                 <Button
