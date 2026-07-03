@@ -95,6 +95,19 @@ export function PixPayment({
     }
   };
 
+  const openBankApp = (deepLink: string, playStoreUrl: string, appStoreUrl: string) => {
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const fallbackUrl = isIOS ? appStoreUrl : playStoreUrl;
+    
+    // Tenta abrir o deep link
+    window.location.href = deepLink;
+    
+    // Se após 1.5s o usuário ainda estiver na página, redireciona para a loja
+    setTimeout(() => {
+      window.location.href = fallbackUrl;
+    }, 1500);
+  };
+
   const qrCodeSrc = getQrCodeSrc();
 
   return (
@@ -131,6 +144,60 @@ export function PixPayment({
               {formatTime(timeLeft)}
             </div>
           )}
+        </div>
+
+        {/* Atalhos de Bancos */}
+        <div className="w-full space-y-3">
+          <p className="text-xs text-muted-foreground text-center">Abrir no seu banco</p>
+          <div className="flex justify-center gap-3">
+            {/* Nubank */}
+            <button
+              onClick={() => openBankApp(
+                "nubank://",
+                "https://play.google.com/store/apps/details?id=com.nu.production",
+                "https://apps.apple.com/br/app/nubank/id814456780"
+              )}
+              className="flex flex-col items-center gap-1 p-2 rounded-xl border border-[#820AD1]/30 bg-[#820AD1]/5 hover:bg-[#820AD1]/20 transition-colors w-20"
+            >
+              <svg viewBox="0 0 40 40" className="w-8 h-8">
+                <circle cx="20" cy="20" r="20" fill="#820AD1"/>
+                <text x="20" y="26" textAnchor="middle" fill="white" fontSize="18" fontWeight="bold" fontFamily="sans-serif">N</text>
+              </svg>
+              <span className="text-[10px] font-medium text-foreground">Nubank</span>
+            </button>
+
+            {/* Inter */}
+            <button
+              onClick={() => openBankApp(
+                "bancointer://",
+                "https://play.google.com/store/apps/details?id=br.com.intermedium",
+                "https://apps.apple.com/br/app/inter-conta-cartao-e-pix/id839711154"
+              )}
+              className="flex flex-col items-center gap-1 p-2 rounded-xl border border-[#FF6B00]/30 bg-[#FF6B00]/5 hover:bg-[#FF6B00]/20 transition-colors w-20"
+            >
+              <svg viewBox="0 0 40 40" className="w-8 h-8">
+                <circle cx="20" cy="20" r="20" fill="#FF6B00"/>
+                <text x="20" y="26" textAnchor="middle" fill="white" fontSize="18" fontWeight="bold" fontFamily="sans-serif">I</text>
+              </svg>
+              <span className="text-[10px] font-medium text-foreground">Inter</span>
+            </button>
+
+            {/* Itaú */}
+            <button
+              onClick={() => openBankApp(
+                "itau://",
+                "https://play.google.com/store/apps/details?id=com.itau",
+                "https://apps.apple.com/br/app/itau/id493694158"
+              )}
+              className="flex flex-col items-center gap-1 p-2 rounded-xl border border-[#EC7000]/30 bg-[#EC7000]/5 hover:bg-[#EC7000]/20 transition-colors w-20"
+            >
+              <svg viewBox="0 0 40 40" className="w-8 h-8">
+                <circle cx="20" cy="20" r="20" fill="#EC7000"/>
+                <text x="20" y="26" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold" fontFamily="sans-serif">IT</text>
+              </svg>
+              <span className="text-[10px] font-medium text-foreground">Itaú</span>
+            </button>
+          </div>
         </div>
 
         {/* Copia e Cola */}
