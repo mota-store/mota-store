@@ -193,10 +193,7 @@ export function PixPayment({
               )}
               className="flex flex-col items-center gap-1 p-2 rounded-xl border border-[#820AD1]/30 bg-[#820AD1]/5 hover:bg-[#820AD1]/20 transition-colors w-20"
             >
-              <svg viewBox="0 0 40 40" className="w-8 h-8" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="20" cy="20" r="20" fill="#820AD1"/>
-                <path d="M12 13h3.2l8.8 10.4V13H27v14h-3.2L15 16.6V27H12V13z" fill="white"/>
-              </svg>
+              <img src="/assets/banks/nubank.png" alt="Nubank" className="w-8 h-8 rounded-lg object-contain" />
               <span className="text-[10px] font-medium text-foreground">Nubank</span>
             </button>
 
@@ -209,11 +206,7 @@ export function PixPayment({
               )}
               className="flex flex-col items-center gap-1 p-2 rounded-xl border border-[#FF6B00]/30 bg-[#FF6B00]/5 hover:bg-[#FF6B00]/20 transition-colors w-20"
             >
-              <svg viewBox="0 0 40 40" className="w-8 h-8" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="20" cy="20" r="20" fill="#FF6B00"/>
-                <path d="M20 10 C14.477 10 10 14.477 10 20 C10 25.523 14.477 30 20 30 C25.523 30 30 25.523 30 20 C30 14.477 25.523 10 20 10Z M20 14 C23.314 14 26 16.686 26 20 C26 23.314 23.314 26 20 26 C16.686 26 14 23.314 14 20 C14 16.686 16.686 14 20 14Z" fill="white" fillRule="evenodd"/>
-                <circle cx="20" cy="20" r="3" fill="white"/>
-              </svg>
+              <img src="/assets/banks/inter.png" alt="Inter" className="w-8 h-8 rounded-lg object-contain" />
               <span className="text-[10px] font-medium text-foreground">Inter</span>
             </button>
 
@@ -226,11 +219,7 @@ export function PixPayment({
               )}
               className="flex flex-col items-center gap-1 p-2 rounded-xl border border-[#EC7000]/30 bg-[#EC7000]/5 hover:bg-[#EC7000]/20 transition-colors w-20"
             >
-              <svg viewBox="0 0 40 40" className="w-8 h-8" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="20" cy="20" r="20" fill="#EC7000"/>
-                <rect x="18.5" y="11" width="3" height="18" rx="1.5" fill="white"/>
-                <rect x="13" y="16" width="14" height="3" rx="1.5" fill="white"/>
-              </svg>
+              <img src="/assets/banks/itau.png" alt="Itaú" className="w-8 h-8 rounded-lg object-contain" />
               <span className="text-[10px] font-medium text-foreground">Itaú</span>
             </button>
           </div>
