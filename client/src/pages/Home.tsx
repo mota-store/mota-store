@@ -95,7 +95,7 @@ export default function Home() {
           />
         </div>
 
-        <div className="container relative z-20 px-4 -mt-20">
+        <div className="container relative z-20 px-4 -mt-32 sm:-mt-20">
           <div className="max-w-4xl mx-auto text-center">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -106,17 +106,17 @@ export default function Home() {
                 <Sparkles className="h-4 w-4" />
                 <span>OFERTA DE LANÇAMENTO: 50% OFF EM TODO O SITE</span>
               </div>
-              <h1 className="text-6xl md:text-8xl font-black tracking-tighter mb-8 leading-[0.8] text-white drop-shadow-2xl">
+              <h1 className="text-5xl md:text-8xl font-black tracking-tighter mb-6 leading-[0.8] text-white drop-shadow-2xl">
                 O MELHOR DO <br />
                 <span className="text-accent">STREAMING</span> AQUI.
               </h1>
-              <p className="text-xl md:text-2xl text-white/80 max-w-2xl mx-auto mb-8 font-bold leading-relaxed drop-shadow-md">
+              <p className="text-lg md:text-2xl text-white/80 max-w-2xl mx-auto mb-6 font-bold leading-relaxed drop-shadow-md">
                 Compre Spotify, YouTube, Prime Video e muito mais por um preço que você nunca viu. Entrega instantânea via WhatsApp.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
                 <Button
                   size="lg"
-                  className="w-full sm:w-auto bg-transparent hover:bg-white/10 border-2 border-accent text-white px-12 py-8 text-xl font-black rounded-[2rem] shadow-2xl shadow-accent/20 backdrop-blur-md transition-all hover:scale-105 active:scale-95"
+                  className="w-full sm:w-auto bg-transparent hover:bg-white/10 border-2 border-accent text-white px-12 py-8 text-xl font-black rounded-[2rem] shadow-2xl shadow-accent/20 transition-all hover:scale-105 active:scale-95"
                   onClick={() => {
                     document.getElementById("products")?.scrollIntoView({ behavior: "smooth" });
                   }}
@@ -133,7 +133,7 @@ export default function Home() {
 		
       {/* Trust Badges - Only show when NOT authenticated */}
       {!isAuthenticated && (
-        <div className="container px-4 relative z-30 -mt-8">
+        <div className="container px-4 relative z-30 -mt-24 sm:-mt-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-8 bg-black/40 backdrop-blur-md border border-white/5 rounded-[2.5rem] shadow-2xl">
             {[
               { icon: <Zap className="text-accent h-6 w-6" />, title: "Entrega Imediata", desc: "Acesso na hora" },
