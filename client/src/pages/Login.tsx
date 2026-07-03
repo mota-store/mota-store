@@ -206,11 +206,12 @@ export default function Login() {
             </Button>
 
             {!isRegister && (
-              <div className="text-center mt-2">
+              <div className="text-center mt-2 flex flex-col items-center">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Não sabe sua senha?</span>
                 <button
                   type="button"
                   onClick={() => navigate("/reset-password")}
-                  className="text-xs font-bold text-muted-foreground hover:text-accent transition-colors uppercase tracking-widest"
+                  className="text-xs font-bold text-blue-500 hover:text-blue-600 transition-colors uppercase tracking-widest"
                 >
                   Esqueci minha senha
                 </button>
@@ -230,9 +231,9 @@ export default function Login() {
           <Button
             onClick={() => (window.location.href = getLoginUrl())}
             variant="outline"
-            className="w-full h-14 rounded-xl border-border/50 bg-background/50 backdrop-blur-sm font-bold hover:bg-accent/10 transition-all -mt-[30px]"
+            className="w-full h-14 rounded-xl border-border/50 bg-background/50 backdrop-blur-sm font-bold hover:bg-accent/10 transition-all -mt-[30px] text-[24px]"
           >
-            <svg className="h-5 w-5 mr-3" viewBox="0 0 24 24">
+            <svg className="h-[30px] w-[30px] mr-3" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -249,7 +250,7 @@ export default function Login() {
               }}
               className="text-sm font-black text-accent hover:underline uppercase tracking-widest"
             >
-              <span className="text-[50px] inline-block">{isRegister ? "Já tenho uma conta" : "Criar nova conta"}</span>
+              <span className="mt-[40px] inline-block">{isRegister ? "Já tenho uma conta" : "Criar nova conta"}</span>
             </button>
           </div>
         </Card>
