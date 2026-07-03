@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { getLoginUrl } from "@/const";
 
 export function Header() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
   const [, navigate] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { cartCount } = useCart();
@@ -25,7 +25,7 @@ export function Header() {
   }, [cartCount, prevCount]);
 
   const handleLogout = async () => {
-    await fetch("/api/logout", { method: "POST" });
+    await logout();
     window.location.href = "/";
   };
 

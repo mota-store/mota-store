@@ -18,16 +18,55 @@ export default function Home() {
 
   const { data: products, isLoading } = trpc.products.list.useQuery();
   const { triggerFlyAnimation, invalidateCart, flyAnimations, removeFlyAnimation } = useCart();
+  const utils = trpc.useUtils();
   const addItem = trpc.cart.addItem.useMutation({
-    onSuccess: () => {
+    onMutate: async (newItem) => {
+      // Cancela refetches em andamento para não sobrescrever o update otimista
+      await utils.cart.getItems.cancel();
+
+      // Snapshot do estado anterior
+      const previousItems = utils.cart.getItems.getData();
+
+      // Atualiza o cache otimisticamente
+      utils.cart.getItems.setData(undefined, (old) => {
+        const existingItem = old?.find(item => item.productId === newItem.productId);
+        if (existingItem) {
+          return old?.map(item => 
+            item.productId === newItem.productId 
+              ? { ...item, quantity: item.quantity + 1 } 
+              : item
+          );
+        }
+        return [...(old || []), { 
+          productId: newItem.productId, 
+          quantity: 1, 
+          id: Math.random(),
+          userId: 0, // Dummy value for TS
+          addedAt: new Date() // Dummy value for TS
+        }];
+      });
+
+      return { previousItems };
+    },
+    onError: (err, newItem, context) => {
+      // Reverte para o estado anterior em caso de erro
+      if (context?.previousItems) {
+        utils.cart.getItems.setData(undefined, context.previousItems);
+      }
+      toast.error("Erro ao adicionar ao carrinho");
+    },
+    onSettled: () => {
+      // Invalida para sincronizar com o servidor
       invalidateCart();
+    },
+    onSuccess: () => {
       toast.success("Produto adicionado ao carrinho!");
     }
   });
 
   const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>, productId: number) => {
     if (!isAuthenticated) {
-      window.location.href = getLoginUrl();
+      window.location.href = "/login";
       return;
     }
 

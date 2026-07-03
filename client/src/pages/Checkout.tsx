@@ -122,22 +122,7 @@ export default function Checkout() {
                   }}
                 />
               </div>
-              <div className="text-center flex-shrink-0 pb-8">
-                <Button 
-                  variant="link" 
-                  className="text-xs lg:text-sm text-muted-foreground hover:text-accent"
-                  onClick={() => {
-                    const productNames = enrichedItems
-                      .map(item => item.product?.name)
-                      .filter(Boolean)
-                      .join(", ");
-                    const message = `Olá! Acabei de pagar o pedido #${orderId} na Mota Store. Comprei: ${productNames}. Total: R$ ${(total / 100).toFixed(2)}. Aguardo a ativação!`;
-                    window.location.href = `https://wa.me/5591984886473?text=${encodeURIComponent(message)}`;
-                  }}
-                >
-                  Já paguei? Falar com Suporte no WhatsApp
-                </Button>
-              </div>
+
             </div>
           )}
           
