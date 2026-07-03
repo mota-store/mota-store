@@ -34,22 +34,57 @@ export function PixPayment({
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  const getQrCodeSrc = () => {
+    if (!qrCodeBase64) return null;
+
+    // Se começa com http:// ou https://, é uma URL
+    if (qrCodeBase64.startsWith("http://") || qrCodeBase64.startsWith("https://")) {
+      console.log("QR Code é URL:", qrCodeBase64.substring(0, 50));
+      return qrCodeBase64;
+    }
+
+    // Se já começa com data:, é um data URI
+    if (qrCodeBase64.startsWith("data:")) {
+      console.log("QR Code é data URI");
+      return qrCodeBase64;
+    }
+
+    // Se for base64 puro, adiciona o prefixo
+    console.log("QR Code é base64 puro");
+    return `data:image/png;base64,${qrCodeBase64}`;
+  };
+
   const copyPixCode = async () => {
+    console.log("Tentando copiar pixCode:", pixCode ? pixCode.substring(0, 50) : "VAZIO");
+
+    if (!pixCode || pixCode.trim() === "") {
+      toast.error("Código PIX não está disponível");
+      console.error("pixCode está vazio ou undefined");
+      return;
+    }
+
     try {
       if (navigator.clipboard && window.isSecureContext) {
+        console.log("Usando navigator.clipboard");
         await navigator.clipboard.writeText(pixCode);
       } else {
+        console.log("Usando fallback com textarea");
         // Fallback para navegadores sem suporte ou contextos não seguros
         const textArea = document.createElement("textarea");
         textArea.value = pixCode;
         textArea.style.position = "fixed";
         textArea.style.left = "-9999px";
         textArea.style.top = "0";
+        textArea.style.opacity = "0";
         document.body.appendChild(textArea);
         textArea.focus();
         textArea.select();
-        document.execCommand('copy');
+        const success = document.execCommand("copy");
         document.body.removeChild(textArea);
+
+        if (!success) {
+          throw new Error('document.execCommand("copy") retornou false');
+        }
       }
       setCopied(true);
       toast.success("Código PIX copiado!");
@@ -59,6 +94,8 @@ export function PixPayment({
       console.error("Falha ao copiar:", err);
     }
   };
+
+  const qrCodeSrc = getQrCodeSrc();
 
   return (
     <Card className="p-6 bg-card/50 border-border/50 backdrop-blur-sm max-w-md mx-auto">
@@ -71,11 +108,15 @@ export function PixPayment({
         {/* QR Code Placeholder/Real */}
         <div className="relative group">
           <div className="w-64 h-64 bg-white p-4 rounded-xl shadow-inner flex items-center justify-center overflow-hidden">
-            {qrCodeBase64 ? (
-              <img 
-                src={qrCodeBase64.startsWith('data:') ? qrCodeBase64 : `data:image/png;base64,${qrCodeBase64}`} 
-                alt="QR Code PIX" 
-                className="w-full h-full object-contain" 
+            {qrCodeSrc ? (
+              <img
+                src={qrCodeSrc}
+                alt="QR Code PIX"
+                className="w-full h-full object-contain"
+                onError={(e) => {
+                  console.error("Erro ao carregar QR Code:", (e.target as HTMLImageElement).src);
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
               />
             ) : (
               <div className="flex flex-col items-center text-slate-400">
@@ -107,8 +148,8 @@ export function PixPayment({
               {copied ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
             </Button>
           </div>
-          
-          <Button 
+
+          <Button
             className="w-full bg-accent hover:bg-accent/90 font-bold py-6 shadow-lg shadow-accent/20"
             onClick={copyPixCode}
           >

@@ -251,11 +251,27 @@ class EfiPaymentService {
         }
       );
 
+      console.log("DEBUG - Resposta da criacao de PIX:", JSON.stringify(response.data, null, 2));
+      console.log("DEBUG - Resposta do QR Code:", JSON.stringify(qrCodeResponse.data, null, 2));
+
+      const pixCode = response.data.brCode || response.data.qrcode || response.data.pixCopiaECola || "";
+      console.log("DEBUG - pixCode extraido:", pixCode);
+
+      let qrCodeBase64 = "";
+      if (qrCodeResponse.data.imagemQrcode) {
+        qrCodeBase64 = qrCodeResponse.data.imagemQrcode;
+      } else if (qrCodeResponse.data.qrcode) {
+        qrCodeBase64 = qrCodeResponse.data.qrcode;
+      } else if (qrCodeResponse.data.url) {
+        qrCodeBase64 = qrCodeResponse.data.url;
+      }
+      console.log("DEBUG - qrCodeBase64 extraido (primeiros 100 chars):", qrCodeBase64.substring(0, 100));
+
       console.log(`✅ PIX criado para Pedido #${orderId}: ${txid}`);
 
       return {
-        pixCode: response.data.brCode || response.data.qrcode || "",
-        qrCodeBase64: qrCodeResponse.data.qrcode || qrCodeResponse.data.url || "",
+        pixCode: pixCode,
+        qrCodeBase64: qrCodeBase64,
         txid: txid,
         expiresIn: 1800,
       };
