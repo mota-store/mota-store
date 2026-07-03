@@ -81,12 +81,27 @@ export default function Home() {
   };
 
   return (
-    <div className="h-screen bg-background text-foreground selection:bg-accent selection:text-accent-foreground overflow-x-hidden overflow-y-scroll scroll-smooth snap-y snap-mandatory">
+    <div className="min-h-screen bg-background text-foreground selection:bg-accent selection:text-accent-foreground overflow-x-hidden scroll-smooth snap-container">
+      <style>{`
+        .snap-container {
+          height: 100vh;
+          overflow-y: scroll;
+          scroll-snap-type: y mandatory;
+        }
+        .snap-section {
+          scroll-snap-align: start;
+          scroll-snap-stop: always;
+        }
+        .no-snap {
+          scroll-snap-align: none;
+          scroll-snap-stop: normal;
+        }
+      `}</style>
       <Header />
 
       {/* Hero Section - Professional Store Look */}
       {!isAuthenticated && (
-      <section className="relative w-full h-screen flex items-center justify-center overflow-hidden snap-start snap-always">
+      <section className="relative w-full h-screen flex items-center justify-center overflow-hidden snap-section">
         <div className="absolute inset-0 z-0">
           <img 
             src="/assets/home-bg.gif" 
@@ -152,7 +167,7 @@ export default function Home() {
       )}
 
       {/* Products Section */}
-      <section id="products" className={`py-24 ${isAuthenticated ? "pt-12" : "min-h-screen flex flex-col justify-center"} snap-start snap-always`}>
+      <section id="products" className={`py-24 ${isAuthenticated ? "pt-12" : "min-h-screen flex flex-col justify-center"} snap-section`}>
         <div className="container px-4">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
             <div>
@@ -239,7 +254,7 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="py-24 bg-accent/5 relative overflow-hidden">
+      <section className="py-24 bg-accent/5 relative overflow-hidden no-snap">
         <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-accent/20 to-transparent" />
         <div className="container px-4">
           <div className="text-center mb-20">
@@ -282,7 +297,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="py-20 border-t border-border/50">
+      <footer className="py-20 border-t border-border/50 no-snap">
         <div className="container px-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-12 mb-16">
             <div className="text-center md:text-left">
