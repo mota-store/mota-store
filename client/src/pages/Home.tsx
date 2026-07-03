@@ -86,12 +86,12 @@ export default function Home() {
 
       {/* Hero Section - Professional Store Look */}
       {!isAuthenticated && (
-      <section className="relative min-h-[73vh] flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
             src="/assets/home-bg.gif" 
             alt="Mota Store Banner" 
-            className="w-full h-full object-cover opacity-100"
+            className="w-full h-full object-cover object-top opacity-100"
           />
         </div>
 
@@ -102,7 +102,7 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 border border-accent/30 text-accent text-sm font-black mt-14 mb-8 backdrop-blur-md">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 border border-accent/30 text-accent text-sm font-black mt-16 mb-8 backdrop-blur-md">
                 <Sparkles className="h-4 w-4" />
                 <span>OFERTA DE LANÇAMENTO: 50% OFF EM TODO O SITE</span>
               </div>
@@ -133,7 +133,7 @@ export default function Home() {
 		
       {/* Trust Badges - Only show when NOT authenticated */}
       {!isAuthenticated && (
-        <div className="container px-4 relative z-30 -mt-24 sm:-mt-8">
+        <div className="container px-4 relative z-30 -mt-36 sm:-mt-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-8 bg-transparent border-2 border-accent/20 rounded-[2.5rem] shadow-2xl shadow-accent/5">
             {[
               { icon: <Zap className="text-accent h-6 w-6" />, title: "Entrega Imediata", desc: "Acesso na hora" },
