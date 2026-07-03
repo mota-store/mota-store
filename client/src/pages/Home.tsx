@@ -133,7 +133,7 @@ export default function Home() {
 		
       {/* Trust Badges - Only show when NOT authenticated */}
       {!isAuthenticated && (
-        <div className="container px-4 relative z-30 -mt-[334px] sm:-mt-[110px]">
+        <div className="container px-4 relative z-30 -mt-[339px] sm:-mt-[115px]">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-8 bg-transparent border-2 border-accent/20 rounded-[2.5rem] shadow-2xl shadow-accent/5">
             {[
               { icon: <Zap className="text-accent h-6 w-6" />, title: "Entrega Imediata", desc: "Acesso na hora" },
