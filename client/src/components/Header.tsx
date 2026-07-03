@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Menu, X, User, LogOut, Zap } from "lucide-react";
+import { ShoppingCart, Menu, X, User, LogOut, Zap, Sun, Moon } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useCart } from "@/contexts/CartContext";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,6 +13,7 @@ export function Header() {
   const [, navigate] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { cartCount } = useCart();
+  const { theme, toggleTheme } = useTheme();
   const [isPulsing, setIsPulsing] = useState(false);
   const [prevCount, setPrevCount] = useState(cartCount);
 
@@ -61,6 +63,14 @@ export function Header() {
 
         {/* Right Side - Auth & Cart */}
         <div className="flex items-center gap-4">
+          {/* Theme Toggle - Desktop */}
+          <button
+            onClick={toggleTheme}
+            className="hidden md:flex p-2 hover:bg-muted rounded-lg transition-colors text-foreground"
+            title={theme === "light" ? "Mudar para Modo Escuro" : "Mudar para Modo Claro"}
+          >
+            {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+          </button>
           {/* Cart - Only visible when authenticated */}
           {isAuthenticated && (
             <motion.button
@@ -159,6 +169,16 @@ export function Header() {
               >
                 Suporte
               </a>
+              <button
+                onClick={() => {
+                  toggleTheme?.();
+                  setMobileMenuOpen(false);
+                }}
+                className="flex w-full items-center justify-between px-4 py-2 font-bold uppercase tracking-widest hover:bg-muted rounded-lg transition-colors"
+              >
+                <span>Modo {theme === "light" ? "Escuro" : "Claro"}</span>
+                {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+              </button>
               <div className="border-t border-border/50 pt-3 space-y-2">
                 {isAuthenticated ? (
                   <>

@@ -81,18 +81,12 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-accent selection:text-accent-foreground overflow-x-hidden scroll-smooth snap-y snap-proximity">
-      <style>{`
-        .snap-section {
-          scroll-snap-align: start;
-          scroll-snap-stop: always;
-        }
-      `}</style>
+    <div className="min-h-screen bg-background text-foreground selection:bg-accent selection:text-accent-foreground overflow-x-hidden scroll-smooth">
       <Header />
 
       {/* Hero Section - Professional Store Look */}
       {!isAuthenticated && (
-      <section className="relative w-full h-screen flex items-center justify-center overflow-hidden snap-section">
+      <section className="relative w-full h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
             src="/assets/home-bg.gif" 
@@ -158,7 +152,7 @@ export default function Home() {
       )}
 
       {/* Products Section */}
-      <section id="products" className={`py-24 ${isAuthenticated ? "pt-12" : "min-h-screen flex flex-col justify-center"} snap-section`}>
+      <section id="products" className={`py-24 ${isAuthenticated ? "pt-12" : "min-h-screen flex flex-col justify-center"}`}>
         <div className="container px-4">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
             <div>
