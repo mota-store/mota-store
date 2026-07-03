@@ -77,7 +77,7 @@ export default function Home() {
     addItem.mutate({ productId });
   };
 
-  // Lógica de Scroll Snap Programático Refinada
+  // Lógica de Scroll Snap Programático Simplificada
   useEffect(() => {
     if (isAuthenticated) return;
 
@@ -92,7 +92,6 @@ export default function Home() {
       isScrolling.current = true;
       target.scrollIntoView({ behavior: 'smooth' });
       
-      // Tempo para o scroll suave completar e estabilizar
       setTimeout(() => {
         isScrolling.current = false;
       }, 800);
@@ -104,29 +103,15 @@ export default function Home() {
       const scrollTop = container.scrollTop;
       const heroHeight = heroRef.current?.offsetHeight || window.innerHeight;
       
-      // 1. Snap para baixo: Do Hero para Produtos
+      // REGRA 1: Hero -> Produtos (Scroll Down)
       if (e.deltaY > 0 && scrollTop < 50) {
         e.preventDefault();
         performSnap(productsRef.current);
-        return;
-      }
-      
-      // 2. Comportamento subindo de baixo
-      if (e.deltaY < 0) {
-        // Se estiver abaixo de Produtos e o próximo movimento for entrar na zona de Produtos
-        // Nós deixamos o scroll livre, mas se ele tentar "pular" para o Hero, nós travamos.
-        const isAtProductsTop = Math.abs(scrollTop - heroHeight) <= 20;
-        
-        if (isAtProductsTop) {
-          // Se já está estabilizado no topo dos produtos, faz o snap pro Hero
-          e.preventDefault();
-          performSnap(heroRef.current);
-        } else if (scrollTop < heroHeight && scrollTop > 50) {
-          // Se o scroll "vazar" para cima dos produtos sem ser um snap intencional (ex: scroll rápido)
-          // Nós forçamos ele a voltar/parar no topo dos produtos
-          e.preventDefault();
-          performSnap(productsRef.current);
-        }
+      } 
+      // REGRA 2: Produtos -> Hero (Scroll Up)
+      else if (e.deltaY < 0 && Math.abs(scrollTop - heroHeight) <= 20) {
+        e.preventDefault();
+        performSnap(heroRef.current);
       }
     };
 
@@ -138,29 +123,19 @@ export default function Home() {
       if (isScrolling.current) return;
       
       const touchCurrentY = e.touches[0].clientY;
-      const deltaY = touchStartY - touchCurrentY; // positivo = deslizar para cima (scroll down)
+      const deltaY = touchStartY - touchCurrentY; 
       const scrollTop = container.scrollTop;
       const heroHeight = heroRef.current?.offsetHeight || window.innerHeight;
 
-      // 1. Snap para baixo (Hero -> Produtos)
+      // REGRA 1: Hero -> Produtos (Scroll Down)
       if (deltaY > 10 && scrollTop < 50) {
         if (e.cancelable) e.preventDefault();
         performSnap(productsRef.current);
-        return;
       }
-
-      // 2. Comportamento subindo de baixo
-      if (deltaY < -10) {
-        const isAtProductsTop = Math.abs(scrollTop - heroHeight) <= 20;
-        
-        if (isAtProductsTop) {
-          if (e.cancelable) e.preventDefault();
-          performSnap(heroRef.current);
-        } else if (scrollTop < heroHeight && scrollTop > 50) {
-          // Bloqueia o "vazamento" para o Hero
-          if (e.cancelable) e.preventDefault();
-          performSnap(productsRef.current);
-        }
+      // REGRA 2: Produtos -> Hero (Scroll Up)
+      else if (deltaY < -10 && Math.abs(scrollTop - heroHeight) <= 20) {
+        if (e.cancelable) e.preventDefault();
+        performSnap(heroRef.current);
       }
     };
 
@@ -231,7 +206,7 @@ export default function Home() {
         </div>
       </section>
       )}
-				
+					
       {/* Trust Badges */}
       {!isAuthenticated && (
         <div className="container px-4 relative z-30 -mt-[362px] sm:-mt-[138px]">
