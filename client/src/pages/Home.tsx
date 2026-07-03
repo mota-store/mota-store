@@ -95,7 +95,7 @@ export default function Home() {
           />
         </div>
 
-        <div className="container relative z-20 px-4 pt-0">
+        <div className="container relative z-20 px-4 -mt-20">
           <div className="max-w-4xl mx-auto text-center">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -133,8 +133,8 @@ export default function Home() {
 		
       {/* Trust Badges - Only show when NOT authenticated */}
       {!isAuthenticated && (
-        <div className="container px-4 relative z-30 -mt-32">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-8 bg-card/20 backdrop-blur-xl border border-white/10 rounded-[2.5rem] shadow-2xl">
+        <div className="container px-4 relative z-30 -mt-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-8 bg-black/40 backdrop-blur-md border border-white/5 rounded-[2.5rem] shadow-2xl">
             {[
               { icon: <Zap className="text-accent h-6 w-6" />, title: "Entrega Imediata", desc: "Acesso na hora" },
               { icon: <ShieldCheck className="text-accent h-6 w-6" />, title: "Compra Segura", desc: "Pagamento via PIX" },
