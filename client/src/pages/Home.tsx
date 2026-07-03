@@ -81,12 +81,12 @@ export default function Home() {
   };
 
   return (
-    <div className="h-screen bg-background text-foreground selection:bg-accent selection:text-accent-foreground overflow-x-hidden overflow-y-auto scroll-smooth snap-y snap-mandatory">
+    <div className="h-screen bg-background text-foreground selection:bg-accent selection:text-accent-foreground overflow-x-hidden overflow-y-scroll scroll-smooth snap-y snap-mandatory">
       <Header />
 
       {/* Hero Section - Professional Store Look */}
       {!isAuthenticated && (
-      <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden snap-start">
+      <section className="relative w-full h-screen flex items-center justify-center overflow-hidden snap-start snap-always">
         <div className="absolute inset-0 z-0">
           <img 
             src="/assets/home-bg.gif" 
@@ -133,7 +133,7 @@ export default function Home() {
 		
       {/* Trust Badges - Only show when NOT authenticated */}
       {!isAuthenticated && (
-        <div className="container px-4 relative z-30 -mt-[362px] sm:-mt-[138px] snap-start">
+        <div className="container px-4 relative z-30 -mt-[362px] sm:-mt-[138px]">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-8 bg-transparent border-2 border-accent/20 rounded-[2.5rem] shadow-2xl shadow-accent/5">
             {[
               { icon: <Zap className="text-accent h-6 w-6" />, title: "Entrega Imediata", desc: "Acesso na hora" },
@@ -152,7 +152,7 @@ export default function Home() {
       )}
 
       {/* Products Section */}
-      <section id="products" className={`py-24 ${isAuthenticated ? "pt-12" : "min-h-screen flex flex-col justify-center"} snap-start`}>
+      <section id="products" className={`py-24 ${isAuthenticated ? "pt-12" : "min-h-screen flex flex-col justify-center"} snap-start snap-always`}>
         <div className="container px-4">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
             <div>
