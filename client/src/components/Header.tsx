@@ -127,9 +127,9 @@ export function Header() {
               <Button
                 size="sm"
                 className="bg-accent hover:bg-accent/90 font-black uppercase tracking-widest px-6 rounded-xl"
-                onClick={() => navigate("/login")}
+                onClick={() => navigate("/login?tab=register")}
               >
-                Entrar
+                Cadastrar
               </Button>
             )}
           </div>
@@ -205,15 +205,15 @@ export function Header() {
                     </Button>
                   </>
                 ) : (
-                  <Button
+                    <Button
                     size="lg"
                     className="w-full bg-accent hover:bg-accent/90 font-black uppercase tracking-widest"
                     onClick={() => {
-                      navigate("/login");
+                      navigate("/login?tab=register");
                       setMobileMenuOpen(false);
                     }}
                   >
-                    Entrar / Cadastro
+                    Cadastrar
                   </Button>
                 )}
               </div>

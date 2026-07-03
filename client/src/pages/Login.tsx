@@ -18,7 +18,12 @@ export default function Login() {
       document.body.style.overflow = "auto";
     };
   }, []);
-  const [isRegister, setIsRegister] = useState(false);
+
+  // Lógica para definir a aba inicial baseada no parâmetro 'tab' da URL
+  const searchParams = new URLSearchParams(window.location.search);
+  const defaultTabIsRegister = searchParams.get("tab") === "register";
+  
+  const [isRegister, setIsRegister] = useState(defaultTabIsRegister);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -51,8 +56,9 @@ export default function Login() {
         });
 
         if (result.success) {
-          // Login automático após o registro
-          window.location.href = "/profile?onboarding=true";
+          // O servidor já define o cookie de sessão na rota register, 
+          // então podemos redirecionar diretamente para a home ou perfil.
+          window.location.href = "/";
         } else {
           setError((result as any).error || "Erro ao registrar");
         }
@@ -63,8 +69,8 @@ export default function Login() {
         });
 
         if (result.success) {
-          // Se for o primeiro login, redirecionar para o perfil para configurar nome/foto
-          window.location.href = "/profile?onboarding=true";
+          // Redirecionar para a home após o login
+          window.location.href = "/";
         } else {
           setError(result.error || "Email ou senha inválidos");
         }
@@ -254,6 +260,7 @@ export default function Login() {
 
           <div className="mt-6 text-center">
             <button
+              type="button"
               onClick={() => {
                 setIsRegister(!isRegister);
                 setError("");

@@ -194,7 +194,7 @@ export default function Home() {
                   size="lg"
                   className="w-full sm:w-auto bg-transparent hover:bg-white/10 border-2 border-accent text-white px-12 py-8 text-xl font-black rounded-[2rem] shadow-2xl shadow-accent/20 transition-all hover:scale-105 active:scale-95 -translate-y-[27px]"
                   onClick={() => {
-                    window.location.href = "/login";
+                    navigate("/login?tab=register");
                   }}
                 >
                   GARANTIR MEU ACESSO
