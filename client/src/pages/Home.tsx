@@ -81,20 +81,11 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-accent selection:text-accent-foreground overflow-x-hidden scroll-smooth snap-container">
+    <div className="min-h-screen bg-background text-foreground selection:bg-accent selection:text-accent-foreground overflow-x-hidden scroll-smooth snap-y snap-proximity">
       <style>{`
-        .snap-container {
-          height: 100vh;
-          overflow-y: scroll;
-          scroll-snap-type: y mandatory;
-        }
         .snap-section {
           scroll-snap-align: start;
           scroll-snap-stop: always;
-        }
-        .no-snap {
-          scroll-snap-align: none;
-          scroll-snap-stop: normal;
         }
       `}</style>
       <Header />
@@ -254,7 +245,7 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="py-24 bg-accent/5 relative overflow-hidden no-snap">
+      <section className="py-24 bg-accent/5 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-accent/20 to-transparent" />
         <div className="container px-4">
           <div className="text-center mb-20">
@@ -297,7 +288,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="py-20 border-t border-border/50 no-snap">
+      <footer className="py-20 border-t border-border/50">
         <div className="container px-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-12 mb-16">
             <div className="text-center md:text-left">
