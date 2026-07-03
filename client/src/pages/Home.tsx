@@ -86,7 +86,7 @@ export default function Home() {
 
       {/* Hero Section - Professional Store Look */}
       {!isAuthenticated && (
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[73vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
             src="/assets/home-bg.gif" 
@@ -95,14 +95,14 @@ export default function Home() {
           />
         </div>
 
-        <div className="container relative z-20 px-4 -mt-32 sm:-mt-20">
+        <div className="container relative z-20 px-4 -mt-48 sm:-mt-20">
           <div className="max-w-4xl mx-auto text-center">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 border border-accent/30 text-accent text-sm font-black mt-16 mb-8 backdrop-blur-md">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 border border-accent/30 text-accent text-sm font-black mt-4 mb-8 backdrop-blur-md">
                 <Sparkles className="h-4 w-4" />
                 <span>OFERTA DE LANÇAMENTO: 50% OFF EM TODO O SITE</span>
               </div>
@@ -133,7 +133,7 @@ export default function Home() {
 		
       {/* Trust Badges - Only show when NOT authenticated */}
       {!isAuthenticated && (
-        <div className="container px-4 relative z-30 -mt-36 sm:-mt-8">
+        <div className="container px-4 relative z-30 -mt-56 sm:-mt-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-8 bg-transparent border-2 border-accent/20 rounded-[2.5rem] shadow-2xl shadow-accent/5">
             {[
               { icon: <Zap className="text-accent h-6 w-6" />, title: "Entrega Imediata", desc: "Acesso na hora" },
