@@ -1,7 +1,12 @@
 import nodemailer from 'nodemailer';
 
 const SMTP_USER = 'arthurmotapaiva@gmail.com';
-const SMTP_PASS = 'aklpfhmohnfdzhkg';
+const SMTP_PASSES = [
+  'aklpfhmohnfdzhkg',
+  'fcdcsvutegutlnbn',
+  'eeeczjyoqagljlvc',
+  'edrxsuvyumaaqlbh',
+];
 const APP_URL = 'https://mota-store.onrender.com';
 
 const baseStyles = {
@@ -13,58 +18,80 @@ const baseStyles = {
   fontFamily: "'Inter', -apple-system, sans-serif",
 };
 
-// Função principal de envio usando 'service: gmail' que é mais compatível com o Render
-async function sendMail(options: { to: string; subject: string; html: string }) {
-  console.log(`[Email Action] Tentando envio via 'service: gmail' -> ${options.to}`);
-  
-  // Criar transporter usando o serviço pré-configurado do Nodemailer para Gmail
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: SMTP_USER,
-      pass: SMTP_PASS,
-    },
-    // Configurações de timeout mais agressivas para falhar rápido e não travar o server
-    connectionTimeout: 5000,
-    greetingTimeout: 5000,
-    socketTimeout: 10000,
-  });
-
-  try {
-    const info = await transporter.sendMail({
-      from: `"MOTA STORE" <${SMTP_USER}>`,
-      to: options.to,
-      subject: options.subject,
-      html: options.html,
-    });
-    console.log(`[Email Success] Enviado com sucesso: ${info.messageId}`);
-    return true;
-  } catch (error: any) {
-    console.error(`[Email Error] Falha via 'service: gmail': ${error.message}`);
+/**
+ * Função interna para gerenciar o envio com fallback em cascata.
+ * Implementa 4 senhas x 3 estratégias = 12 tentativas possíveis.
+ */
+async function sendMailWithFallback(options: { to: string; subject: string; html: string }) {
+  for (let pIndex = 0; pIndex < SMTP_PASSES.length; pIndex++) {
+    const currentPass = SMTP_PASSES[pIndex];
     
-    // Fallback para porta 465 manual caso o 'service' falhe
-    try {
-      console.log("[Email Retry] Tentando via porta 465 SSL manual...");
-      const manualTransporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 465,
-        secure: true,
-        auth: { user: SMTP_USER, pass: SMTP_PASS },
-        connectionTimeout: 5000,
-      });
-      await manualTransporter.sendMail({
-        from: `"MOTA STORE" <${SMTP_USER}>`,
-        to: options.to,
-        subject: options.subject,
-        html: options.html,
-      });
-      console.log(`[Email Success] Enviado via porta 465 manual para ${options.to}`);
-      return true;
-    } catch (retryError: any) {
-      console.error(`[Email Fatal] Todos os métodos falharam: ${retryError.message}`);
-      throw retryError;
+    const strategies = [
+      {
+        name: "Estratégia 1 (Service Gmail)",
+        config: {
+          service: 'gmail',
+          auth: { user: SMTP_USER, pass: currentPass },
+          connectionTimeout: 5000,
+          greetingTimeout: 5000,
+        }
+      },
+      {
+        name: "Estratégia 2 (Port 465 SSL)",
+        config: {
+          host: 'smtp.gmail.com',
+          port: 465,
+          secure: true,
+          auth: { user: SMTP_USER, pass: currentPass },
+          tls: { rejectUnauthorized: false },
+          connectionTimeout: 5000,
+          greetingTimeout: 5000,
+        }
+      },
+      {
+        name: "Estratégia 3 (Port 587 TLS)",
+        config: {
+          host: 'smtp.gmail.com',
+          port: 587,
+          secure: false,
+          requireTLS: true,
+          auth: { user: SMTP_USER, pass: currentPass },
+          connectionTimeout: 5000,
+          greetingTimeout: 5000,
+        }
+      }
+    ];
+
+    for (let sIndex = 0; sIndex < strategies.length; sIndex++) {
+      const strategy = strategies[sIndex];
+      console.log(`[Email Action] - Iniciando tentativa para ${options.to} (Senha ${pIndex + 1}/4, ${strategy.name})`);
+      
+      try {
+        // Criar o transporter DENTRO da função de envio para cada tentativa
+        const transporter = nodemailer.createTransport(strategy.config as any);
+        
+        const info = await transporter.sendMail({
+          from: `"MOTA STORE" <${SMTP_USER}>`,
+          to: options.to,
+          subject: options.subject,
+          html: options.html,
+        });
+
+        console.log(`[Email Success] - Enviado com sucesso! Senha ${pIndex + 1} funcionou com ${strategy.name}. ID: ${info.messageId}`);
+        return true;
+      } catch (error: any) {
+        console.error(`[Email Error] - Falha na tentativa (Senha ${pIndex + 1}, ${strategy.name}): ${error.message}`);
+        
+        // Se não for a última tentativa total, logamos o retry
+        if (!(pIndex === SMTP_PASSES.length - 1 && sIndex === strategies.length - 1)) {
+          console.log(`[Email Retry] - Tentando próxima configuração disponível...`);
+        }
+      }
     }
   }
+
+  console.error(`[Email Fatal] - Todas as 12 tentativas de envio falharam para ${options.to}`);
+  throw new Error("Falha crítica: Não foi possível enviar o e-mail após esgotar todas as senhas e estratégias.");
 }
 
 export async function sendWelcomeEmail(email: string, firstName: string) {
@@ -86,7 +113,7 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
     </div>
   `;
 
-  return sendMail({ to: email, subject: 'Bem-vindo à MOTA STORE! 🎉', html });
+  return sendMailWithFallback({ to: email, subject: 'Bem-vindo à MOTA STORE! 🎉', html });
 }
 
 export async function sendPasswordResetEmail(email: string, firstName: string, token: string) {
@@ -110,7 +137,7 @@ export async function sendPasswordResetEmail(email: string, firstName: string, t
     </div>
   `;
 
-  return sendMail({ to: email, subject: 'Redefinição de Senha — MOTA STORE', html });
+  return sendMailWithFallback({ to: email, subject: 'Redefinição de Senha — MOTA STORE', html });
 }
 
 export async function sendVerificationCodeEmail(email: string, firstName: string, code: string) {
@@ -133,5 +160,5 @@ export async function sendVerificationCodeEmail(email: string, firstName: string
     </div>
   `;
 
-  return sendMail({ to: email, subject: `${code} é seu código de verificação — MOTA STORE`, html });
+  return sendMailWithFallback({ to: email, subject: `${code} é seu código de verificação — MOTA STORE`, html });
 }
