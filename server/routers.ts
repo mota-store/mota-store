@@ -23,22 +23,22 @@ export const appRouter = router({
       .input(z.object({ email: z.string().email(), password: z.string().min(6), name: z.string() }))
       .mutation(async ({ input, ctx }) => {
         const result = await registerUser(input.email, input.password, input.name);
-        
+
         if (result.success && result.userId) {
           const loginResult = await loginUser(input.email, input.password);
-          
+
           if (loginResult.success && loginResult.user) {
             const { sdk } = await import("./_core/sdk");
             const token = await sdk.createSessionToken(loginResult.user.openId, {
-              name: loginResult.user.name,
+              name: loginResult.user.name || input.name || loginResult.user.email?.split("@")[0] || "Usuário",
             });
-            
+
             const cookieOptions = getSessionCookieOptions(ctx.req);
             ctx.res.cookie(COOKIE_NAME, token, {
               ...cookieOptions,
               maxAge: ONE_YEAR_MS,
             });
-            
+
             return { success: true, user: loginResult.user };
           }
         }
@@ -51,15 +51,15 @@ export const appRouter = router({
         if (result.success && result.user) {
           const { sdk } = await import("./_core/sdk");
           const token = await sdk.createSessionToken(result.user.openId, {
-            name: result.user.name,
+            name: result.user.name || result.user.email?.split("@")[0] || "Usuário",
           });
-          
+
           const cookieOptions = getSessionCookieOptions(ctx.req);
           ctx.res.cookie(COOKIE_NAME, token, {
             ...cookieOptions,
             maxAge: ONE_YEAR_MS,
           });
-          
+
           return { success: true, user: result.user };
         }
         return result;

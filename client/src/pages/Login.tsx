@@ -67,7 +67,6 @@ export default function Login() {
         });
 
         if (result.success) {
-          // Redirecionar para a home após o login
           window.location.href = "/";
         } else {
           setError(result.error || "Email ou senha inválidos");
