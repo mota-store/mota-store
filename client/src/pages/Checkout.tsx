@@ -250,7 +250,6 @@ export default function Checkout() {
               </div>
 
               <div className="space-y-3">
-                {/* Option: Pay with Balance */}
                 {canPayWithBalance && (
                   <button
                     onClick={() => setStep("balance_confirm")}
@@ -273,7 +272,6 @@ export default function Checkout() {
                   </button>
                 )}
 
-                {/* Option: PIX */}
                 <button
                   onClick={handleConfirmOrder}
                   disabled={isSubmitting}
@@ -294,7 +292,6 @@ export default function Checkout() {
                   </div>
                 </button>
 
-                {/* Insufficient Balance Message */}
                 {!canPayWithBalance && balance !== undefined && (
                   <div className="px-6 py-3 text-center">
                     <p className="text-[9px] font-black uppercase tracking-[0.15em] text-muted-foreground/60">
