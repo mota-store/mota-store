@@ -70,7 +70,6 @@ export function PixPayment({
       await navigator.clipboard.writeText(pixCode);
       if (!silent) {
         setCopied(true);
-        toast.success("Código PIX copiado!");
         setTimeout(() => setCopied(false), 2000);
       }
     } catch (err) {
@@ -97,8 +96,7 @@ export function PixPayment({
       window.location.href = fallbackUrl;
     }, 1500);
 
-    // Mensagem informativa para o usuário
-    toast.info(`Tentando abrir ${appName}... Se não abrir automaticamente, cole o código PIX manualmente no app do banco.`);
+
   };
 
   const qrCodeSrc = getQrCodeSrc();
