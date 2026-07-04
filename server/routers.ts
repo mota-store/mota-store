@@ -4,7 +4,6 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
 import { getProducts, getProductById, getCartItems, addToCart, getUserOrders, updateUser } from "./db";
 import { loginUser, registerUser } from "./_core/email-auth";
-import { SignJWT } from "jose";
 import { z } from "zod";
 
 export const appRouter = router({
@@ -42,6 +41,7 @@ export const appRouter = router({
             console.log("[Register] Cookie definido com sucesso para:", loginResult.user.email);
             console.log("[Register] Cookie options:", cookieOptions);
             console.log("[Register] Token gerado (primeiros 20 chars):", token.substring(0, 20));
+            console.log("[Register] Headers de resposta após cookie:", ctx.res.getHeaders());
 
             return { success: true, user: loginResult.user };
           }
@@ -67,6 +67,7 @@ export const appRouter = router({
           console.log("[Login] Cookie definido com sucesso para:", result.user.email);
           console.log("[Login] Cookie options:", cookieOptions);
           console.log("[Login] Token gerado (primeiros 20 chars):", token.substring(0, 20));
+          console.log("[Login] Headers de resposta após cookie:", ctx.res.getHeaders());
 
           return { success: true, user: result.user };
         }
