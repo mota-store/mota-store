@@ -1,16 +1,19 @@
 
 import nodemailer from 'nodemailer';
 
-// Configuração do Nodemailer - Usando SMTP para maior compatibilidade
+// Configuração do Nodemailer - Usando SMTP da Resend
+// Documentação: https://resend.com/docs/send-with-nodemailer
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.resend.com',
-  port: parseInt(process.env.SMTP_PORT || '465'),
+  host: 'smtp.resend.com',
+  port: 465,
   secure: true,
   auth: {
-    user: process.env.SMTP_USER || 'resend',
+    user: 'resend',
     pass: process.env.RESEND_API_KEY,
   },
 });
+
+console.log("[Email] Nodemailer configurado com SMTP da Resend");
 
 const APP_URL = process.env.APP_URL || 'https://mota-store.onrender.com';
 
