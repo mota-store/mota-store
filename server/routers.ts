@@ -25,19 +25,23 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         const result = await registerUser(input.email, input.password, input.name);
         if (result.success && result.userId) {
+          // Login automático imediato
           const loginResult = await loginUser(input.email, input.password);
           if (loginResult.success && loginResult.user) {
             const { sdk } = await import("./_core/sdk");
             const token = await sdk.createSessionToken(loginResult.user.openId, {
               name: loginResult.user.name || input.name || loginResult.user.email?.split("@")[0] || "Usuário",
             });
+            
             const cookieOptions = getSessionCookieOptions(ctx.req);
+            
+            // Forçar o cookie a ser definido na resposta
             ctx.res.cookie(COOKIE_NAME, token, {
               ...cookieOptions,
               maxAge: ONE_YEAR_MS,
             });
-            console.log("[Register] Cookie definido para:", loginResult.user.email);
-            console.log("[Register] Cookie options:", cookieOptions);
+            
+            console.log(`[Register Auto-Login] Sucesso para: ${input.email}`);
             return { success: true, user: loginResult.user };
           }
         }

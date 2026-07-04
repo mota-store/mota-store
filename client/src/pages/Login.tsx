@@ -70,7 +70,7 @@ export default function Login() {
           setTimeout(() => {
             // Usar window.location.href para forçar um recarregamento completo da página
             // Isso garante que os cookies sejam enviados e o estado do tRPC seja resetado
-            window.location.href = "/?logged_in=true";
+            window.location.href = "/";
           }, 1200);
         } else {
           setError((result as any).error || "Erro ao registrar");
