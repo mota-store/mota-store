@@ -62,7 +62,7 @@ export default function Cart() {
 
   const groupedItems = Array.from(groupedItemsMap.values());
   const subtotal = groupedItems.reduce((sum, item) => sum + (item.product?.price || 0) * (item.quantity || 1), 0);
-  const originalTotal = subtotal * 1.5; 
+  const originalTotal = subtotal * 2;
   const total = subtotal;
 
   const handleRemoveOne = (item: any) => {
