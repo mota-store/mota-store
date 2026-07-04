@@ -56,8 +56,6 @@ export default function Login() {
         });
 
         if (result.success) {
-          // Após o registro bem-sucedido, o servidor já definiu o cookie.
-          // Forçamos o recarregamento total para a Home para garantir que o estado de auth seja lido.
           window.location.href = "/";
         } else {
           setError((result as any).error || "Erro ao registrar");

@@ -25,21 +25,13 @@ export const appRouter = router({
         const result = await registerUser(input.email, input.password, input.name);
         
         if (result.success && result.userId) {
-          // Após o registro, fazemos o login automático
           const loginResult = await loginUser(input.email, input.password);
           
           if (loginResult.success && loginResult.user) {
-            const secret = new TextEncoder().encode(process.env.JWT_SECRET || "secret");
-            const issuedAt = Date.now();
-            const expirationSeconds = Math.floor((issuedAt + ONE_YEAR_MS) / 1000);
-            const token = await new SignJWT({
-              openId: loginResult.user.openId,
-              appId: process.env.VITE_APP_ID || "mota-store",
+            const { sdk } = await import("./_core/sdk");
+            const token = await sdk.createSessionToken(loginResult.user.openId, {
               name: loginResult.user.name,
-            })
-              .setProtectedHeader({ alg: "HS256", typ: "JWT" })
-              .setExpirationTime(expirationSeconds)
-              .sign(secret);
+            });
             
             const cookieOptions = getSessionCookieOptions(ctx.req);
             ctx.res.cookie(COOKIE_NAME, token, {
@@ -57,17 +49,10 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         const result = await loginUser(input.email, input.password);
         if (result.success && result.user) {
-          const secret = new TextEncoder().encode(process.env.JWT_SECRET || "secret");
-          const issuedAt = Date.now();
-          const expirationSeconds = Math.floor((issuedAt + ONE_YEAR_MS) / 1000);
-          const token = await new SignJWT({
-            openId: result.user.openId,
-            appId: process.env.VITE_APP_ID || "mota-store",
+          const { sdk } = await import("./_core/sdk");
+          const token = await sdk.createSessionToken(result.user.openId, {
             name: result.user.name,
-          })
-            .setProtectedHeader({ alg: "HS256", typ: "JWT" })
-            .setExpirationTime(expirationSeconds)
-            .sign(secret);
+          });
           
           const cookieOptions = getSessionCookieOptions(ctx.req);
           ctx.res.cookie(COOKIE_NAME, token, {
