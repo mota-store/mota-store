@@ -84,7 +84,7 @@ export const appRouter = router({
         
         if (input.password) {
           const bcrypt = await import("bcrypt");
-          updateData.password = await bcrypt.hash(input.password, 10);
+          updateData.passwordHash = await bcrypt.hash(input.password, 10);
         }
         
         await updateUser(ctx.user.id, updateData);

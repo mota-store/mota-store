@@ -243,15 +243,6 @@ export default function Login() {
               {loading ? "PROCESSANDO..." : isRegister ? "CRIAR MINHA CONTA" : "ENTRAR"}
             </Button>
 
-            {isRegister && (
-              <p className="text-[9px] text-white/40 text-center mt-1">
-                Ao criar sua conta, você concorda com nossos{" "}
-                <a href="/termos" className="underline text-white/60 hover:text-white/80">Termos de Uso</a>
-                {" "}e{" "}
-                <a href="/privacidade" className="underline text-white/60 hover:text-white/80">Política de Privacidade</a>.
-              </p>
-            )}
-
             {!isRegister && (
               <div className="text-center mt-1 flex flex-col items-center">
                 <span className="text-[9px] font-bold text-white/50 uppercase tracking-widest mb-0.5">Não sabe sua senha?</span>
