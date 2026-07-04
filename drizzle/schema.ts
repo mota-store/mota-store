@@ -23,6 +23,7 @@ export const users = mysqlTable("users", {
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
   resetToken: varchar("resetToken", { length: 255 }),
   resetTokenExpires: timestamp("resetTokenExpires"),
+  balance: int("balance").default(0).notNull(), // saldo em centavos
 });
 
 export type User = typeof users.$inferSelect;
@@ -93,3 +94,59 @@ export const orderItems = mysqlTable("order_items", {
 
 export type OrderItem = typeof orderItems.$inferSelect;
 export type InsertOrderItem = typeof orderItems.$inferInsert;
+
+/**
+ * Balance transactions - registro de todas movimentações de saldo
+ */
+export const balanceTransactions = mysqlTable("balance_transactions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id").notNull().references(() => users.id),
+  amount: int("amount").notNull(), // positivo = crédito, negativo = débito (em centavos)
+  type: mysqlEnum("type", [
+    "deposit",
+    "purchase",
+    "refund",
+    "admin_credit",
+    "coupon",
+    "adjustment",
+  ]).notNull(),
+  description: text("description"),
+  relatedOrderId: int("related_order_id"),
+  relatedCouponId: int("related_coupon_id"),
+  newBalance: int("new_balance").notNull(), // saldo após a transação
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type BalanceTransaction = typeof balanceTransactions.$inferSelect;
+export type InsertBalanceTransaction = typeof balanceTransactions.$inferInsert;
+
+/**
+ * Coupons table
+ */
+export const coupons = mysqlTable("coupons", {
+  id: int("id").autoincrement().primaryKey(),
+  code: varchar("code", { length: 50 }).notNull().unique(), // código único (ex: SUMMER10)
+  value: int("value").notNull(), // valor do cupom em centavos
+  description: text("description"),
+  maxRedemptions: int("max_redemptions").default(1).notNull(), // quantas pessoas podem resgatar (1 = único, null = ilimitado)
+  currentRedemptions: int("current_redemptions").default(0).notNull(),
+  expiresAt: timestamp("expires_at"),
+  isActive: int("is_active").default(1).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type Coupon = typeof coupons.$inferSelect;
+export type InsertCoupon = typeof coupons.$inferInsert;
+
+/**
+ * Coupon redemptions - registro de quem resgatou qual cupom
+ */
+export const couponRedemptions = mysqlTable("coupon_redemptions", {
+  id: int("id").autoincrement().primaryKey(),
+  couponId: int("coupon_id").notNull().references(() => coupons.id),
+  userId: int("user_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type CouponRedemption = typeof couponRedemptions.$inferSelect;
+export type InsertCouponRedemption = typeof couponRedemptions.$inferInsert;

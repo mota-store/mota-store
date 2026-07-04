@@ -38,6 +38,20 @@ async function startServer() {
   registerStorageProxy(app);
   registerOAuthRoutes(app);
   registerGoogleOAuthRoutes(app);
+  
+  // Admin Login Route
+  const adminUsername = process.env.ADMIN_USERNAME || "whtxz";
+  const adminPassword = process.env.ADMIN_PASSWORD || "arthur2003";
+  
+  app.post("/api/admin/login", express.json(), (req, res) => {
+    const { username, password } = req.body;
+    if (username === adminUsername && password === adminPassword) {
+      res.json({ success: true });
+    } else {
+      res.status(401).json({ success: false, error: "Credenciais inválidas" });
+    }
+  });
+  
   // tRPC API
   app.use(
     "/api/trpc",

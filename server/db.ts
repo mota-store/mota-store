@@ -1,6 +1,6 @@
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql, gt, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, products, cartItems, orders, orderItems } from "../drizzle/schema";
+import { InsertUser, users, products, cartItems, orders, orderItems, balanceTransactions, coupons, couponRedemptions, InsertCoupon } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -59,6 +59,9 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       values.role = 'admin';
       updateSet.role = 'admin';
     }
+
+    // Set balance to 0 for new users
+    values.balance = 0;
 
     if (!values.lastSignedIn) {
       values.lastSignedIn = new Date();
@@ -164,7 +167,7 @@ export async function getUserOrders(userId: number) {
   return db.select().from(orders).where(eq(orders.userId, userId));
 }
 
-export async function updateUser(userId: number, data: { name?: string; avatarUrl?: string; passwordHash?: string }) {
+export async function updateUser(userId: number, data: { name?: string; avatarUrl?: string; passwordHash?: string; balance?: number }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(users).set(data).where(eq(users.id, userId));
@@ -196,4 +199,321 @@ export async function updateOrderStatus(orderId: number, status: string) {
       await db.delete(cartItems).where(eq(cartItems.userId, order.userId));
     }
   }
+}
+
+// ============================================
+// ADMIN FUNCTIONS
+// ============================================
+
+export async function getAllUsers() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(users).orderBy(desc(users.id));
+}
+
+export async function getUserBalance(userId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  const [user] = await db.select({ balance: users.balance }).from(users).where(eq(users.id, userId)).limit(1);
+  return user?.balance ?? 0;
+}
+
+export async function addUserBalance(userId: number, amount: number): Promise<{ success: boolean; newBalance: number }> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Usar transação para segurança
+  const result = await db.transaction(async (tx) => {
+    // 1. Obter saldo atual
+    const [currentUser] = await tx.select({ balance: users.balance }).from(users).where(eq(users.id, userId)).for("update").limit(1);
+    if (!currentUser) throw new Error("Usuário não encontrado");
+
+    const newBalance = currentUser.balance + amount;
+    if (newBalance < 0) throw new Error("Saldo não pode ser negativo");
+
+    // 2. Atualizar saldo
+    await tx.update(users).set({ balance: newBalance }).where(eq(users.id, userId));
+
+    // 3. Registrar transação
+    await tx.insert(balanceTransactions).values({
+      userId,
+      amount,
+      type: "admin_credit",
+      description: `Crédito administrativo de R$ ${(amount / 100).toFixed(2).replace(".", ",")}`,
+      newBalance,
+    });
+
+    return { success: true, newBalance };
+  });
+
+  return result;
+}
+
+export async function getUserTransactions(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(balanceTransactions).where(eq(balanceTransactions.userId, userId)).orderBy(desc(balanceTransactions.createdAt));
+}
+
+// ============================================
+// COUPON FUNCTIONS
+// ============================================
+
+export async function createCoupon(input: InsertCoupon): Promise<any> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const [result] = await db.insert(coupons).values({
+    code: input.code,
+    value: input.value,
+    description: input.description,
+    maxRedemptions: input.maxRedemptions ?? 1,
+    expiresAt: input.expiresAt,
+    isActive: 1,
+  });
+
+  const [coupon] = await db.select().from(coupons).where(eq(coupons.id, result.insertId)).limit(1);
+  return coupon;
+}
+
+export async function getAllCoupons() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(coupons).orderBy(desc(coupons.createdAt));
+}
+
+export async function toggleCouponActive(couponId: number, isActive: boolean) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(coupons).set({ isActive: isActive ? 1 : 0 }).where(eq(coupons.id, couponId));
+}
+
+export async function deleteCoupon(couponId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(coupons).where(eq(coupons.id, couponId));
+}
+
+export async function redeemCoupon(code: string, userId: number): Promise<{ success: boolean; value?: number; error?: string; newBalance?: number }> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.transaction(async (tx) => {
+    // 1. Buscar cupom
+    const [coupon] = await tx.select().from(coupons).where(and(eq(coupons.code, code), eq(coupons.isActive, 1))).limit(1);
+    if (!coupon) return { success: false, error: "Cupom inválido ou inativo" };
+
+    // 2. Verificar expiração
+    if (coupon.expiresAt && coupon.expiresAt < new Date()) {
+      return { success: false, error: "Cupom expirado" };
+    }
+
+    // 3. Verificar limite de resgates
+    if (coupon.currentRedemptions >= coupon.maxRedemptions) {
+      return { success: false, error: "Cupom já atingiu o limite de resgates" };
+    }
+
+    // 4. Verificar se o usuário já resgatou este cupom
+    const existingRedemption = await tx.select().from(couponRedemptions)
+      .where(and(eq(couponRedemptions.couponId, coupon.id), eq(couponRedemptions.userId, userId)))
+      .limit(1);
+    if (existingRedemption.length > 0) {
+      return { success: false, error: "Você já resgatou este cupom" };
+    }
+
+    // 5. Registrar resgate
+    await tx.insert(couponRedemptions).values({ couponId: coupon.id, userId });
+
+    // 6. Incrementar contador de resgates
+    await tx.update(coupons).set({ currentRedemptions: coupon.currentRedemptions + 1 }).where(eq(coupons.id, coupon.id));
+
+    // 7. Creditar saldo
+    const [currentUser] = await tx.select({ balance: users.balance }).from(users).where(eq(users.id, userId)).for("update").limit(1);
+    if (!currentUser) throw new Error("Usuário não encontrado");
+
+    const newBalance = currentUser.balance + coupon.value;
+    await tx.update(users).set({ balance: newBalance }).where(eq(users.id, userId));
+
+    // 8. Registrar transação
+    await tx.insert(balanceTransactions).values({
+      userId,
+      amount: coupon.value,
+      type: "coupon",
+      description: `Resgate de cupom: ${coupon.code}`,
+      relatedCouponId: coupon.id,
+      newBalance,
+    });
+
+    return { success: true, value: coupon.value, newBalance };
+  });
+
+  return result;
+}
+
+// ============================================
+// WALLET / CHECKOUT FUNCTIONS
+// ============================================
+
+export async function checkoutWithBalance(userId: number, amount: number, items: Array<{ productId: number; quantity: number; price: number }>): Promise<{ success: boolean; orderId?: number; error?: string; newBalance?: number }> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.transaction(async (tx) => {
+    // 1. Verificar saldo
+    const [currentUser] = await tx.select({ balance: users.balance }).from(users).where(eq(users.id, userId)).for("update").limit(1);
+    if (!currentUser) return { success: false, error: "Usuário não encontrado" };
+
+    if (currentUser.balance < amount) {
+      return { success: false, error: "Saldo insuficiente" };
+    }
+
+    // 2. Verificar se todos os produtos existem (validação adicional)
+    for (const item of items) {
+      const [product] = await tx.select().from(products).where(eq(products.id, item.productId)).limit(1);
+      if (!product || product.price !== item.price) {
+        return { success: false, error: `Preço do produto alterado ou produto não encontrado` };
+      }
+    }
+
+    // 3. Deduzir saldo
+    const newBalance = currentUser.balance - amount;
+    await tx.update(users).set({ balance: newBalance }).where(eq(users.id, userId));
+
+    // 4. Registrar transação
+    await tx.insert(balanceTransactions).values({
+      userId,
+      amount: -amount, // negativo = débito
+      type: "purchase",
+      description: `Compra via saldo - ${items.length} item(ns)`,
+      newBalance,
+    });
+
+    // 5. Criar ordem
+    const [orderResult] = await tx.insert(orders).values({
+      userId,
+      totalAmount: amount,
+      status: "completed", // já pago com saldo
+      paymentMethod: "balance",
+    });
+
+    const orderId = orderResult.insertId;
+
+    // 6. Criar itens da ordem
+    for (const item of items) {
+      await tx.insert(orderItems).values({
+        orderId,
+        productId: item.productId,
+        quantity: item.quantity,
+        priceAtPurchase: item.price,
+      });
+    }
+
+    // 7. Limpar carrinho
+    await tx.delete(cartItems).where(eq(cartItems.userId, userId));
+
+    return { success: true, orderId, newBalance };
+  });
+
+  return result;
+}
+
+// ============================================
+// PRODUCT CRUD (ADMIN)
+// ============================================
+
+export async function createProduct(input: {
+  name: string;
+  description?: string;
+  price: number;
+  trialDays: number;
+  benefits?: string;
+  imageUrl?: string;
+  affiliateLink: string;
+  category: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const [result] = await db.insert(products).values({
+    name: input.name,
+    description: input.description || null,
+    price: input.price,
+    trialDays: input.trialDays,
+    benefits: input.benefits || null,
+    imageUrl: input.imageUrl || null,
+    affiliateLink: input.affiliateLink,
+    category: input.category,
+    isActive: 1,
+  });
+
+  const [product] = await db.select().from(products).where(eq(products.id, result.insertId)).limit(1);
+  return product;
+}
+
+export async function updateProduct(id: number, input: {
+  name?: string;
+  description?: string;
+  price?: number;
+  trialDays?: number;
+  benefits?: string;
+  imageUrl?: string;
+  affiliateLink?: string;
+  category?: string;
+  isActive?: boolean;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const updateData: Record<string, any> = {};
+  if (input.name !== undefined) updateData.name = input.name;
+  if (input.description !== undefined) updateData.description = input.description;
+  if (input.price !== undefined) updateData.price = input.price;
+  if (input.trialDays !== undefined) updateData.trialDays = input.trialDays;
+  if (input.benefits !== undefined) updateData.benefits = input.benefits;
+  if (input.imageUrl !== undefined) updateData.imageUrl = input.imageUrl;
+  if (input.affiliateLink !== undefined) updateData.affiliateLink = input.affiliateLink;
+  if (input.category !== undefined) updateData.category = input.category;
+  if (input.isActive !== undefined) updateData.isActive = input.isActive ? 1 : 0;
+
+  await db.update(products).set(updateData).where(eq(products.id, id));
+
+  const [product] = await db.select().from(products).where(eq(products.id, id)).limit(1);
+  return product;
+}
+
+export async function deleteProduct(productId: number) {
+  const db = await getDb();
+  if (!db) return;
+  // Soft delete - desativar produto
+  await db.update(products).set({ isActive: 0 }).where(eq(products.id, productId));
+}
+
+export async function getAllProducts() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(products).orderBy(desc(products.createdAt));
+}
+
+// ============================================
+// ADMIN: LIST ALL ORDERS
+// ============================================
+
+export async function getAllOrders() {
+  const db = await getDb();
+  if (!db) return [];
+  // Retorna orders com info do usuário
+  const result = await db.select({
+    order: orders,
+    userName: users.name,
+    userEmail: users.email,
+  })
+  .from(orders)
+  .leftJoin(users, eq(orders.userId, users.id))
+  .orderBy(desc(orders.createdAt));
+
+  return result.map(r => ({
+    ...r.order,
+    userName: r.userName,
+    userEmail: r.userEmail,
+  }));
 }

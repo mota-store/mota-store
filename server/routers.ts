@@ -1,7 +1,7 @@
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
+import { publicProcedure, router, protectedProcedure, adminProcedure } from "./_core/trpc";
 import { getProducts, getProductById, getCartItems, addToCart, getUserOrders, updateUser } from "./db";
 import { loginUser, registerUser } from "./_core/email-auth";
 import { z } from "zod";
@@ -38,7 +38,6 @@ export const appRouter = router({
           
           const cookieOptions = getSessionCookieOptions(ctx.req);
           
-          // Passo 3.3: Definir o cookie ANTES de retornar
           ctx.res.cookie(COOKIE_NAME, token, {
             ...cookieOptions,
             maxAge: ONE_YEAR_MS,
@@ -46,7 +45,6 @@ export const appRouter = router({
           
           console.log(`[Register Auto-Login] Sucesso para: ${input.email}`);
           
-          // Envio síncrono obrigatório
           try {
             await emailService.sendWelcomeEmail(input.email, input.name);
           } catch (e) {
@@ -89,14 +87,12 @@ export const appRouter = router({
         const updateData: any = { name: input.name, avatarUrl: input.avatarUrl };
         
         if (input.password) {
-          // Se um código de verificação foi fornecido, validar antes de alterar a senha
           if (input.verificationCode) {
             const { getUserByResetToken, clearResetToken } = await import("./db");
             const user = await getUserByResetToken(input.verificationCode);
             if (!user || user.id !== ctx.user.id || !user.resetTokenExpires || user.resetTokenExpires < new Date()) {
               return { success: false, error: "Código de verificação inválido ou expirado" };
             }
-            // Limpar o código após uso
             await clearResetToken(ctx.user.id);
           }
 
@@ -140,14 +136,13 @@ export const appRouter = router({
         const crypto = await import("crypto");
         
         const user = await getUserByEmail(input.email);
-        if (!user) return { success: true }; // Don't reveal user existence
+        if (!user) return { success: true };
 
         const token = crypto.randomBytes(32).toString("hex");
-        const expires = new Date(Date.now() + 3600000); // 1 hour
+        const expires = new Date(Date.now() + 3600000);
 
         await setResetToken(user.id, token, expires);
         
-        // Envio síncrono obrigatório
         try {
           await emailService.sendPasswordResetEmail(user.email!, user.name || "Cliente", token);
         } catch (e) {
@@ -177,14 +172,11 @@ export const appRouter = router({
         const { setResetToken } = await import("./db");
         const { sendVerificationCodeEmail } = await import("./email");
         
-        // Gerar código de 4 dígitos
         const code = Math.floor(1000 + Math.random() * 9000).toString();
-        const expires = new Date(Date.now() + 600000); // 10 minutos
+        const expires = new Date(Date.now() + 600000);
 
-        // Reutilizar o campo resetToken para o código de 4 dígitos
         await setResetToken(ctx.user.id, code, expires);
         
-        // Envio síncrono obrigatório
         try {
           await emailService.sendVerificationCodeEmail(ctx.user.email!, ctx.user.name || "Cliente", code);
         } catch (e) {
@@ -193,22 +185,184 @@ export const appRouter = router({
         
         return { success: true };
       }),
-    verifyCodeAndShowPassword: protectedProcedure
-      .input(z.object({ code: z.string() }))
-      .mutation(async ({ ctx, input }) => {
-        const { getUserByResetToken } = await import("./db");
-        
-        const user = await getUserByResetToken(input.code);
-        if (!user || user.id !== ctx.user.id || !user.resetTokenExpires || user.resetTokenExpires < new Date()) {
-          return { success: false, error: "Código inválido ou expirado" };
-        }
+  }),
 
-        // Se o código estiver correto, retornamos um sinal de sucesso. 
-        // Nota: No banco a senha está em hash, então o frontend não conseguirá "ver" a senha original.
-        // Como o usuário quer "ver a senha atual", e ela é um hash, vamos informar que ela é protegida.
-        // Mas para satisfazer o requisito de "ver", vamos permitir que ele veja o hash ou uma mensagem.
-        // Na verdade, o ideal é permitir que ele redefina sem saber a antiga se ele tem o código.
+  // ============================================
+  // ADMIN ROUTES (protegidas com adminProcedure)
+  // ============================================
+  admin: router({
+    listUsers: adminProcedure.query(async () => {
+      const { getAllUsers } = await import("./db");
+      const users = await getAllUsers();
+      // Não retornar passwordHash nem resetToken
+      return users.map(u => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        loginMethod: u.loginMethod,
+        avatarUrl: u.avatarUrl,
+        role: u.role,
+        balance: u.balance,
+        createdAt: u.createdAt,
+        updatedAt: u.updatedAt,
+        lastSignedIn: u.lastSignedIn,
+      }));
+    }),
+
+    addUserBalance: adminProcedure
+      .input(z.object({
+        userId: z.number(),
+        amount: z.number().positive(), // em centavos
+      }))
+      .mutation(async ({ input }) => {
+        const { addUserBalance } = await import("./db");
+        return addUserBalance(input.userId, input.amount);
+      }),
+
+    createCoupon: adminProcedure
+      .input(z.object({
+        code: z.string().min(3).max(50).toUpperCase(),
+        value: z.number().positive(), // em centavos
+        description: z.string().max(255).optional(),
+        maxRedemptions: z.number().min(1).max(10000).optional(), // null = ilimitado
+        expiresAt: z.string().datetime().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { createCoupon } = await import("./db");
+        return createCoupon({
+          code: input.code,
+          value: input.value,
+          description: input.description || null,
+          maxRedemptions: input.maxRedemptions ?? 1,
+          expiresAt: input.expiresAt ? new Date(input.expiresAt) : null,
+        });
+      }),
+
+    listCoupons: adminProcedure.query(async () => {
+      const { getAllCoupons } = await import("./db");
+      return getAllCoupons();
+    }),
+
+    toggleCoupon: adminProcedure
+      .input(z.object({
+        couponId: z.number(),
+        isActive: z.boolean(),
+      }))
+      .mutation(async ({ input }) => {
+        const { toggleCouponActive } = await import("./db");
+        await toggleCouponActive(input.couponId, input.isActive);
         return { success: true };
+      }),
+
+    deleteCoupon: adminProcedure
+      .input(z.object({ couponId: z.number() }))
+      .mutation(async ({ input }) => {
+        const { deleteCoupon } = await import("./db");
+        await deleteCoupon(input.couponId);
+        return { success: true };
+      }),
+
+    // Produto CRUD
+    createProduct: adminProcedure
+      .input(z.object({
+        name: z.string().min(1).max(255),
+        description: z.string().max(2000).optional(),
+        price: z.number().positive(), // em centavos
+        trialDays: z.number().min(0).max(365),
+        benefits: z.string().max(2000).optional(),
+        imageUrl: z.string().max(512).optional(),
+        affiliateLink: z.string().max(512),
+        category: z.string().min(1).max(100),
+      }))
+      .mutation(async ({ input }) => {
+        const { createProduct } = await import("./db");
+        return createProduct(input);
+      }),
+
+    updateProduct: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        name: z.string().min(1).max(255).optional(),
+        description: z.string().max(2000).optional(),
+        price: z.number().positive().optional(),
+        trialDays: z.number().min(0).max(365).optional(),
+        benefits: z.string().max(2000).optional(),
+        imageUrl: z.string().max(512).optional(),
+        affiliateLink: z.string().max(512).optional(),
+        category: z.string().min(1).max(100).optional(),
+        isActive: z.boolean().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { updateProduct } = await import("./db");
+        return updateProduct(input.id, input);
+      }),
+
+    deleteProduct: adminProcedure
+      .input(z.object({ productId: z.number() }))
+      .mutation(async ({ input }) => {
+        const { deleteProduct } = await import("./db");
+        await deleteProduct(input.productId);
+        return { success: true };
+      }),
+
+    listAllProducts: adminProcedure.query(async () => {
+      const { getAllProducts } = await import("./db");
+      return getAllProducts();
+    }),
+
+    // Histórico de transações de um usuário
+    getUserTransactions: adminProcedure
+      .input(z.object({ userId: z.number() }))
+      .query(async ({ input }) => {
+        const { getUserTransactions } = await import("./db");
+        return getUserTransactions(input.userId);
+      }),
+
+    // Todas as orders do banco
+    listAllOrders: adminProcedure.query(async () => {
+      const { getAllOrders } = await import("./db");
+      return getAllOrders();
+    }),
+  }),
+
+  // ============================================
+  // COUPON ROUTES
+  // ============================================
+  coupon: router({
+    redeem: protectedProcedure
+      .input(z.object({ code: z.string().toUpperCase().min(1).max(50) }))
+      .mutation(async ({ ctx, input }) => {
+        const { redeemCoupon } = await import("./db");
+        return redeemCoupon(input.code, ctx.user.id);
+      }),
+  }),
+
+  // ============================================
+  // WALLET ROUTES
+  // ============================================
+  wallet: router({
+    getBalance: protectedProcedure.query(async ({ ctx }) => {
+      const { getUserBalance } = await import("./db");
+      return getUserBalance(ctx.user.id);
+    }),
+
+    getUserTransactions: protectedProcedure.query(async ({ ctx }) => {
+      const { getUserTransactions } = await import("./db");
+      return getUserTransactions(ctx.user.id);
+    }),
+
+    checkoutWithBalance: protectedProcedure
+      .input(z.object({
+        amount: z.number().positive(), // em centavos
+        cartItems: z.array(z.object({
+          productId: z.number(),
+          quantity: z.number().min(1),
+          price: z.number().positive(),
+        })),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { checkoutWithBalance } = await import("./db");
+        return checkoutWithBalance(ctx.user.id, input.amount, input.cartItems);
       }),
   }),
 

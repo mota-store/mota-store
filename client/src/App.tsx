@@ -12,9 +12,10 @@ import Checkout from "./pages/Checkout";
 import Login from "./pages/Login";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import ResetPassword from "./pages/ResetPassword";
+import Admin from "./pages/Admin";
+import RedeemCoupon from "./pages/RedeemCoupon";
 
 function Router() {
-  // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
       <Route path={"/"} component={Home} />
@@ -24,17 +25,13 @@ function Router() {
       <Route path={"/checkout"} component={Checkout} />
       <Route path={"/order-confirmation"} component={OrderConfirmation} />
       <Route path={"/reset-password"} component={ResetPassword} />
+      <Route path={"/admin"} component={Admin} />
+      <Route path={"/redeem-coupon"} component={RedeemCoupon} />
       <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
       <Route component={NotFound} />
     </Switch>
   );
 }
-
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
 
 function App() {
   return (

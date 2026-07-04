@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
-import { ArrowLeft, LogOut, ShoppingBag, Moon, Sun, Check, Loader2, Lock, Eye, EyeOff, Mail, ShoppingCart } from "lucide-react";
+import { ArrowLeft, LogOut, ShoppingBag, Moon, Sun, Check, Loader2, Lock, Eye, EyeOff, Mail, ShoppingCart, Gift, Wallet } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -18,6 +18,8 @@ export default function Profile() {
 
   const { data: allOrders } = trpc.orders.list.useQuery();
   const orders = allOrders?.filter(order => order.status === "completed");
+  const { data: balance } = trpc.wallet.getBalance.useQuery(undefined, { enabled: !!user });
+  const { data: transactions } = trpc.wallet.getUserTransactions.useQuery(undefined, { enabled: !!user });
   
   const updateProfile = trpc.auth.updateProfile.useMutation({
     onSuccess: () => {
@@ -199,6 +201,47 @@ export default function Profile() {
                       alt={user.name || "Avatar"} 
                       className="w-full h-full object-cover" 
                     />
+                  </div>
+                </div>
+
+                {/* Carteira / Saldo */}
+                <div className="w-full space-y-3 mb-6">
+                  <button
+                    onClick={() => navigate("/redeem-coupon")}
+                    className="w-full p-4 rounded-2xl bg-accent/10 border border-accent/20 hover:bg-accent/15 transition-all text-left group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Gift className="h-5 w-5 text-accent group-hover:scale-110 transition-transform" />
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-accent">Cupom</p>
+                          <p className="text-xs text-muted-foreground">Resgatar cupom promocional</p>
+                        </div>
+                      </div>
+                      <ArrowLeft className="h-4 w-4 text-accent rotate-180" />
+                    </div>
+                  </button>
+
+                  <div className="p-4 rounded-2xl bg-card/50 border border-border/40">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Wallet className="h-5 w-5 text-green-500" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Saldo</span>
+                    </div>
+                    <p className="text-2xl font-black text-green-500">R$ {((balance || 0) / 100).toFixed(2).replace(".", ",")}</p>
+                    {transactions && transactions.length > 0 && (
+                      <div className="mt-3 space-y-1 max-h-32 overflow-y-auto">
+                        {transactions.slice(0, 5).map(tx => (
+                          <div key={tx.id} className="flex items-center justify-between text-[10px] py-1 px-2 rounded-lg bg-muted/10">
+                            <span className="font-medium text-muted-foreground">
+                              {tx.type === "admin_credit" ? "Crédito" : tx.type === "purchase" ? "Compra" : tx.type === "coupon" ? "Cupom" : tx.type}
+                            </span>
+                            <span className={`font-black ${tx.amount >= 0 ? "text-green-500" : "text-red-500"}`}>
+                              {tx.amount >= 0 ? "+" : ""}R$ {(Math.abs(tx.amount) / 100).toFixed(2).replace(".", ",")}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 
