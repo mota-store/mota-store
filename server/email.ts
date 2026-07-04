@@ -5,8 +5,8 @@ import nodemailer from 'nodemailer';
 // Documentação: https://resend.com/docs/send-with-nodemailer
 const transporter = nodemailer.createTransport({
   host: 'smtp.resend.com',
-  port: 465,
-  secure: true,
+  port: 587,
+  secure: false, // true para 465, false para outras portas
   auth: {
     user: 'resend',
     pass: process.env.RESEND_API_KEY,

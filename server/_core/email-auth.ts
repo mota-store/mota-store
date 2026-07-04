@@ -50,13 +50,10 @@ export async function registerUser(
       lastSignedIn: new Date(),
     });
 
-    // Enviar e-mail de boas-vindas real via Resend
-    try {
-      const { sendWelcomeEmail } = await import("../email");
-      await sendWelcomeEmail(email, finalName);
-    } catch (err) {
+    // Enviar e-mail de boas-vindas real (sem aguardar para não travar o cadastro)
+    import("../email").then(m => m.sendWelcomeEmail(email, finalName)).catch(err => {
       console.error("[Email Auth] Failed to send welcome email:", err);
-    }
+    });
 
     return { success: true, userId: (result as any).insertId };
   } catch (error) {

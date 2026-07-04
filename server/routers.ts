@@ -124,7 +124,7 @@ export const appRouter = router({
         const expires = new Date(Date.now() + 3600000); // 1 hour
 
         await setResetToken(user.id, token, expires);
-        await sendPasswordResetEmail(user.email!, user.name || "Cliente", token);
+        sendPasswordResetEmail(user.email!, user.name || "Cliente", token).catch(console.error);
         
         return { success: true };
       }),
@@ -155,7 +155,7 @@ export const appRouter = router({
 
         // Reutilizar o campo resetToken para o código de 4 dígitos
         await setResetToken(ctx.user.id, code, expires);
-        await sendVerificationCodeEmail(ctx.user.email!, ctx.user.name || "Cliente", code);
+        sendVerificationCodeEmail(ctx.user.email!, ctx.user.name || "Cliente", code).catch(console.error);
         
         return { success: true };
       }),
