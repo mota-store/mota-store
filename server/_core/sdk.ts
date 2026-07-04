@@ -171,8 +171,8 @@ class SDKServer {
     return this.signSession(
       {
         openId,
-        appId: ENV.appId,
-        name: options.name || "",
+        appId: ENV.appId || "mota-store",
+        name: options.name || "Usuário",
       },
       options
     );

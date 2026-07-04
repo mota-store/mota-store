@@ -20,7 +20,8 @@ export function getSessionCookieOptions(
   return {
     httpOnly: true,
     path: "/",
-    sameSite: secure ? "none" : "lax",
+    // Usar 'lax' para maior compatibilidade em solicitações do mesmo site
+    sameSite: "lax",
     secure,
   };
 }
