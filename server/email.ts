@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import { google } from 'googleapis';
 
 const SMTP_USER = 'arthurmotapaiva@gmail.com';
 const CLIENT_ID = '1067935514097-gogg5cvuka13k514q2sju3ma0bak0ikr.apps.googleusercontent.com';
@@ -16,59 +16,62 @@ const baseStyles = {
 };
 
 /**
- * Função interna para gerenciar o envio usando OAuth2.
- * Esta abordagem usa HTTPS (porta 443) e ignora bloqueios de SMTP do Render.
+ * Configuração do cliente OAuth2 do Google
  */
-async function sendMailWithOAuth2(options: { to: string; subject: string; html: string }) {
-  console.log(`[Email Action] - Iniciando tentativa de envio via OAuth2 para ${options.to}`);
+const oauth2Client = new google.auth.OAuth2(
+  CLIENT_ID,
+  CLIENT_SECRET,
+  'https://developers.google.com/oauthplayground'
+);
+
+oauth2Client.setCredentials({
+  refresh_token: REFRESH_TOKEN,
+});
+
+const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+
+/**
+ * Função para codificar o e-mail no formato exigido pela API do Gmail (Base64URL)
+ */
+function createRawMessage(options: { to: string; subject: string; html: string }) {
+  const str = [
+    `Content-Type: text/html; charset="UTF-8"\n`,
+    `MIME-Version: 1.0\n`,
+    `Content-Transfer-Encoding: 7bit\n`,
+    `to: ${options.to}\n`,
+    `from: "MOTA STORE" <${SMTP_USER}>\n`,
+    `subject: ${options.subject}\n\n`,
+    options.html,
+  ].join('');
+
+  return Buffer.from(str)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+/**
+ * Função principal de envio via GMAIL HTTP API.
+ * Ignora completamente protocolos SMTP e bloqueios de porta do Render.
+ */
+async function sendMailViaAPI(options: { to: string; subject: string; html: string }) {
+  console.log(`[Email Action] - Iniciando envio via GMAIL HTTP API para ${options.to}`);
   
   try {
-    // Criar o transporter DENTRO da função de envio com configuração OAuth2
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        type: 'OAuth2',
-        user: SMTP_USER,
-        clientId: CLIENT_ID,
-        clientSecret: CLIENT_SECRET,
-        refreshToken: REFRESH_TOKEN,
+    const raw = createRawMessage(options);
+    const res = await gmail.users.messages.send({
+      userId: 'me',
+      requestBody: {
+        raw: raw,
       },
-    } as any);
-
-    const info = await transporter.sendMail({
-      from: `"MOTA STORE" <${SMTP_USER}>`,
-      to: options.to,
-      subject: options.subject,
-      html: options.html,
     });
 
-    console.log(`[Email Success] - Enviado com sucesso via OAuth2! ID: ${info.messageId}`);
+    console.log(`[Email Success] - Enviado com sucesso via API! ID: ${res.data.id}`);
     return true;
   } catch (error: any) {
-    console.error(`[Email Error] - Falha crítica no envio via OAuth2: ${error.message}`);
-    
-    // Se falhar o OAuth2, tentamos um fallback simples com as senhas de app (apenas em porta 587 como última tentativa)
-    console.log(`[Email Retry] - Tentando fallback emergencial com Senha de App...`);
-    try {
-      const fallbackTransporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: SMTP_USER,
-          pass: 'aklpfhmohnfdzhkg', // Usando a primeira senha de app como fallback
-        },
-      });
-      await fallbackTransporter.sendMail({
-        from: `"MOTA STORE" <${SMTP_USER}>`,
-        to: options.to,
-        subject: options.subject,
-        html: options.html,
-      });
-      console.log(`[Email Success] - Enviado via fallback de Senha de App.`);
-      return true;
-    } catch (fallbackError: any) {
-      console.error(`[Email Fatal] - Todos os métodos (OAuth2 e Fallback) falharam.`);
-      throw fallbackError;
-    }
+    console.error(`[Email Fatal] - Falha crítica no envio via GMAIL API: ${error.message}`);
+    throw error;
   }
 }
 
@@ -91,7 +94,7 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
     </div>
   `;
 
-  return sendMailWithOAuth2({ to: email, subject: 'Bem-vindo à MOTA STORE! 🎉', html });
+  return sendMailViaAPI({ to: email, subject: 'Bem-vindo à MOTA STORE! 🎉', html });
 }
 
 export async function sendPasswordResetEmail(email: string, firstName: string, token: string) {
@@ -115,7 +118,7 @@ export async function sendPasswordResetEmail(email: string, firstName: string, t
     </div>
   `;
 
-  return sendMailWithOAuth2({ to: email, subject: 'Redefinição de Senha — MOTA STORE', html });
+  return sendMailViaAPI({ to: email, subject: 'Redefinição de Senha — MOTA STORE', html });
 }
 
 export async function sendVerificationCodeEmail(email: string, firstName: string, code: string) {
@@ -138,5 +141,5 @@ export async function sendVerificationCodeEmail(email: string, firstName: string
     </div>
   `;
 
-  return sendMailWithOAuth2({ to: email, subject: `${code} é seu código de verificação — MOTA STORE`, html });
+  return sendMailViaAPI({ to: email, subject: `${code} é seu código de verificação — MOTA STORE`, html });
 }
