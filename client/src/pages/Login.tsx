@@ -67,11 +67,19 @@ export default function Login() {
 
         if (result.success) {
           toast.success(`Bem-vindo(a), ${name || "usuário"}! Sua conta foi criada com sucesso.`);
-          setTimeout(() => {
-            // Usar window.location.href para forçar um recarregamento completo da página
-            // Isso garante que os cookies sejam enviados e o estado do tRPC seja resetado
-            window.location.href = "/";
-          }, 1200);
+          
+          // Aguardar um pouco para o cookie ser processado pelo navegador
+          // e então forçar o recarregamento para a Home
+          setTimeout(async () => {
+            try {
+              // Tentar buscar o usuário atual para garantir que o cookie está funcionando
+              await utils.auth.me.fetch();
+              window.location.href = "/";
+            } catch (e) {
+              console.error("Erro ao validar login automático:", e);
+              window.location.href = "/";
+            }
+          }, 1500);
         } else {
           setError((result as any).error || "Erro ao registrar");
         }

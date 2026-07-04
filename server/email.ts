@@ -1,7 +1,16 @@
 
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Configuração do Nodemailer - Usando SMTP para maior compatibilidade
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || 'smtp.resend.com',
+  port: parseInt(process.env.SMTP_PORT || '465'),
+  secure: true,
+  auth: {
+    user: process.env.SMTP_USER || 'resend',
+    pass: process.env.RESEND_API_KEY,
+  },
+});
 
 const APP_URL = process.env.APP_URL || 'https://mota-store.onrender.com';
 
@@ -128,20 +137,15 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
   `;
 
   try {
-    const { data, error } = await resend.emails.send({
-      from: `Mota Store <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
-      to: [email],
+    const info = await transporter.sendMail({
+      from: `"Mota Store" <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
+      to: email,
       subject: 'Bem-vindo à Mota Store! 🎉',
       html: emailHtml,
     });
 
-    if (error) {
-      console.error('Error sending welcome email:', error);
-      return { success: false, error: error.message };
-    }
-
-    console.log('Welcome email sent:', data);
-    return { success: true, data };
+    console.log('Welcome email sent:', info.messageId);
+    return { success: true, data: info };
   } catch (error: any) {
     console.error('Exception sending welcome email:', error);
     return { success: false, error: error.message };
@@ -196,20 +200,15 @@ export async function sendPasswordResetEmail(email: string, firstName: string, t
   `;
 
   try {
-    const { data, error } = await resend.emails.send({
-      from: `Mota Store <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
-      to: [email],
+    const info = await transporter.sendMail({
+      from: `"Mota Store" <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
+      to: email,
       subject: 'Redefinição de senha — Mota Store',
       html: emailHtml,
     });
 
-    if (error) {
-      console.error('Error sending password reset email:', error);
-      return { success: false, error: error.message };
-    }
-
-    console.log('Password reset email sent:', data);
-    return { success: true, data };
+    console.log('Password reset email sent:', info.messageId);
+    return { success: true, data: info };
   } catch (error: any) {
     console.error('Exception sending password reset email:', error);
     return { success: false, error: error.message };
@@ -268,20 +267,15 @@ export async function sendVerificationCodeEmail(email: string, firstName: string
   `;
 
   try {
-    const { data, error } = await resend.emails.send({
-      from: `Mota Store <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
-      to: [email],
+    const info = await transporter.sendMail({
+      from: `"Mota Store" <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
+      to: email,
       subject: `${code} é seu código de verificação — Mota Store`,
       html: emailHtml,
     });
 
-    if (error) {
-      console.error('Error sending verification code email:', error);
-      return { success: false, error: error.message };
-    }
-
-    console.log('Verification code email sent:', data);
-    return { success: true, data };
+    console.log('Verification code email sent:', info.messageId);
+    return { success: true, data: info };
   } catch (error: any) {
     console.error('Exception sending verification code email:', error);
     return { success: false, error: error.message };
