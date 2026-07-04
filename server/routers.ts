@@ -45,10 +45,13 @@ export const appRouter = router({
           
           console.log(`[Register Auto-Login] Sucesso para: ${input.email}`);
           
-          // Passo 4.3: Envio de e-mail de boas-vindas assíncrono
-          import("./email").then(m => m.sendWelcomeEmail(input.email, input.name)).catch(err => {
-            console.error("[Email] Erro ao enviar boas-vindas no registro:", err);
-          });
+          // Forçando espera síncrona para garantir o envio no Render
+          try {
+            const { sendWelcomeEmail } = await import("./email");
+            await sendWelcomeEmail(input.email, input.name);
+          } catch (err) {
+            console.error("[Email Critical Error] Falha no registro:", err);
+          }
 
           return { success: true, user: result.user };
         }
@@ -132,10 +135,13 @@ export const appRouter = router({
 
         await setResetToken(user.id, token, expires);
         
-        // Passo 4.3: Envio de e-mail de redefinição assíncrono
-        import("./email").then(m => m.sendPasswordResetEmail(user.email!, user.name || "Cliente", token)).catch(err => {
-          console.error("[Email] Erro ao enviar redefinição de senha:", err);
-        });
+        // Forçando espera síncrona para garantir o envio no Render
+        try {
+          const { sendPasswordResetEmail } = await import("./email");
+          await sendPasswordResetEmail(user.email!, user.name || "Cliente", token);
+        } catch (err) {
+          console.error("[Email Critical Error] Falha na redefinição:", err);
+        }
         
         return { success: true };
       }),
@@ -167,10 +173,13 @@ export const appRouter = router({
         // Reutilizar o campo resetToken para o código de 4 dígitos
         await setResetToken(ctx.user.id, code, expires);
         
-        // Passo 4.3: Envio de e-mail de código de verificação assíncrono
-        import("./email").then(m => m.sendVerificationCodeEmail(ctx.user.email!, ctx.user.name || "Cliente", code)).catch(err => {
-          console.error("[Email] Erro ao enviar código de verificação:", err);
-        });
+        // Forçando espera síncrona para garantir o envio no Render
+        try {
+          const { sendVerificationCodeEmail } = await import("./email");
+          await sendVerificationCodeEmail(ctx.user.email!, ctx.user.name || "Cliente", code);
+        } catch (err) {
+          console.error("[Email Critical Error] Falha no código de verificação:", err);
+        }
         
         return { success: true };
       }),
