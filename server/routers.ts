@@ -5,6 +5,7 @@ import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
 import { getProducts, getProductById, getCartItems, addToCart, getUserOrders, updateUser } from "./db";
 import { loginUser, registerUser } from "./_core/email-auth";
 import { z } from "zod";
+import * as emailService from "./email";
 
 export const appRouter = router({
   system: systemRouter,
@@ -45,13 +46,8 @@ export const appRouter = router({
           
           console.log(`[Register Auto-Login] Sucesso para: ${input.email}`);
           
-          // Forçando espera síncrona para garantir o envio no Render
-          try {
-            const { sendWelcomeEmail } = await import("./email");
-            await sendWelcomeEmail(input.email, input.name);
-          } catch (err) {
-            console.error("[Email Critical Error] Falha no registro:", err);
-          }
+          // Envio síncrono obrigatório
+          await emailService.sendWelcomeEmail(input.email, input.name);
 
           return { success: true, user: result.user };
         }
@@ -135,13 +131,8 @@ export const appRouter = router({
 
         await setResetToken(user.id, token, expires);
         
-        // Forçando espera síncrona para garantir o envio no Render
-        try {
-          const { sendPasswordResetEmail } = await import("./email");
-          await sendPasswordResetEmail(user.email!, user.name || "Cliente", token);
-        } catch (err) {
-          console.error("[Email Critical Error] Falha na redefinição:", err);
-        }
+        // Envio síncrono obrigatório
+        await emailService.sendPasswordResetEmail(user.email!, user.name || "Cliente", token);
         
         return { success: true };
       }),
@@ -173,13 +164,8 @@ export const appRouter = router({
         // Reutilizar o campo resetToken para o código de 4 dígitos
         await setResetToken(ctx.user.id, code, expires);
         
-        // Forçando espera síncrona para garantir o envio no Render
-        try {
-          const { sendVerificationCodeEmail } = await import("./email");
-          await sendVerificationCodeEmail(ctx.user.email!, ctx.user.name || "Cliente", code);
-        } catch (err) {
-          console.error("[Email Critical Error] Falha no código de verificação:", err);
-        }
+        // Envio síncrono obrigatório
+        await emailService.sendVerificationCodeEmail(ctx.user.email!, ctx.user.name || "Cliente", code);
         
         return { success: true };
       }),
