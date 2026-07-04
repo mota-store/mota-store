@@ -44,6 +44,12 @@ export const appRouter = router({
           });
           
           console.log(`[Register Auto-Login] Sucesso para: ${input.email}`);
+          
+          // Passo 4.3: Envio de e-mail de boas-vindas assíncrono
+          import("./email").then(m => m.sendWelcomeEmail(input.email, input.name)).catch(err => {
+            console.error("[Email] Erro ao enviar boas-vindas no registro:", err);
+          });
+
           return { success: true, user: result.user };
         }
         return result;
@@ -125,7 +131,11 @@ export const appRouter = router({
         const expires = new Date(Date.now() + 3600000); // 1 hour
 
         await setResetToken(user.id, token, expires);
-        sendPasswordResetEmail(user.email!, user.name || "Cliente", token).catch(console.error);
+        
+        // Passo 4.3: Envio de e-mail de redefinição assíncrono
+        import("./email").then(m => m.sendPasswordResetEmail(user.email!, user.name || "Cliente", token)).catch(err => {
+          console.error("[Email] Erro ao enviar redefinição de senha:", err);
+        });
         
         return { success: true };
       }),
@@ -156,7 +166,11 @@ export const appRouter = router({
 
         // Reutilizar o campo resetToken para o código de 4 dígitos
         await setResetToken(ctx.user.id, code, expires);
-        sendVerificationCodeEmail(ctx.user.email!, ctx.user.name || "Cliente", code).catch(console.error);
+        
+        // Passo 4.3: Envio de e-mail de código de verificação assíncrono
+        import("./email").then(m => m.sendVerificationCodeEmail(ctx.user.email!, ctx.user.name || "Cliente", code)).catch(err => {
+          console.error("[Email] Erro ao enviar código de verificação:", err);
+        });
         
         return { success: true };
       }),
