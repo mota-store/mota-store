@@ -18,7 +18,7 @@ export async function registerUser(
   email: string,
   password: string,
   name: string
-): Promise<{ success: boolean; error?: string; userId?: number }> {
+): Promise<{ success: boolean; error?: string; userId?: number; user?: any }> {
   try {
     const db = await getDb();
     if (!db) {
@@ -55,7 +55,8 @@ export async function registerUser(
       console.error("[Email Auth] Failed to send welcome email:", err);
     });
 
-    return { success: true, userId: (result as any).insertId };
+    const userId = (result as any).insertId;
+    return { success: true, userId, user: { id: userId, email, name: finalName, openId: `email_${email}` } };
   } catch (error) {
     console.error("[Email Auth] Registration failed:", error);
     return { success: false, error: "Registration failed" };

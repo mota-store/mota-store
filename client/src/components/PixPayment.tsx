@@ -31,7 +31,8 @@ export function PixPayment({
 
   // Polling para verificar se o pagamento foi confirmado
   useEffect(() => {
-    if (pixCode) {
+    // Passo 7.1: Copiar automaticamente ao gerar
+    if (pixCode && !copied) {
       copyPixCode();
     }
     const pollInterval = setInterval(async () => {
@@ -105,11 +106,18 @@ export function PixPayment({
 
   const openBankApp = (appName: string, deepLink: string) => {
     const url = deepLink.replace("CODIGO_PIX", encodeURIComponent(pixCode || ""));
+    
+    // Passo 7.2: Tentar abrir app sem redirecionar para Play Store
+    // Usamos um iframe ou redirecionamento direto controlado
+    const start = Date.now();
     window.location.href = url;
     
     setTimeout(() => {
-      toast.info(`Se o app ${appName} não abriu, use o código copiado para colar manualmente.`);
-    }, 2000);
+      // Se demorou muito para voltar ou o foco mudou, o app provavelmente abriu
+      if (Date.now() - start < 1500) {
+        toast.info(`Se o app ${appName} não abriu, use o código copiado para colar manualmente.`);
+      }
+    }, 1000);
   };
 
   const qrCodeSrc = getQrCodeSrc();

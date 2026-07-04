@@ -113,11 +113,9 @@ export function registerGoogleOAuthRoutes(app: Express) {
         lastSignedIn: new Date(),
       });
 
-      // Se for um novo usuário, enviar e-mail de boas-vindas (assíncrono)
+      // Passo 4.3: Envio de e-mail assíncrono sem await
       if (isNewUser && email) {
-        import("../email").then(m => m.sendWelcomeEmail(email, name || "Cliente")).catch(err => {
-          console.error("[Google OAuth] Failed to send welcome email:", err);
-        });
+        import("../email").then(m => m.sendWelcomeEmail(email, name || "Cliente")).catch(console.error);
       }
 
       // Criar token de sessão

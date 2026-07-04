@@ -1,4 +1,3 @@
-
 import nodemailer from 'nodemailer';
 
 // Configuração do Nodemailer - SMTP Genérico (Gmail, Outlook, etc)
@@ -7,8 +6,8 @@ const transporter = nodemailer.createTransport({
   port: parseInt(process.env.SMTP_PORT || '587'),
   secure: process.env.SMTP_SECURE === 'true', // false para 587, true para 465
   auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
+    user: process.env.SMTP_USER || 'arthurmotapaiva@gmail.com',
+    pass: process.env.SMTP_PASS || 'aklpfhmohnfdzhkg',
   },
 });
 
@@ -80,11 +79,8 @@ const renderButton = (text: string, href: string) => `
 `;
 
 export async function sendWelcomeEmail(email: string, firstName: string) {
-  if (!process.env.RESEND_API_KEY) {
-    console.warn('RESEND_API_KEY is not defined. Skipping email send.');
-    return { success: false, error: 'API Key missing' };
-  }
-
+  const fromEmail = process.env.SMTP_USER || 'arthurmotapaiva@gmail.com';
+  
   const emailHtml = `
     <body style="background-color: ${baseStyles.bodyBg}; margin: 0; padding: 0;">
       <center>
@@ -140,7 +136,7 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
 
   try {
     const info = await transporter.sendMail({
-      from: process.env.SMTP_USER,
+      from: fromEmail,
       to: email,
       subject: 'Bem-vindo à Mota Store! 🎉',
       html: emailHtml,
@@ -155,11 +151,7 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
 }
 
 export async function sendPasswordResetEmail(email: string, firstName: string, token: string) {
-  if (!process.env.RESEND_API_KEY) {
-    console.warn('RESEND_API_KEY is not defined. Skipping email send.');
-    return { success: false, error: 'API Key missing' };
-  }
-
+  const fromEmail = process.env.SMTP_USER || 'arthurmotapaiva@gmail.com';
   const resetLink = `${APP_URL}/reset-password?token=${token}`;
 
   const emailHtml = `
@@ -184,7 +176,7 @@ export async function sendPasswordResetEmail(email: string, firstName: string, t
                     ${renderButton('REDEFINIR MINHA SENHA', resetLink)}
 
                     <p style="font-size: 14px; line-height: 20px; color: ${baseStyles.mutedTextColor}; margin-top: 40px;">
-                      Se você não solicitou a redefinição de senha, ignore este e-mail.
+                      Se você não solicitou a redefinir a senha, ignore este e-mail.
                     </p>
                   </td>
                 </tr>
@@ -203,7 +195,7 @@ export async function sendPasswordResetEmail(email: string, firstName: string, t
 
   try {
     const info = await transporter.sendMail({
-      from: process.env.SMTP_USER,
+      from: fromEmail,
       to: email,
       subject: 'Redefinição de senha — Mota Store',
       html: emailHtml,
@@ -218,11 +210,8 @@ export async function sendPasswordResetEmail(email: string, firstName: string, t
 }
 
 export async function sendVerificationCodeEmail(email: string, firstName: string, code: string) {
-  if (!process.env.RESEND_API_KEY) {
-    console.warn('RESEND_API_KEY is not defined. Skipping email send.');
-    return { success: false, error: 'API Key missing' };
-  }
-
+  const fromEmail = process.env.SMTP_USER || 'arthurmotapaiva@gmail.com';
+  
   const emailHtml = `
     <body style="background-color: ${baseStyles.bodyBg}; margin: 0; padding: 0;">
       <center>
@@ -270,7 +259,7 @@ export async function sendVerificationCodeEmail(email: string, firstName: string
 
   try {
     const info = await transporter.sendMail({
-      from: process.env.SMTP_USER,
+      from: fromEmail,
       to: email,
       subject: `${code} é seu código de verificação — Mota Store`,
       html: emailHtml,
@@ -279,12 +268,7 @@ export async function sendVerificationCodeEmail(email: string, firstName: string
     console.log('Verification code email sent:', info.messageId);
     return { success: true, data: info };
   } catch (error: any) {
-    console.error('Exception sending verification code email:', {
-      message: error.message,
-      code: error.code,
-      command: error.command,
-      response: error.response
-    });
+    console.error('Exception sending verification code email:', error);
     return { success: false, error: error.message };
   }
 }

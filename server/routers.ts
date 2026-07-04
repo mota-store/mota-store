@@ -23,27 +23,28 @@ export const appRouter = router({
     register: publicProcedure
       .input(z.object({ email: z.string().email(), password: z.string().min(6), name: z.string() }))
       .mutation(async ({ input, ctx }) => {
+        const { registerUser } = await import("./_core/email-auth");
         const result = await registerUser(input.email, input.password, input.name);
-        if (result.success && result.userId) {
-          // Login automático imediato
-          const loginResult = await loginUser(input.email, input.password);
-          if (loginResult.success && loginResult.user) {
-            const { sdk } = await import("./_core/sdk");
-            const token = await sdk.createSessionToken(loginResult.user.openId, {
-              name: loginResult.user.name || input.name || loginResult.user.email?.split("@")[0] || "Usuário",
-            });
-            
-            const cookieOptions = getSessionCookieOptions(ctx.req);
-            
-            // Forçar o cookie a ser definido na resposta
-            ctx.res.cookie(COOKIE_NAME, token, {
-              ...cookieOptions,
-              maxAge: ONE_YEAR_MS,
-            });
-            
-            console.log(`[Register Auto-Login] Sucesso para: ${input.email}`);
-            return { success: true, user: loginResult.user };
-          }
+        
+        if (result.success && result.user) {
+          const { sdk } = await import("./_core/sdk");
+          const { getSessionCookieOptions } = await import("./_core/cookies");
+          const { COOKIE_NAME, ONE_YEAR_MS } = await import("@shared/const");
+          
+          const token = await sdk.createSessionToken(result.user.openId, {
+            name: result.user.name || input.name || result.user.email?.split("@")[0] || "Usuário",
+          });
+          
+          const cookieOptions = getSessionCookieOptions(ctx.req);
+          
+          // Passo 3.3: Definir o cookie ANTES de retornar
+          ctx.res.cookie(COOKIE_NAME, token, {
+            ...cookieOptions,
+            maxAge: ONE_YEAR_MS,
+          });
+          
+          console.log(`[Register Auto-Login] Sucesso para: ${input.email}`);
+          return { success: true, user: result.user };
         }
         return result;
       }),

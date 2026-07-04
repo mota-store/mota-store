@@ -4,9 +4,9 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
-import { ArrowLeft, LogOut, ShoppingBag, Moon, Sun, Camera, Check, Loader2, Upload, Lock, Eye, EyeOff, Mail } from "lucide-react";
+import { ArrowLeft, LogOut, ShoppingBag, Moon, Sun, Check, Loader2, Lock, Eye, EyeOff, Mail, ShoppingCart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export default function Profile() {
@@ -23,6 +23,9 @@ export default function Profile() {
     onSuccess: () => {
       toast.success("Perfil atualizado com sucesso!");
       utils.auth.me.invalidate();
+      setNewPassword("");
+      setConfirmNewPassword("");
+      setShowPasswordFields(false);
     },
     onError: () => {
       toast.error("Erro ao atualizar perfil.");
@@ -38,11 +41,16 @@ export default function Profile() {
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
+  const [identityVerified, setIdentityVerified] = useState(false);
 
   const requestCodeMutation = trpc.auth.requestVerificationCode.useMutation();
   const verifyCodeMutation = trpc.auth.verifyCodeAndShowPassword.useMutation();
 
   const handleShowCurrentPassword = async () => {
+    if (user?.loginMethod === "google") {
+      toast.info("Contas Google não possuem senha definida no sistema. Crie uma senha abaixo se desejar.");
+      return;
+    }
     try {
       setIsVerifying(true);
       await requestCodeMutation.mutateAsync();
@@ -66,9 +74,8 @@ export default function Profile() {
       const result = await verifyCodeMutation.mutateAsync({ code: verificationCode });
       if (result.success) {
         setShowCodeModal(false);
-        toast.info("Identidade confirmada! Por segurança, as senhas são criptografadas e não podem ser lidas. Você pode alterá-la abaixo.", {
-          duration: 6000,
-        });
+        setIdentityVerified(true);
+        toast.success("Identidade confirmada! Por segurança, as senhas são criptografadas. Você pode alterá-la abaixo.");
       } else {
         toast.error(result.error || "Código inválido");
       }
@@ -105,7 +112,19 @@ export default function Profile() {
 
   const handleUpdateProfile = (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfile.mutate({ name });
+    if (showPasswordFields) {
+      if (newPassword.length < 6) {
+        toast.error("A senha deve ter pelo menos 6 caracteres.");
+        return;
+      }
+      if (newPassword !== confirmNewPassword) {
+        toast.error("As senhas não conferem.");
+        return;
+      }
+      updateProfile.mutate({ name, password: newPassword });
+    } else {
+      updateProfile.mutate({ name });
+    }
   };
 
   useEffect(() => {
@@ -169,6 +188,7 @@ export default function Profile() {
           </div>
         )}
       </AnimatePresence>
+
       {isOnboarding && (
         <div className="bg-accent text-accent-foreground py-3 px-4 text-center font-black uppercase tracking-widest text-xs animate-pulse">
           Bem-vindo! Por favor, confirme seu nome e foto de perfil abaixo.
@@ -235,7 +255,6 @@ export default function Profile() {
                         {updateProfile.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-5 w-5" />}
                       </button>
                     </div>
-                    <p className="text-[10px] text-muted-foreground ml-1 font-medium">O nome será atualizado automaticamente ao clicar no check.</p>
                   </div>
 
                   <div className="w-full space-y-4 pt-4 text-left">
@@ -245,7 +264,7 @@ export default function Profile() {
                     </div>
 
                     {!showPasswordFields ? (
-                      <>
+                      <div className="space-y-3">
                         <Button
                           type="button"
                           variant="outline"
@@ -257,14 +276,21 @@ export default function Profile() {
                         </Button>
                         <Button
                           type="button"
-                          variant="outline"
+                          variant="ghost"
                           onClick={handleShowCurrentPassword}
                           disabled={isVerifying}
-                          className="w-full h-10 rounded-xl border-accent/20 text-accent/70 font-bold text-xs uppercase tracking-widest hover:bg-accent/5 mt-2"
+                          className="w-full h-10 rounded-xl text-accent/70 font-bold text-[10px] uppercase tracking-widest hover:bg-accent/5"
                         >
                           {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : "Ver Senha Atual"}
                         </Button>
-                      </>
+                        
+                        {identityVerified && (
+                          <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-xl flex items-center gap-2">
+                            <Check className="h-4 w-4 text-green-500" />
+                            <span className="text-[9px] font-black text-green-500 uppercase tracking-widest">Identidade Verificada</span>
+                          </div>
+                        )}
+                      </div>
                     ) : (
                       <div className="space-y-4 p-4 rounded-2xl bg-accent/5 border border-accent/20 animate-in fade-in slide-in-from-top-2">
                         <div className="flex items-center justify-between">
@@ -279,7 +305,7 @@ export default function Profile() {
                         </div>
                         {user.loginMethod === "google" && (
                           <p className="text-[10px] text-yellow-500/80 font-medium mb-2">
-                            Você entrou com o Google. Criar uma senha permite que você também acesse sua conta por e-mail e senha.
+                            Você entrou com o Google. Defina uma senha para acesso manual.
                           </p>
                         )}
                         
@@ -287,7 +313,7 @@ export default function Profile() {
                           <div className="relative">
                             <Input
                               type={showNewPassword ? "text" : "password"}
-                              placeholder="Nova senha (min. 6 caracteres)"
+                              placeholder="Nova senha (min. 6)"
                               value={newPassword}
                               onChange={(e) => setNewPassword(e.target.value)}
                               className="h-10 rounded-lg bg-background/50 border-border/50 text-sm"
@@ -311,28 +337,11 @@ export default function Profile() {
                           
                           <Button
                             type="button"
+                            onClick={handleUpdateProfile}
                             disabled={updateProfile.isPending}
-                            onClick={async () => {
-                              if (newPassword.length < 6) {
-                                toast.error("A senha deve ter pelo menos 6 caracteres.");
-                                return;
-                              }
-                              if (newPassword !== confirmNewPassword) {
-                                toast.error("As senhas não conferem.");
-                                return;
-                              }
-                              updateProfile.mutate({ password: newPassword }, {
-                                onSuccess: () => {
-                                  setShowPasswordFields(false);
-                                  setNewPassword("");
-                                  setConfirmNewPassword("");
-                                  toast.success("Senha atualizada com sucesso!");
-                                }
-                              });
-                            }}
-                            className="w-full h-10 bg-accent text-accent-foreground font-black text-[10px] uppercase tracking-widest rounded-lg"
+                            className="w-full bg-accent text-accent-foreground font-black h-10 rounded-lg"
                           >
-                            {updateProfile.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "ATUALIZAR SENHA"}
+                            {updateProfile.isPending ? "SALVANDO..." : "SALVAR SENHA"}
                           </Button>
                         </div>
                       </div>
@@ -340,10 +349,10 @@ export default function Profile() {
                   </div>
 
                   <Button
-                    variant="outline"
                     type="button"
-                    className="w-full h-14 rounded-2xl border-destructive/20 text-destructive hover:bg-destructive/10 hover:text-destructive font-black transition-all mt-4"
-                    onClick={logout}
+                    onClick={() => logout()}
+                    variant="ghost"
+                    className="w-full h-12 rounded-xl text-red-500 hover:text-red-600 hover:bg-red-500/5 font-black text-xs uppercase tracking-widest"
                   >
                     <LogOut className="h-5 w-5 mr-2" />
                     ENCERRAR SESSÃO
@@ -363,7 +372,6 @@ export default function Profile() {
                   : "Você ainda não tem nenhum acesso ativo."}
               </p>
             </div>
-
             {orders && orders.length > 0 ? (
               <div className="space-y-6">
                 {orders.map((order) => (
@@ -416,7 +424,7 @@ export default function Profile() {
             ) : (
               <Card className="p-16 text-center bg-card/30 backdrop-blur-sm border-border/50 rounded-[2.5rem] border-dashed">
                 <div className="h-20 w-20 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-6">
-                  <ShoppingBag className="h-10 w-10 text-muted-foreground opacity-50" />
+                  <ShoppingCart className="h-10 w-10 text-muted-foreground opacity-50" />
                 </div>
                 <h4 className="text-2xl font-black mb-2 uppercase tracking-tight">Sua estante está vazia</h4>
                 <p className="text-muted-foreground mb-10 max-w-xs mx-auto font-medium">

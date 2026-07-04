@@ -39,7 +39,8 @@ export default function Checkout() {
     product: products?.find(p => p.id === item.productId)
   })) || [];
 
-  const total = enrichedItems.length * 500;
+  // Preço fixo de 5 reais por item para teste, ou usar o preço real
+  const total = enrichedItems.reduce((acc, item) => acc + (item.product?.price || 0) * (item.quantity || 1), 0);
 
   // Efeito para processar o pedido automaticamente se vier do carrinho com direct=true
   useEffect(() => {

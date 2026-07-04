@@ -68,15 +68,12 @@ export default function Login() {
         if (result.success) {
           toast.success(`Bem-vindo(a), ${name || "usuário"}! Sua conta foi criada com sucesso.`);
           
-          // Aguardar um pouco para o cookie ser processado pelo navegador
-          // e então forçar o recarregamento para a Home
+          // Passo 3.2: Aguardar confirmação e forçar recarregamento
           setTimeout(async () => {
             try {
-              // Tentar buscar o usuário atual para garantir que o cookie está funcionando
-              await utils.auth.me.fetch();
+              // Forçar recarregamento completo para garantir que o cookie seja reconhecido
               window.location.href = "/";
             } catch (e) {
-              console.error("Erro ao validar login automático:", e);
               window.location.href = "/";
             }
           }, 1500);
