@@ -1,19 +1,18 @@
 
 import nodemailer from 'nodemailer';
 
-// Configuração do Nodemailer - Usando SMTP da Resend
-// Documentação: https://resend.com/docs/send-with-nodemailer
+// Configuração do Nodemailer - SMTP Genérico (Gmail, Outlook, etc)
 const transporter = nodemailer.createTransport({
-  host: 'smtp.resend.com',
-  port: 587,
-  secure: false, // true para 465, false para outras portas
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: parseInt(process.env.SMTP_PORT || '587'),
+  secure: process.env.SMTP_SECURE === 'true', // false para 587, true para 465
   auth: {
-    user: 'resend',
-    pass: process.env.RESEND_API_KEY,
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
   },
 });
 
-console.log("[Email] Nodemailer configurado com SMTP da Resend");
+console.log("[Email] Nodemailer configurado para SMTP:", process.env.SMTP_HOST || 'smtp.gmail.com');
 
 const APP_URL = process.env.APP_URL || 'https://mota-store.onrender.com';
 
@@ -141,7 +140,7 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
 
   try {
     const info = await transporter.sendMail({
-      from: `"Mota Store" <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
+      from: `"Mota Store" <${process.env.SMTP_USER}>`,
       to: email,
       subject: 'Bem-vindo à Mota Store! 🎉',
       html: emailHtml,
@@ -204,7 +203,7 @@ export async function sendPasswordResetEmail(email: string, firstName: string, t
 
   try {
     const info = await transporter.sendMail({
-      from: `"Mota Store" <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
+      from: `"Mota Store" <${process.env.SMTP_USER}>`,
       to: email,
       subject: 'Redefinição de senha — Mota Store',
       html: emailHtml,
@@ -271,7 +270,7 @@ export async function sendVerificationCodeEmail(email: string, firstName: string
 
   try {
     const info = await transporter.sendMail({
-      from: `"Mota Store" <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
+      from: `"Mota Store" <${process.env.SMTP_USER}>`,
       to: email,
       subject: `${code} é seu código de verificação — Mota Store`,
       html: emailHtml,
