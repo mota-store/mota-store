@@ -144,6 +144,38 @@ export const appRouter = router({
         
         return { success: true };
       }),
+    requestVerificationCode: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        const { setResetToken } = await import("./db");
+        const { sendVerificationCodeEmail } = await import("./email");
+        
+        // Gerar código de 4 dígitos
+        const code = Math.floor(1000 + Math.random() * 9000).toString();
+        const expires = new Date(Date.now() + 600000); // 10 minutos
+
+        // Reutilizar o campo resetToken para o código de 4 dígitos
+        await setResetToken(ctx.user.id, code, expires);
+        await sendVerificationCodeEmail(ctx.user.email!, ctx.user.name || "Cliente", code);
+        
+        return { success: true };
+      }),
+    verifyCodeAndShowPassword: protectedProcedure
+      .input(z.object({ code: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const { getUserByResetToken } = await import("./db");
+        
+        const user = await getUserByResetToken(input.code);
+        if (!user || user.id !== ctx.user.id || !user.resetTokenExpires || user.resetTokenExpires < new Date()) {
+          return { success: false, error: "Código inválido ou expirado" };
+        }
+
+        // Se o código estiver correto, retornamos um sinal de sucesso. 
+        // Nota: No banco a senha está em hash, então o frontend não conseguirá "ver" a senha original.
+        // Como o usuário quer "ver a senha atual", e ela é um hash, vamos informar que ela é protegida.
+        // Mas para satisfazer o requisito de "ver", vamos permitir que ele veja o hash ou uma mensagem.
+        // Na verdade, o ideal é permitir que ele redefina sem saber a antiga se ele tem o código.
+        return { success: true };
+      }),
   }),
 
   products: router({

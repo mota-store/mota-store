@@ -4,7 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
-import { ArrowLeft, LogOut, ShoppingBag, Moon, Sun, Camera, Check, Loader2, Upload, Lock, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, LogOut, ShoppingBag, Moon, Sun, Camera, Check, Loader2, Upload, Lock, Eye, EyeOff, Mail } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 
@@ -34,6 +35,49 @@ export default function Profile() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showCodeModal, setShowCodeModal] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  const requestCodeMutation = trpc.auth.requestVerificationCode.useMutation();
+  const verifyCodeMutation = trpc.auth.verifyCodeAndShowPassword.useMutation();
+
+  const handleShowCurrentPassword = async () => {
+    try {
+      setIsVerifying(true);
+      await requestCodeMutation.mutateAsync();
+      setShowCodeModal(true);
+      toast.success("Código de verificação enviado para seu e-mail!");
+    } catch (err: any) {
+      toast.error("Erro ao enviar código: " + err.message);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    if (verificationCode.length !== 4) {
+      toast.error("O código deve ter 4 dígitos");
+      return;
+    }
+
+    try {
+      setIsVerifying(true);
+      const result = await verifyCodeMutation.mutateAsync({ code: verificationCode });
+      if (result.success) {
+        setShowCodeModal(false);
+        toast.info("Identidade confirmada! Por segurança, as senhas são criptografadas e não podem ser lidas. Você pode alterá-la abaixo.", {
+          duration: 6000,
+        });
+      } else {
+        toast.error(result.error || "Código inválido");
+      }
+    } catch (err: any) {
+      toast.error("Erro ao verificar código: " + err.message);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
 
   useEffect(() => {
     const isDarkMode = document.documentElement.classList.contains("dark");
@@ -74,6 +118,57 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-background text-foreground pt-16">
+      {/* Modal de Código de Verificação */}
+      <AnimatePresence>
+        {showCodeModal && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-card border border-border p-8 rounded-[2rem] max-w-sm w-full shadow-2xl"
+            >
+              <div className="text-center space-y-4">
+                <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/20 text-accent mb-2">
+                  <Mail className="h-8 w-8" />
+                </div>
+                <h2 className="text-xl font-black uppercase tracking-tight">Verifique seu e-mail</h2>
+                <p className="text-sm text-muted-foreground">
+                  Enviamos um código de 4 dígitos para <span className="text-foreground font-bold">{user?.email}</span>. Digite-o abaixo para continuar.
+                </p>
+                
+                <div className="pt-4">
+                  <Input
+                    type="text"
+                    maxLength={4}
+                    placeholder="0000"
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ""))}
+                    className="text-center text-3xl font-black tracking-[1rem] h-16 bg-muted/50 border-2 border-accent/30 rounded-2xl focus:border-accent"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    variant="ghost"
+                    className="flex-1 font-bold uppercase tracking-widest text-xs"
+                    onClick={() => setShowCodeModal(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    className="flex-1 bg-accent hover:bg-accent/90 font-black uppercase tracking-widest text-xs"
+                    onClick={handleVerifyCode}
+                    disabled={isVerifying || verificationCode.length !== 4}
+                  >
+                    {isVerifying ? "Verificando..." : "Confirmar"}
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
       {isOnboarding && (
         <div className="bg-accent text-accent-foreground py-3 px-4 text-center font-black uppercase tracking-widest text-xs animate-pulse">
           Bem-vindo! Por favor, confirme seu nome e foto de perfil abaixo.
@@ -163,16 +258,11 @@ export default function Profile() {
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => {
-                            if (user.loginMethod === "email" || (user as any).passwordHash) {
-                              toast.info("Você tem uma senha definida. Por segurança, não exibimos senhas. Use 'Alterar Senha' para criar uma nova.");
-                            } else {
-                              toast.info("Você entrou com o Google e não tem senha definida. Você pode criar uma senha abaixo.");
-                            }
-                          }}
+                          onClick={handleShowCurrentPassword}
+                          disabled={isVerifying}
                           className="w-full h-10 rounded-xl border-accent/20 text-accent/70 font-bold text-xs uppercase tracking-widest hover:bg-accent/5 mt-2"
                         >
-                          Ver Senha Atual
+                          {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : "Ver Senha Atual"}
                         </Button>
                       </>
                     ) : (

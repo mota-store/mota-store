@@ -215,3 +215,75 @@ export async function sendPasswordResetEmail(email: string, firstName: string, t
     return { success: false, error: error.message };
   }
 }
+
+export async function sendVerificationCodeEmail(email: string, firstName: string, code: string) {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('RESEND_API_KEY is not defined. Skipping email send.');
+    return { success: false, error: 'API Key missing' };
+  }
+
+  const emailHtml = `
+    <body style="background-color: ${baseStyles.bodyBg}; margin: 0; padding: 0;">
+      <center>
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: ${baseStyles.bodyBg};">
+          <tr>
+            <td align="center" style="padding: 20px;">
+              <table class="main" width="600" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: ${baseStyles.cardBg}; border-radius: ${baseStyles.cardBorderRadius};">
+                <tr>
+                  <td style="padding: 0px 20px;">
+                    ${renderHeader()}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 20px 40px 40px 40px; font-family: ${baseStyles.fontFamily}; color: ${baseStyles.textColor};">
+                    <h1 style="font-size: 24px; font-weight: 900; margin: 0 0 15px 0;">Seu código de verificação</h1>
+                    <p style="font-size: 16px; line-height: 24px; color: ${baseStyles.mutedTextColor}; margin: 0 0 30px 0;">
+                      Olá, ${firstName}! Use o código abaixo para confirmar sua identidade e visualizar sua senha atual na Mota Store.
+                    </p>
+
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: ${baseStyles.bodyBg}; border: 2px dashed ${baseStyles.accentColor}; border-radius: 16px; padding: 30px; margin-top: 20px;">
+                      <tr>
+                        <td align="center" style="font-family: ${baseStyles.fontFamily}; color: ${baseStyles.accentColor}; font-size: 48px; font-weight: 900; letter-spacing: 10px;">
+                          ${code}
+                        </td>
+                      </tr>
+                    </table>
+
+                    <p style="font-size: 14px; line-height: 20px; color: ${baseStyles.mutedTextColor}; margin-top: 40px;">
+                      Este código é válido por 10 minutos. Se você não solicitou este código, ignore este e-mail.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 0px 20px;">
+                    ${renderFooter()}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </center>
+    </body>
+  `;
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: `Mota Store <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
+      to: [email],
+      subject: `${code} é seu código de verificação — Mota Store`,
+      html: emailHtml,
+    });
+
+    if (error) {
+      console.error('Error sending verification code email:', error);
+      return { success: false, error: error.message };
+    }
+
+    console.log('Verification code email sent:', data);
+    return { success: true, data };
+  } catch (error: any) {
+    console.error('Exception sending verification code email:', error);
+    return { success: false, error: error.message };
+  }
+}
