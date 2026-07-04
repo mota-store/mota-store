@@ -25,18 +25,17 @@ export const appRouter = router({
         const result = await registerUser(input.email, input.password, input.name);
         
         if (result.success && result.userId) {
-          // Login automático após o registro
-          const { getUserByOpenId } = await import("./db");
-          const user = await getUserByOpenId(`email_${input.email}`);
+          // Após o registro, fazemos o login automático
+          const loginResult = await loginUser(input.email, input.password);
           
-          if (user) {
+          if (loginResult.success && loginResult.user) {
             const secret = new TextEncoder().encode(process.env.JWT_SECRET || "secret");
             const issuedAt = Date.now();
             const expirationSeconds = Math.floor((issuedAt + ONE_YEAR_MS) / 1000);
             const token = await new SignJWT({
-              openId: user.openId,
+              openId: loginResult.user.openId,
               appId: process.env.VITE_APP_ID || "mota-store",
-              name: user.name || input.name,
+              name: loginResult.user.name,
             })
               .setProtectedHeader({ alg: "HS256", typ: "JWT" })
               .setExpirationTime(expirationSeconds)
@@ -48,7 +47,7 @@ export const appRouter = router({
               maxAge: ONE_YEAR_MS,
             });
             
-            return { success: true, user };
+            return { success: true, user: loginResult.user };
           }
         }
         return result;
