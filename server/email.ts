@@ -140,7 +140,7 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
 
   try {
     const info = await transporter.sendMail({
-      from: `"Mota Store" <${process.env.SMTP_USER}>`,
+      from: process.env.SMTP_USER,
       to: email,
       subject: 'Bem-vindo à Mota Store! 🎉',
       html: emailHtml,
@@ -203,7 +203,7 @@ export async function sendPasswordResetEmail(email: string, firstName: string, t
 
   try {
     const info = await transporter.sendMail({
-      from: `"Mota Store" <${process.env.SMTP_USER}>`,
+      from: process.env.SMTP_USER,
       to: email,
       subject: 'Redefinição de senha — Mota Store',
       html: emailHtml,
@@ -270,7 +270,7 @@ export async function sendVerificationCodeEmail(email: string, firstName: string
 
   try {
     const info = await transporter.sendMail({
-      from: `"Mota Store" <${process.env.SMTP_USER}>`,
+      from: process.env.SMTP_USER,
       to: email,
       subject: `${code} é seu código de verificação — Mota Store`,
       html: emailHtml,
@@ -279,7 +279,12 @@ export async function sendVerificationCodeEmail(email: string, firstName: string
     console.log('Verification code email sent:', info.messageId);
     return { success: true, data: info };
   } catch (error: any) {
-    console.error('Exception sending verification code email:', error);
+    console.error('Exception sending verification code email:', {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+      response: error.response
+    });
     return { success: false, error: error.message };
   }
 }
