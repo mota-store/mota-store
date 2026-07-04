@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
-import { Copy, CheckCircle2, Clock, QrCode, RefreshCw } from "lucide-react";
+import { Copy, CheckCircle2, Clock, QrCode, RefreshCw, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 interface PixPaymentProps {
@@ -14,40 +14,48 @@ interface PixPaymentProps {
 export function PixPayment({ 
   qrCodeBase64, 
   pixCode = "00020126360014br.gov.bcb.pix0114+55919848864735204000053039865802BR5910MOTA STORE6009SAO PAULO62070503***6304E2B9", 
-  expiresIn = 1800,
+  expiresIn = 600,
   onPaymentConfirmed 
 }: PixPaymentProps) {
-  const [timeLeft, setTimeLeft] = useState(expiresIn);
+  // Inicializar timeLeft a partir do sessionStorage se existir, para persistir após refresh
+  const [timeLeft, setTimeLeft] = useState(() => {
+    const savedExpiry = sessionStorage.getItem("pix_expiry_time");
+    if (savedExpiry) {
+      const remaining = Math.floor((parseInt(savedExpiry) - Date.now()) / 1000);
+      return remaining > 0 ? remaining : 0;
+    }
+    
+    // Se não tiver salvo, salvar o tempo atual + expiresIn
+    const expiryTime = Date.now() + expiresIn * 1000;
+    sessionStorage.setItem("pix_expiry_time", expiryTime.toString());
+    return expiresIn;
+  });
+  
   const [copied, setCopied] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
 
   useEffect(() => {
     if (timeLeft <= 0) return;
     const timer = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
+      setTimeLeft((prev) => {
+        const next = prev - 1;
+        if (next <= 0) {
+          clearInterval(timer);
+          return 0;
+        }
+        return next;
+      });
     }, 1000);
     return () => clearInterval(timer);
   }, [timeLeft]);
 
-  // Polling para verificar se o pagamento foi confirmado
   useEffect(() => {
-    // Passo 7.1: Copiar automaticamente ao gerar
     if (pixCode && !copied) {
-      copyPixCode();
+      // Pequeno delay para garantir que o componente montou antes de copiar
+      const t = setTimeout(() => copyPixCode(true), 1000);
+      return () => clearTimeout(t);
     }
-    const pollInterval = setInterval(async () => {
-      setIsChecking(true);
-      try {
-        // Aqui você pode adicionar uma chamada à API para verificar o status do pagamento
-      } catch (err) {
-        console.error("Erro ao verificar pagamento:", err);
-      } finally {
-        setIsChecking(false);
-      }
-    }, 5000); // Verifica a cada 5 segundos
-
-    return () => clearInterval(pollInterval);
-  }, [onPaymentConfirmed, pixCode]);
+  }, [pixCode]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -57,188 +65,126 @@ export function PixPayment({
 
   const getQrCodeSrc = () => {
     if (!qrCodeBase64) return null;
-
-    if (qrCodeBase64.startsWith("http://") || qrCodeBase64.startsWith("https://")) {
-      return qrCodeBase64;
-    }
-
-    if (qrCodeBase64.startsWith("data:")) {
-      return qrCodeBase64;
-    }
-
+    if (qrCodeBase64.startsWith("http") || qrCodeBase64.startsWith("data:")) return qrCodeBase64;
     return `data:image/png;base64,${qrCodeBase64}`;
   };
 
-  const copyPixCode = async () => {
-    if (!pixCode || pixCode.trim() === "") {
-      toast.error("Código PIX não está disponível");
-      return;
-    }
-
+  const copyPixCode = async (silent = false) => {
+    if (!pixCode) return;
     try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(pixCode);
-      } else {
-        const textArea = document.createElement("textarea");
-        textArea.value = pixCode;
-        textArea.style.position = "fixed";
-        textArea.style.left = "-9999px";
-        textArea.style.top = "0";
-        textArea.style.opacity = "0";
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        const success = document.execCommand("copy");
-        document.body.removeChild(textArea);
-
-        if (!success) {
-          throw new Error('document.execCommand("copy") retornou false');
-        }
+      await navigator.clipboard.writeText(pixCode);
+      if (!silent) {
+        setCopied(true);
+        toast.success("Código PIX copiado!");
+        setTimeout(() => setCopied(false), 2000);
       }
-      setCopied(true);
-      toast.success("Código PIX copiado!");
-      setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      toast.error("Erro ao copiar código");
-      console.error("Falha ao copiar:", err);
+      if (!silent) toast.error("Erro ao copiar código");
     }
   };
 
   const openBankApp = (appName: string, deepLink: string) => {
+    // Copiar antes de tentar abrir o app para garantir que o usuário tenha o código
+    copyPixCode(true);
+    
     const url = deepLink.replace("CODIGO_PIX", encodeURIComponent(pixCode || ""));
     
-    // Passo 7.2: Tentar abrir app sem redirecionar para Play Store
-    // Usamos um iframe ou redirecionamento direto controlado
-    const start = Date.now();
+    // Tentar abrir o app
     window.location.href = url;
     
-    setTimeout(() => {
-      // Se demorou muito para voltar ou o foco mudou, o app provavelmente abriu
-      if (Date.now() - start < 1500) {
-        toast.info(`Se o app ${appName} não abriu, use o código copiado para colar manualmente.`);
-      }
-    }, 1000);
+    toast.info(`Abrindo ${appName}... Se o app não abrir, cole o código manualmente.`);
   };
 
   const qrCodeSrc = getQrCodeSrc();
 
   return (
-    <Card className="p-6 bg-card/50 border-border/50 backdrop-blur-sm max-w-md mx-auto">
-      <div className="flex flex-col items-center text-center space-y-6">
+    <Card className="p-8 bg-card/40 border-border/40 backdrop-blur-xl rounded-[2.5rem] shadow-2xl max-w-md mx-auto border-t-accent/20">
+      <div className="flex flex-col items-center text-center space-y-8">
         <div className="space-y-2">
-          <h3 className="text-xl font-bold text-foreground">Pagamento via PIX</h3>
-          <p className="text-sm text-muted-foreground">Escaneie o QR Code ou copie o código abaixo</p>
-          {isChecking && (
-            <div className="flex items-center justify-center gap-1 text-xs text-accent animate-pulse">
-              <RefreshCw className="w-3 h-3" />
-              <span>Verificando pagamento...</span>
-            </div>
-          )}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 border border-accent/20 text-accent text-[10px] font-black uppercase tracking-widest mb-2">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
+            </span>
+            Pagamento Seguro via PIX
+          </div>
+          <h3 className="text-2xl font-black text-foreground tracking-tighter uppercase">Finalize seu Pedido</h3>
+          <p className="text-xs text-muted-foreground font-medium px-4">Escaneie o QR Code abaixo ou utilize o botão Copia e Cola</p>
         </div>
 
-        {/* QR Code Placeholder/Real */}
+        {/* QR Code */}
         <div className="relative group">
-          <div className="w-64 h-64 bg-white p-4 rounded-xl shadow-inner flex items-center justify-center overflow-hidden">
+          <div className="w-64 h-64 bg-white p-6 rounded-[2rem] shadow-2xl flex items-center justify-center overflow-hidden border-4 border-accent/5 transition-transform group-hover:scale-[1.02]">
             {qrCodeSrc ? (
-              <img
-                src={qrCodeSrc}
-                alt="QR Code PIX"
-                className="w-full h-full object-contain"
-                onError={(e) => {
-                  console.error("Erro ao carregar QR Code:", (e.target as HTMLImageElement).src);
-                  (e.target as HTMLImageElement).style.display = "none";
-                }}
-              />
+              <img src={qrCodeSrc} alt="QR Code PIX" className="w-full h-full object-contain" />
             ) : (
-              <div className="flex flex-col items-center text-slate-400">
-                <QrCode className="w-20 h-20 mb-2 opacity-20" />
-                <span className="text-xs font-mono opacity-40">QR CODE GERADO PELA API</span>
+              <div className="flex flex-col items-center text-slate-300">
+                <QrCode className="w-20 h-20 mb-2 opacity-10" />
+                <span className="text-[10px] font-black opacity-20 uppercase tracking-widest">Gerando...</span>
               </div>
             )}
           </div>
-          {timeLeft > 0 && (
-            <div className="absolute -top-3 -right-3 bg-accent text-accent-foreground px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
-              <Clock className="w-3 h-3" />
-              {formatTime(timeLeft)}
+          
+          {timeLeft > 0 ? (
+            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-background border border-border/50 px-6 py-2 rounded-2xl text-sm font-black flex items-center gap-2 shadow-xl whitespace-nowrap">
+              <Clock className="w-4 h-4 text-accent animate-pulse" />
+              <span className="text-foreground">Expira em:</span>
+              <span className="text-accent tabular-nums">{formatTime(timeLeft)}</span>
             </div>
-          )}
-          {timeLeft <= 0 && (
-            <div className="absolute -top-3 -right-3 bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
-              Expirado
+          ) : (
+            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-destructive text-destructive-foreground px-6 py-2 rounded-2xl text-sm font-black shadow-xl">
+              QR Code Expirado
             </div>
           )}
         </div>
 
-        {/* Atalhos de Bancos */}
-        <div className="w-full space-y-3">
-          <p className="text-xs text-muted-foreground text-center">Abrir no seu banco</p>
-          <div className="flex justify-center gap-3">
-            {/* Nubank */}
-            <button
-              onClick={() => openBankApp("Nubank", "nubank://nu/pix/copia-e-cola?code=CODIGO_PIX")}
-              className="flex flex-col items-center gap-1 p-2 rounded-xl border border-[#820AD1]/30 bg-[#820AD1]/5 hover:bg-[#820AD1]/20 transition-colors w-20"
-            >
-              <img src="/assets/banks/nubank.png" alt="Nubank" className="w-8 h-8 rounded-lg object-contain" />
-              <span className="text-[10px] font-medium text-foreground">Nubank</span>
-            </button>
-
-            {/* Inter */}
-            <button
-              onClick={() => openBankApp("Inter", "inter://pix?code=CODIGO_PIX")}
-              className="flex flex-col items-center gap-1 p-2 rounded-xl border border-[#FF6B00]/30 bg-[#FF6B00]/5 hover:bg-[#FF6B00]/20 transition-colors w-20"
-            >
-              <img src="/assets/banks/inter.png" alt="Inter" className="w-8 h-8 rounded-lg object-contain" />
-              <span className="text-[10px] font-medium text-foreground">Inter</span>
-            </button>
-
-            {/* Itaú */}
-            <button
-              onClick={() => openBankApp("Itaú", "itau-empresas://pix/copia-e-cola?code=CODIGO_PIX")}
-              className="flex flex-col items-center gap-1 p-2 rounded-xl border border-[#EC7000]/30 bg-[#EC7000]/5 hover:bg-[#EC7000]/20 transition-colors w-20"
-            >
-              <img src="/assets/banks/itau.png" alt="Itaú" className="w-8 h-8 rounded-lg object-contain" />
-              <span className="text-[10px] font-medium text-foreground">Itaú</span>
-            </button>
-
-            {/* Bradesco */}
-            <button
-              onClick={() => openBankApp("Bradesco", "bradesco://pix?code=CODIGO_PIX")}
-              className="flex flex-col items-center gap-1 p-2 rounded-xl border border-[#cc092f]/30 bg-[#cc092f]/5 hover:bg-[#cc092f]/20 transition-colors w-20"
-            >
-              <img src="/assets/banks/bradesco.png" alt="Bradesco" className="w-8 h-8 rounded-lg object-contain" />
-              <span className="text-[10px] font-medium text-foreground">Bradesco</span>
-            </button>
+        {/* Bancos */}
+        <div className="w-full space-y-4 pt-4">
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Pagar com meu banco</p>
+          <div className="grid grid-cols-4 gap-3">
+            {[
+              { name: "Nubank", color: "#820AD1", icon: "/assets/banks/nubank.png", link: "nubank://nu/pix/copia-e-cola?code=CODIGO_PIX" },
+              { name: "Inter", color: "#FF6B00", icon: "/assets/banks/inter.png", link: "inter://pix?code=CODIGO_PIX" },
+              { name: "Itaú", color: "#EC7000", icon: "/assets/banks/itau.png", link: "itau-empresas://pix/copia-e-cola?code=CODIGO_PIX" },
+              { name: "Bradesco", color: "#cc092f", icon: "/assets/banks/bradesco.png", link: "bradesco://pix?code=CODIGO_PIX" }
+            ].map((bank) => (
+              <button
+                key={bank.name}
+                onClick={() => openBankApp(bank.name, bank.link)}
+                className="flex flex-col items-center gap-2 p-3 rounded-2xl border border-border/50 bg-muted/20 hover:bg-muted/40 transition-all active:scale-90 group"
+              >
+                <div className="w-10 h-10 rounded-xl overflow-hidden shadow-md group-hover:shadow-lg transition-all">
+                  <img src={bank.icon} alt={bank.name} className="w-full h-full object-cover" />
+                </div>
+                <span className="text-[9px] font-black uppercase tracking-tighter text-muted-foreground group-hover:text-foreground">{bank.name}</span>
+              </button>
+            ))}
           </div>
         </div>
 
         {/* Copia e Cola */}
-        <div className="w-full space-y-3">
-          <div className="relative">
-            <div className="w-full bg-muted/50 p-3 rounded-lg text-[10px] font-mono break-all border border-border text-left pr-10 max-h-24 overflow-y-auto">
-              {pixCode}
-            </div>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="absolute right-1 top-1 h-8 w-8 hover:bg-accent/20"
-              onClick={copyPixCode}
-            >
-              {copied ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-            </Button>
-          </div>
-
+        <div className="w-full space-y-3 pt-2">
           <Button
-            className="w-full bg-accent hover:bg-accent/90 font-bold py-6 shadow-lg shadow-accent/20"
-            onClick={copyPixCode}
+            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-black py-8 rounded-[1.5rem] shadow-xl shadow-accent/20 transition-all active:scale-95 text-sm uppercase tracking-widest flex items-center justify-center gap-3"
+            onClick={() => copyPixCode()}
           >
-            {copied ? "Código Copiado!" : "Copiar Código PIX"}
+            {copied ? (
+              <>
+                <CheckCircle2 className="h-5 w-5" />
+                Código Copiado!
+              </>
+            ) : (
+              <>
+                <Copy className="h-5 w-5" />
+                Pix Copia e Cola
+              </>
+            )}
           </Button>
-        </div>
-
-        <div className="text-xs text-muted-foreground space-y-1">
-          <p>1. Abra o app do seu banco</p>
-          <p>2. Escolha pagar via PIX (QR Code ou Copia e Cola)</p>
-          <p>3. O pagamento é aprovado instantaneamente</p>
+          
+          <div className="flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground/50">
+            <RefreshCw className={`w-3 h-3 ${isChecking ? 'animate-spin' : ''}`} />
+            {isChecking ? 'Verificando Pagamento...' : 'Aguardando confirmação...'}
+          </div>
         </div>
       </div>
     </Card>
