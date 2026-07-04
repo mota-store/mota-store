@@ -21,6 +21,7 @@ const baseStyles = {
 /**
  * Função interna para gerenciar o envio com fallback em cascata.
  * Implementa 4 senhas x 3 estratégias = 12 tentativas possíveis.
+ * Adicionado 'family: 4' para forçar IPv4 e evitar erro ENETUNREACH no Render.
  */
 async function sendMailWithFallback(options: { to: string; subject: string; html: string }) {
   for (let pIndex = 0; pIndex < SMTP_PASSES.length; pIndex++) {
@@ -34,6 +35,7 @@ async function sendMailWithFallback(options: { to: string; subject: string; html
           auth: { user: SMTP_USER, pass: currentPass },
           connectionTimeout: 5000,
           greetingTimeout: 5000,
+          family: 4 // Forçar IPv4
         }
       },
       {
@@ -46,6 +48,7 @@ async function sendMailWithFallback(options: { to: string; subject: string; html
           tls: { rejectUnauthorized: false },
           connectionTimeout: 5000,
           greetingTimeout: 5000,
+          family: 4 // Forçar IPv4
         }
       },
       {
@@ -58,6 +61,7 @@ async function sendMailWithFallback(options: { to: string; subject: string; html
           auth: { user: SMTP_USER, pass: currentPass },
           connectionTimeout: 5000,
           greetingTimeout: 5000,
+          family: 4 // Forçar IPv4
         }
       }
     ];
