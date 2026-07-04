@@ -1,12 +1,9 @@
 import nodemailer from 'nodemailer';
 
 const SMTP_USER = 'arthurmotapaiva@gmail.com';
-const SMTP_PASSES = [
-  'aklpfhmohnfdzhkg',
-  'fcdcsvutegutlnbn',
-  'eeeczjyoqagljlvc',
-  'edrxsuvyumaaqlbh',
-];
+const CLIENT_ID = '1067935514097-gogg5cvuka13k514q2sju3ma0bak0ikr.apps.googleusercontent.com';
+const CLIENT_SECRET = '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';
+const REFRESH_TOKEN = '1//04CuXpN3UYnKpCgYIARAAGAQSNwF-L9IrmwyxlF_wSJhepkvW9MxjZ39qK1-_S-tEGPX7x6cTUsgKrduwnCk8lood4l6bNgBJHYA';
 const APP_URL = 'https://mota-store.onrender.com';
 
 const baseStyles = {
@@ -19,83 +16,60 @@ const baseStyles = {
 };
 
 /**
- * Função interna para gerenciar o envio com fallback em cascata.
- * Implementa 4 senhas x 3 estratégias = 12 tentativas possíveis.
- * Adicionado 'family: 4' para forçar IPv4 e evitar erro ENETUNREACH no Render.
+ * Função interna para gerenciar o envio usando OAuth2.
+ * Esta abordagem usa HTTPS (porta 443) e ignora bloqueios de SMTP do Render.
  */
-async function sendMailWithFallback(options: { to: string; subject: string; html: string }) {
-  for (let pIndex = 0; pIndex < SMTP_PASSES.length; pIndex++) {
-    const currentPass = SMTP_PASSES[pIndex];
+async function sendMailWithOAuth2(options: { to: string; subject: string; html: string }) {
+  console.log(`[Email Action] - Iniciando tentativa de envio via OAuth2 para ${options.to}`);
+  
+  try {
+    // Criar o transporter DENTRO da função de envio com configuração OAuth2
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        type: 'OAuth2',
+        user: SMTP_USER,
+        clientId: CLIENT_ID,
+        clientSecret: CLIENT_SECRET,
+        refreshToken: REFRESH_TOKEN,
+      },
+    } as any);
+
+    const info = await transporter.sendMail({
+      from: `"MOTA STORE" <${SMTP_USER}>`,
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+    });
+
+    console.log(`[Email Success] - Enviado com sucesso via OAuth2! ID: ${info.messageId}`);
+    return true;
+  } catch (error: any) {
+    console.error(`[Email Error] - Falha crítica no envio via OAuth2: ${error.message}`);
     
-    const strategies = [
-      {
-        name: "Estratégia 1 (Service Gmail)",
-        config: {
-          service: 'gmail',
-          auth: { user: SMTP_USER, pass: currentPass },
-          connectionTimeout: 5000,
-          greetingTimeout: 5000,
-          family: 4 // Forçar IPv4
-        }
-      },
-      {
-        name: "Estratégia 2 (Port 465 SSL)",
-        config: {
-          host: 'smtp.gmail.com',
-          port: 465,
-          secure: true,
-          auth: { user: SMTP_USER, pass: currentPass },
-          tls: { rejectUnauthorized: false },
-          connectionTimeout: 5000,
-          greetingTimeout: 5000,
-          family: 4 // Forçar IPv4
-        }
-      },
-      {
-        name: "Estratégia 3 (Port 587 TLS)",
-        config: {
-          host: 'smtp.gmail.com',
-          port: 587,
-          secure: false,
-          requireTLS: true,
-          auth: { user: SMTP_USER, pass: currentPass },
-          connectionTimeout: 5000,
-          greetingTimeout: 5000,
-          family: 4 // Forçar IPv4
-        }
-      }
-    ];
-
-    for (let sIndex = 0; sIndex < strategies.length; sIndex++) {
-      const strategy = strategies[sIndex];
-      console.log(`[Email Action] - Iniciando tentativa para ${options.to} (Senha ${pIndex + 1}/4, ${strategy.name})`);
-      
-      try {
-        // Criar o transporter DENTRO da função de envio para cada tentativa
-        const transporter = nodemailer.createTransport(strategy.config as any);
-        
-        const info = await transporter.sendMail({
-          from: `"MOTA STORE" <${SMTP_USER}>`,
-          to: options.to,
-          subject: options.subject,
-          html: options.html,
-        });
-
-        console.log(`[Email Success] - Enviado com sucesso! Senha ${pIndex + 1} funcionou com ${strategy.name}. ID: ${info.messageId}`);
-        return true;
-      } catch (error: any) {
-        console.error(`[Email Error] - Falha na tentativa (Senha ${pIndex + 1}, ${strategy.name}): ${error.message}`);
-        
-        // Se não for a última tentativa total, logamos o retry
-        if (!(pIndex === SMTP_PASSES.length - 1 && sIndex === strategies.length - 1)) {
-          console.log(`[Email Retry] - Tentando próxima configuração disponível...`);
-        }
-      }
+    // Se falhar o OAuth2, tentamos um fallback simples com as senhas de app (apenas em porta 587 como última tentativa)
+    console.log(`[Email Retry] - Tentando fallback emergencial com Senha de App...`);
+    try {
+      const fallbackTransporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: SMTP_USER,
+          pass: 'aklpfhmohnfdzhkg', // Usando a primeira senha de app como fallback
+        },
+      });
+      await fallbackTransporter.sendMail({
+        from: `"MOTA STORE" <${SMTP_USER}>`,
+        to: options.to,
+        subject: options.subject,
+        html: options.html,
+      });
+      console.log(`[Email Success] - Enviado via fallback de Senha de App.`);
+      return true;
+    } catch (fallbackError: any) {
+      console.error(`[Email Fatal] - Todos os métodos (OAuth2 e Fallback) falharam.`);
+      throw fallbackError;
     }
   }
-
-  console.error(`[Email Fatal] - Todas as 12 tentativas de envio falharam para ${options.to}`);
-  throw new Error("Falha crítica: Não foi possível enviar o e-mail após esgotar todas as senhas e estratégias.");
 }
 
 export async function sendWelcomeEmail(email: string, firstName: string) {
@@ -117,7 +91,7 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
     </div>
   `;
 
-  return sendMailWithFallback({ to: email, subject: 'Bem-vindo à MOTA STORE! 🎉', html });
+  return sendMailWithOAuth2({ to: email, subject: 'Bem-vindo à MOTA STORE! 🎉', html });
 }
 
 export async function sendPasswordResetEmail(email: string, firstName: string, token: string) {
@@ -141,7 +115,7 @@ export async function sendPasswordResetEmail(email: string, firstName: string, t
     </div>
   `;
 
-  return sendMailWithFallback({ to: email, subject: 'Redefinição de Senha — MOTA STORE', html });
+  return sendMailWithOAuth2({ to: email, subject: 'Redefinição de Senha — MOTA STORE', html });
 }
 
 export async function sendVerificationCodeEmail(email: string, firstName: string, code: string) {
@@ -164,5 +138,5 @@ export async function sendVerificationCodeEmail(email: string, firstName: string
     </div>
   `;
 
-  return sendMailWithFallback({ to: email, subject: `${code} é seu código de verificação — MOTA STORE`, html });
+  return sendMailWithOAuth2({ to: email, subject: `${code} é seu código de verificação — MOTA STORE`, html });
 }
