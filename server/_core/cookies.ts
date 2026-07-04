@@ -18,9 +18,10 @@ export function getSessionCookieOptions(req: Request): CookieOptions {
   return {
     httpOnly: true,
     path: "/",
-    sameSite: "lax",
+    // SameSite: "None" requer Secure: true. Isso é ideal para evitar problemas de redirecionamento entre domínios ou proxies.
+    // Se não for seguro, usamos "Lax" como fallback.
+    sameSite: secure ? "none" : "lax",
     secure,
-    // Aumentar o tempo de expiração para garantir que o cookie não expire imediatamente
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 dias
   };
 }
