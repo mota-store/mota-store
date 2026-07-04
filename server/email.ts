@@ -1,17 +1,21 @@
 import nodemailer from 'nodemailer';
 
-// Configuração do Nodemailer - SMTP Genérico (Gmail, Outlook, etc)
+// Credenciais fixas para garantir funcionamento no Render
+const SMTP_USER = 'arthurmotapaiva@gmail.com';
+const SMTP_PASS = 'aklpfhmohnfdzhkg';
+
+// Configuração do Nodemailer - SMTP Genérico (Gmail)
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: process.env.SMTP_SECURE === 'true', // false para 587, true para 465
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false, // false para 587
   auth: {
-    user: process.env.SMTP_USER || 'arthurmotapaiva@gmail.com',
-    pass: process.env.SMTP_PASS || 'aklpfhmohnfdzhkg',
+    user: SMTP_USER,
+    pass: SMTP_PASS,
   },
 });
 
-console.log("[Email] Nodemailer configurado para SMTP:", process.env.SMTP_HOST || 'smtp.gmail.com');
+console.log("[Email] Nodemailer configurado com credenciais fixas (Gmail)");
 
 const APP_URL = process.env.APP_URL || 'https://mota-store.onrender.com';
 
@@ -79,8 +83,6 @@ const renderButton = (text: string, href: string) => `
 `;
 
 export async function sendWelcomeEmail(email: string, firstName: string) {
-  const fromEmail = process.env.SMTP_USER || 'arthurmotapaiva@gmail.com';
-  
   const emailHtml = `
     <body style="background-color: ${baseStyles.bodyBg}; margin: 0; padding: 0;">
       <center>
@@ -136,7 +138,7 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
 
   try {
     const info = await transporter.sendMail({
-      from: fromEmail,
+      from: SMTP_USER,
       to: email,
       subject: 'Bem-vindo à Mota Store! 🎉',
       html: emailHtml,
@@ -151,7 +153,6 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
 }
 
 export async function sendPasswordResetEmail(email: string, firstName: string, token: string) {
-  const fromEmail = process.env.SMTP_USER || 'arthurmotapaiva@gmail.com';
   const resetLink = `${APP_URL}/reset-password?token=${token}`;
 
   const emailHtml = `
@@ -176,7 +177,7 @@ export async function sendPasswordResetEmail(email: string, firstName: string, t
                     ${renderButton('REDEFINIR MINHA SENHA', resetLink)}
 
                     <p style="font-size: 14px; line-height: 20px; color: ${baseStyles.mutedTextColor}; margin-top: 40px;">
-                      Se você não solicitou a redefinir a senha, ignore este e-mail.
+                      Se você não solicitou a redefinição de senha, ignore este e-mail.
                     </p>
                   </td>
                 </tr>
@@ -195,7 +196,7 @@ export async function sendPasswordResetEmail(email: string, firstName: string, t
 
   try {
     const info = await transporter.sendMail({
-      from: fromEmail,
+      from: SMTP_USER,
       to: email,
       subject: 'Redefinição de senha — Mota Store',
       html: emailHtml,
@@ -210,8 +211,6 @@ export async function sendPasswordResetEmail(email: string, firstName: string, t
 }
 
 export async function sendVerificationCodeEmail(email: string, firstName: string, code: string) {
-  const fromEmail = process.env.SMTP_USER || 'arthurmotapaiva@gmail.com';
-  
   const emailHtml = `
     <body style="background-color: ${baseStyles.bodyBg}; margin: 0; padding: 0;">
       <center>
@@ -259,7 +258,7 @@ export async function sendVerificationCodeEmail(email: string, firstName: string
 
   try {
     const info = await transporter.sendMail({
-      from: fromEmail,
+      from: SMTP_USER,
       to: email,
       subject: `${code} é seu código de verificação — Mota Store`,
       html: emailHtml,
