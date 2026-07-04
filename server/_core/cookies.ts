@@ -15,12 +15,11 @@ function isSecureRequest(req: Request) {
 
 export function getSessionCookieOptions(
   req: Request
-): Pick<CookieOptions, "domain" | "httpOnly" | "path" | "sameSite" | "secure"> {
+): CookieOptions {
   const secure = isSecureRequest(req);
   return {
     httpOnly: true,
     path: "/",
-    // Usar 'lax' para maior compatibilidade em solicitações do mesmo site
     sameSite: "lax",
     secure,
   };
