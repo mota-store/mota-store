@@ -157,7 +157,7 @@ export function PixPayment({
                 name: "Nubank",
                 color: "#820AD1",
                 icon: "/assets/banks/nubank.png",
-                intentLink: "intent://nu/pix/copia-e-cola?code=CODIGO_PIX#Intent;scheme=nubank;package=com.nubank;end",
+                intentLink: "intent://nu/pix/copia-e-cola?code=CODIGO_PIX#Intent;scheme=nubank;package=com.nu.production;end",
                 fallbackScheme: "nubank://nu/pix/copia-e-cola?code=CODIGO_PIX"
               },
               {
