@@ -150,15 +150,31 @@ export default function Profile() {
                     </div>
 
                     {!showPasswordFields ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setShowPasswordFields(true)}
-                        className="w-full h-12 rounded-xl border-accent/20 text-accent font-bold text-xs uppercase tracking-widest hover:bg-accent/10"
-                      >
-                        <Lock className="h-4 w-4 mr-2" />
-                        Alterar Senha
-                      </Button>
+                      <>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setShowPasswordFields(true)}
+                          className="w-full h-12 rounded-xl border-accent/20 text-accent font-bold text-xs uppercase tracking-widest hover:bg-accent/10"
+                        >
+                          <Lock className="h-4 w-4 mr-2" />
+                          Alterar Senha
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            if (user.loginMethod === "email" || (user as any).passwordHash) {
+                              toast.info("Você tem uma senha definida. Por segurança, não exibimos senhas. Use 'Alterar Senha' para criar uma nova.");
+                            } else {
+                              toast.info("Você entrou com o Google e não tem senha definida. Você pode criar uma senha abaixo.");
+                            }
+                          }}
+                          className="w-full h-10 rounded-xl border-accent/20 text-accent/70 font-bold text-xs uppercase tracking-widest hover:bg-accent/5 mt-2"
+                        >
+                          Ver Senha Atual
+                        </Button>
+                      </>
                     ) : (
                       <div className="space-y-4 p-4 rounded-2xl bg-accent/5 border border-accent/20 animate-in fade-in slide-in-from-top-2">
                         <div className="flex items-center justify-between">
@@ -171,6 +187,11 @@ export default function Profile() {
                             CANCELAR
                           </button>
                         </div>
+                        {user.loginMethod === "google" && (
+                          <p className="text-[10px] text-yellow-500/80 font-medium mb-2">
+                            Você entrou com o Google. Criar uma senha permite que você também acesse sua conta por e-mail e senha.
+                          </p>
+                        )}
                         
                         <div className="space-y-3">
                           <div className="relative">

@@ -31,6 +31,9 @@ export function PixPayment({
 
   // Polling para verificar se o pagamento foi confirmado
   useEffect(() => {
+    if (pixCode) {
+      copyPixCode();
+    }
     const pollInterval = setInterval(async () => {
       setIsChecking(true);
       try {
@@ -43,7 +46,7 @@ export function PixPayment({
     }, 5000); // Verifica a cada 5 segundos
 
     return () => clearInterval(pollInterval);
-  }, [onPaymentConfirmed]);
+  }, [onPaymentConfirmed, pixCode]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -100,35 +103,13 @@ export function PixPayment({
     }
   };
 
-  const openBankApp = (deepLink: string, playStoreUrl: string, appStoreUrl: string) => {
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const fallbackUrl = isIOS ? appStoreUrl : playStoreUrl;
-
-    let didOpenApp = false;
-
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        didOpenApp = true;
-      }
-    };
-
-    const handleBlur = () => {
-      didOpenApp = true;
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("blur", handleBlur);
-
-    window.location.href = deepLink;
-
+  const openBankApp = (appName: string, deepLink: string) => {
+    const url = deepLink.replace("CODIGO_PIX", encodeURIComponent(pixCode || ""));
+    window.location.href = url;
+    
     setTimeout(() => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("blur", handleBlur);
-
-      if (!didOpenApp) {
-        window.location.href = fallbackUrl;
-      }
-    }, 1500);
+      toast.info(`Se o app ${appName} não abriu, use o código copiado para colar manualmente.`);
+    }, 2000);
   };
 
   const qrCodeSrc = getQrCodeSrc();
@@ -186,11 +167,7 @@ export function PixPayment({
           <div className="flex justify-center gap-3">
             {/* Nubank */}
             <button
-              onClick={() => openBankApp(
-                "nubank://",
-                "https://play.google.com/store/apps/details?id=com.nu.production",
-                "https://apps.apple.com/br/app/nubank/id814456780"
-              )}
+              onClick={() => openBankApp("Nubank", "nubank://nu/pix/copia-e-cola?code=CODIGO_PIX")}
               className="flex flex-col items-center gap-1 p-2 rounded-xl border border-[#820AD1]/30 bg-[#820AD1]/5 hover:bg-[#820AD1]/20 transition-colors w-20"
             >
               <img src="/assets/banks/nubank.png" alt="Nubank" className="w-8 h-8 rounded-lg object-contain" />
@@ -199,11 +176,7 @@ export function PixPayment({
 
             {/* Inter */}
             <button
-              onClick={() => openBankApp(
-                "bancointer://",
-                "https://play.google.com/store/apps/details?id=br.com.intermedium",
-                "https://apps.apple.com/br/app/inter-conta-cartao-e-pix/id839711154"
-              )}
+              onClick={() => openBankApp("Inter", "inter://pix?code=CODIGO_PIX")}
               className="flex flex-col items-center gap-1 p-2 rounded-xl border border-[#FF6B00]/30 bg-[#FF6B00]/5 hover:bg-[#FF6B00]/20 transition-colors w-20"
             >
               <img src="/assets/banks/inter.png" alt="Inter" className="w-8 h-8 rounded-lg object-contain" />
@@ -212,15 +185,20 @@ export function PixPayment({
 
             {/* Itaú */}
             <button
-              onClick={() => openBankApp(
-                "itau://",
-                "https://play.google.com/store/apps/details?id=com.itau",
-                "https://apps.apple.com/br/app/itau/id493694158"
-              )}
+              onClick={() => openBankApp("Itaú", "itau-empresas://pix/copia-e-cola?code=CODIGO_PIX")}
               className="flex flex-col items-center gap-1 p-2 rounded-xl border border-[#EC7000]/30 bg-[#EC7000]/5 hover:bg-[#EC7000]/20 transition-colors w-20"
             >
               <img src="/assets/banks/itau.png" alt="Itaú" className="w-8 h-8 rounded-lg object-contain" />
               <span className="text-[10px] font-medium text-foreground">Itaú</span>
+            </button>
+
+            {/* Bradesco */}
+            <button
+              onClick={() => openBankApp("Bradesco", "bradesco://pix?code=CODIGO_PIX")}
+              className="flex flex-col items-center gap-1 p-2 rounded-xl border border-[#cc092f]/30 bg-[#cc092f]/5 hover:bg-[#cc092f]/20 transition-colors w-20"
+            >
+              <img src="/assets/banks/bradesco.png" alt="Bradesco" className="w-8 h-8 rounded-lg object-contain" />
+              <span className="text-[10px] font-medium text-foreground">Bradesco</span>
             </button>
           </div>
         </div>

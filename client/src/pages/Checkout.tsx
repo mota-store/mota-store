@@ -16,6 +16,17 @@ export default function Checkout() {
   const [pixData, setPixData] = useState<{ pixCode: string; qrCodeBase64: string; txid: string; expiresIn: number } | null>(null);
   const [orderId, setOrderId] = useState<number | null>(null);
 
+  // Restaurar pagamento pendente do sessionStorage
+  useEffect(() => {
+    const savedPayment = sessionStorage.getItem("pix_payment");
+    if (savedPayment) {
+      const payment = JSON.parse(savedPayment);
+      setPixData(payment);
+      setOrderId(payment.orderId);
+      setStep("pix");
+    }
+  }, []);
+
   const { data: cartItems, isLoading: cartLoading } = trpc.cart.getItems.useQuery(undefined, {
     enabled: isAuthenticated,
   });
@@ -49,7 +60,9 @@ export default function Checkout() {
       
       // Forçar 600 segundos (10 minutos) para o PIX
       const pix = await createPix.mutateAsync({ orderId: order.id, amount: total / 100 });
-      setPixData({ ...pix, expiresIn: 600 });
+      const pixWithExpiry = { ...pix, expiresIn: 600, orderId: order.id, amount: total };
+      setPixData(pixWithExpiry);
+      sessionStorage.setItem("pix_payment", JSON.stringify(pixWithExpiry));
       setStep("pix");
       toast.success("Pedido registrado! Aguardando pagamento PIX.");
     } catch (err) {
@@ -111,6 +124,7 @@ export default function Checkout() {
                   qrCodeBase64={pixData.qrCodeBase64}
                   expiresIn={600} // 10 minutos
                   onPaymentConfirmed={() => {
+                    sessionStorage.removeItem("pix_payment");
                     // Armazenar dados para o redirecionamento automático no OrderConfirmation
                     const orderInfo = {
                       id: orderId,

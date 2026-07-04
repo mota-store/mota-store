@@ -11,8 +11,6 @@ export const appRouter = router({
   
   auth: router({
     me: publicProcedure.query(opts => {
-      console.log("[Auth Me] User in context:", opts.ctx.user ? opts.ctx.user.email : "null");
-      console.log("[Auth Me] Cookies received:", opts.ctx.req.headers.cookie);
       return opts.ctx.user;
     }),
     logout: publicProcedure.mutation(({ ctx }) => {
@@ -26,27 +24,20 @@ export const appRouter = router({
       .input(z.object({ email: z.string().email(), password: z.string().min(6), name: z.string() }))
       .mutation(async ({ input, ctx }) => {
         const result = await registerUser(input.email, input.password, input.name);
-
         if (result.success && result.userId) {
           const loginResult = await loginUser(input.email, input.password);
-
           if (loginResult.success && loginResult.user) {
             const { sdk } = await import("./_core/sdk");
             const token = await sdk.createSessionToken(loginResult.user.openId, {
               name: loginResult.user.name || input.name || loginResult.user.email?.split("@")[0] || "Usuário",
             });
-
             const cookieOptions = getSessionCookieOptions(ctx.req);
             ctx.res.cookie(COOKIE_NAME, token, {
               ...cookieOptions,
               maxAge: ONE_YEAR_MS,
             });
-
-            console.log("[Register] Cookie definido com sucesso para:", loginResult.user.email);
+            console.log("[Register] Cookie definido para:", loginResult.user.email);
             console.log("[Register] Cookie options:", cookieOptions);
-            console.log("[Register] Token gerado (primeiros 20 chars):", token.substring(0, 20));
-            console.log("[Register] Headers de resposta após cookie:", ctx.res.getHeaders());
-
             return { success: true, user: loginResult.user };
           }
         }
@@ -68,11 +59,7 @@ export const appRouter = router({
             maxAge: ONE_YEAR_MS,
           });
 
-          console.log("[Login] Cookie definido com sucesso para:", result.user.email);
-          console.log("[Login] Cookie options:", cookieOptions);
-          console.log("[Login] Token gerado (primeiros 20 chars):", token.substring(0, 20));
-          console.log("[Login] Headers de resposta após cookie:", ctx.res.getHeaders());
-
+          console.log("[Login] Cookie definido para:", result.user.email);
           return { success: true, user: result.user };
         }
         return result;

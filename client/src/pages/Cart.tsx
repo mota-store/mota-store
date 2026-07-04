@@ -51,8 +51,8 @@ export default function Cart() {
       </header>
 
       {/* Main Content */}
-      <div className="container py-12">
-        <h1 className="text-3xl font-bold mb-8">Meu Carrinho</h1>
+      <div className="container py-6">
+        <h1 className="text-2xl font-bold mb-4">Meu Carrinho</h1>
 
         {isLoading ? (
           <div className="space-y-4">
@@ -71,9 +71,9 @@ export default function Cart() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Cart Items */}
-            <div className="lg:col-span-2 space-y-4">
+            <div className="lg:col-span-2 space-y-3">
               {enrichedItems.map((item) => (
-                <Card key={item.id} className="p-6 flex items-center gap-4">
+                <Card key={item.id} className="p-4 flex items-center gap-3">
                   <div className={`h-16 w-16 rounded-lg flex items-center justify-center bg-gradient-to-br ${
                     item.product?.name.includes("Spotify") ? "from-green-600 to-green-900" :
                     item.product?.name.includes("YouTube Music") ? "from-red-800 to-black" :
@@ -81,16 +81,34 @@ export default function Cart() {
                     "from-blue-800 to-blue-950"
                   }`}>
                     {item.product?.imageUrl ? (
-                      <img src={item.product.imageUrl} alt={item.product.name} className="w-10 h-10 object-contain" />
+                      <img src={item.product.imageUrl} alt={item.product.name} className="w-8 h-8 object-contain" />
                     ) : (
-                      <ShoppingCart className="h-8 w-8 text-white/40" />
+                      <ShoppingCart className="h-6 w-6 text-white/40" />
                     )}
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-lg">{item.product?.name || `Produto #${item.productId}`}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Quantidade: {item.quantity || 1}
-                    </p>
+                    <h3 className="font-semibold text-base">{item.product?.name || `Produto #${item.productId}`}</h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <button
+                        onClick={() => {
+                          if (item.quantity > 1) {
+                            trpc.cart.addItem.useMutation().mutate({ productId: item.productId, quantity: -1 });
+                          } else {
+                            removeItem.mutate(item.id);
+                          }
+                        }}
+                        className="h-7 w-7 rounded-lg bg-muted flex items-center justify-center text-sm font-bold hover:bg-muted/80"
+                      >
+                        -
+                      </button>
+                      <span className="text-sm font-bold w-4 text-center">{item.quantity || 1}</span>
+                      <button
+                        onClick={() => trpc.cart.addItem.useMutation().mutate({ productId: item.productId, quantity: 1 })}
+                        className="h-7 w-7 rounded-lg bg-accent/20 text-accent flex items-center justify-center text-sm font-bold hover:bg-accent/30"
+                      >
+                        +
+                      </button>
+                    </div>
                     <p className="text-xs text-muted-foreground line-through">
                       De R$ {(((item.product?.price || 0) * 2 * (item.quantity || 1)) / 100).toFixed(2)}
                     </p>
@@ -133,15 +151,15 @@ export default function Cart() {
                   </div>
                 </div>
 
-                <Button
-                  className="w-full bg-accent hover:bg-accent/90 mb-3"
-                  onClick={() => navigate("/checkout?direct=true")}
-                >
-                  Ir para Checkout
-                </Button>
+                  <Button
+                    className="w-full bg-accent hover:bg-accent/90 mb-3 h-10"
+                    onClick={() => navigate("/checkout?direct=true")}
+                  >
+                    Ir para Checkout
+                  </Button>
                 <Button
                   variant="outline"
-                  className="w-full"
+                  className="w-full h-10"
                   onClick={() => navigate("/")}
                 >
                   Continuar Comprando

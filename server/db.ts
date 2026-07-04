@@ -173,9 +173,6 @@ export async function createOrder(userId: number, totalAmount: number) {
     paymentMethod: "pix",
   });
 
-  // Clear cart after order
-  await db.delete(cartItems).where(eq(cartItems.userId, userId));
-
   return { id: result.insertId };
 }
 
@@ -183,4 +180,12 @@ export async function updateOrderStatus(orderId: number, status: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(orders).set({ status: status as any }).where(eq(orders.id, orderId));
+
+  // Clear cart only after successful payment
+  if (status === "completed") {
+    const [order] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
+    if (order) {
+      await db.delete(cartItems).where(eq(cartItems.userId, order.userId));
+    }
+  }
 }
