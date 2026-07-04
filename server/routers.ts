@@ -39,6 +39,10 @@ export const appRouter = router({
               maxAge: ONE_YEAR_MS,
             });
 
+            console.log("[Register] Cookie definido com sucesso para:", loginResult.user.email);
+            console.log("[Register] Cookie options:", cookieOptions);
+            console.log("[Register] Token gerado (primeiros 20 chars):", token.substring(0, 20));
+
             return { success: true, user: loginResult.user };
           }
         }
@@ -59,6 +63,10 @@ export const appRouter = router({
             ...cookieOptions,
             maxAge: ONE_YEAR_MS,
           });
+
+          console.log("[Login] Cookie definido com sucesso para:", result.user.email);
+          console.log("[Login] Cookie options:", cookieOptions);
+          console.log("[Login] Token gerado (primeiros 20 chars):", token.substring(0, 20));
 
           return { success: true, user: result.user };
         }
