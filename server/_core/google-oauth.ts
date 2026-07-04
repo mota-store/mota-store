@@ -113,14 +113,11 @@ export function registerGoogleOAuthRoutes(app: Express) {
         lastSignedIn: new Date(),
       });
 
-      // Se for um novo usuário, enviar e-mail de boas-vindas
+      // Se for um novo usuário, enviar e-mail de boas-vindas (assíncrono)
       if (isNewUser && email) {
-        try {
-          const { sendWelcomeEmail } = await import("../email");
-          await sendWelcomeEmail(email, name || "Cliente");
-        } catch (emailError) {
-          console.error("[Google OAuth] Failed to send welcome email:", emailError);
-        }
+        import("../email").then(m => m.sendWelcomeEmail(email, name || "Cliente")).catch(err => {
+          console.error("[Google OAuth] Failed to send welcome email:", err);
+        });
       }
 
       // Criar token de sessão
