@@ -9,6 +9,16 @@ import { Mail, Lock, User, ArrowLeft, Zap, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
+function getPasswordStrength(pwd: string): "fraca" | "média" | "forte" | null {
+  if (!pwd) return null;
+  const hasUpper = /[A-Z]/.test(pwd);
+  const hasLower = /[a-z]/.test(pwd);
+  const hasNumber = /[0-9]/.test(pwd);
+  if (pwd.length >= 8 && hasUpper && hasLower && hasNumber) return "forte";
+  if (pwd.length >= 8 && (hasUpper || hasNumber)) return "média";
+  return "fraca";
+}
+
 export default function Login() {
   const [, navigate] = useLocation();
 
@@ -56,7 +66,10 @@ export default function Login() {
         });
 
         if (result.success) {
-          window.location.href = "/";
+          toast.success(`Bem-vindo(a), ${name || "usuário"}! Sua conta foi criada com sucesso.`);
+          setTimeout(() => {
+            window.location.href = "/";
+          }, 1200);
         } else {
           setError((result as any).error || "Erro ao registrar");
         }
@@ -78,6 +91,8 @@ export default function Login() {
       setLoading(false);
     }
   };
+
+  const strength = getPasswordStrength(password);
 
   return (
     <div className="h-screen relative flex items-center justify-center p-4 overflow-hidden touch-none">
@@ -126,7 +141,7 @@ export default function Login() {
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
                   <Input
                     className="pl-12 bg-white/10 border-white/20 text-white placeholder:text-white/30 h-11 rounded-xl focus:ring-accent backdrop-blur-md"
-                    placeholder="Como podemos te chamar?"
+                    placeholder="Ex: João Silva"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required={isRegister}
@@ -171,6 +186,18 @@ export default function Login() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              {isRegister && password && (
+                <div className="flex items-center gap-2 mt-1 px-1">
+                  <div className="flex gap-1 flex-1">
+                    <div className={`h-1 flex-1 rounded-full ${strength === "fraca" || strength === "média" || strength === "forte" ? (strength === "fraca" ? "bg-red-500" : strength === "média" ? "bg-yellow-500" : "bg-green-500") : "bg-white/10"}`} />
+                    <div className={`h-1 flex-1 rounded-full ${strength === "média" || strength === "forte" ? (strength === "média" ? "bg-yellow-500" : "bg-green-500") : "bg-white/10"}`} />
+                    <div className={`h-1 flex-1 rounded-full ${strength === "forte" ? "bg-green-500" : "bg-white/10"}`} />
+                  </div>
+                  <span className={`text-[9px] font-bold uppercase tracking-wider ${strength === "fraca" ? "text-red-500" : strength === "média" ? "text-yellow-500" : "text-green-500"}`}>
+                    {strength}
+                  </span>
+                </div>
+              )}
             </div>
 
             {isRegister && (
@@ -213,8 +240,17 @@ export default function Login() {
               className={`w-full border-2 border-white/20 bg-white/5 backdrop-blur-md hover:bg-white/10 text-white h-12 rounded-xl font-black text-base transition-all active:scale-95 ${isRegister ? "" : ""}`}
               disabled={loading}
             >
-              {loading ? "PROCESSANDO..." : isRegister ? "CRIAR CONTA" : "ENTRAR"}
+              {loading ? "PROCESSANDO..." : isRegister ? "CRIAR MINHA CONTA" : "ENTRAR"}
             </Button>
+
+            {isRegister && (
+              <p className="text-[9px] text-white/40 text-center mt-1">
+                Ao criar sua conta, você concorda com nossos{" "}
+                <a href="/termos" className="underline text-white/60 hover:text-white/80">Termos de Uso</a>
+                {" "}e{" "}
+                <a href="/privacidade" className="underline text-white/60 hover:text-white/80">Política de Privacidade</a>.
+              </p>
+            )}
 
             {!isRegister && (
               <div className="text-center mt-1 flex flex-col items-center">
