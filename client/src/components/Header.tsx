@@ -16,9 +16,20 @@ export function Header() {
   const { theme, toggleTheme } = useTheme();
   const [isPulsing, setIsPulsing] = useState(false);
   const [prevCount, setPrevCount] = useState(cartCount);
-  const [hasPendingPayment, setHasPendingPayment] = useState(() => {
-    return typeof window !== "undefined" && !!sessionStorage.getItem("pix_payment");
-  });
+  const [hasPendingPayment, setHasPendingPayment] = useState(false);
+
+  React.useEffect(() => {
+    const checkPendingPayment = () => {
+      const pending = !!sessionStorage.getItem("pix_payment");
+      setHasPendingPayment(pending);
+    };
+
+    checkPendingPayment();
+    
+    // Verificar periodicamente para detectar mudanças no sessionStorage
+    const interval = setInterval(checkPendingPayment, 2000);
+    return () => clearInterval(interval);
+  }, []);
 
   React.useEffect(() => {
     if (cartCount > prevCount) {

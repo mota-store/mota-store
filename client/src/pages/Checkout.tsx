@@ -97,10 +97,9 @@ export default function Checkout() {
   };
 
   const handleBack = () => {
-    if (step === "pix") {
-      sessionStorage.removeItem("pix_payment");
-      sessionStorage.removeItem("pix_expiry_time");
-    }
+    // Ao voltar da tela de PIX, NÃO removemos o pix_payment do sessionStorage
+    // Isso permite que o Header exiba o ícone de "Pagamento Pendente"
+    
     // Limpar carrinho ao voltar
     sessionStorage.removeItem("lastOrder");
     navigate("/");
