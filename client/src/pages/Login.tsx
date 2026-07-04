@@ -68,7 +68,9 @@ export default function Login() {
         if (result.success) {
           toast.success(`Bem-vindo(a), ${name || "usuário"}! Sua conta foi criada com sucesso.`);
           setTimeout(() => {
-            window.location.href = "/";
+            // Usar window.location.href para forçar um recarregamento completo da página
+            // Isso garante que os cookies sejam enviados e o estado do tRPC seja resetado
+            window.location.href = "/?logged_in=true";
           }, 1200);
         } else {
           setError((result as any).error || "Erro ao registrar");

@@ -11,11 +11,16 @@ function isSecureRequest(req: Request) {
 }
 
 export function getSessionCookieOptions(req: Request): CookieOptions {
-  const secure = isSecureRequest(req);
+  // Em produção no Render, sempre usamos HTTPS
+  const isProduction = req.hostname.includes("onrender.com");
+  const secure = isProduction || isSecureRequest(req);
+  
   return {
     httpOnly: true,
     path: "/",
     sameSite: "lax",
     secure,
+    // Aumentar o tempo de expiração para garantir que o cookie não expire imediatamente
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 dias
   };
 }
