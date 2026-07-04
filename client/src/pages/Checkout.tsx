@@ -12,7 +12,7 @@ export default function Checkout() {
   const [, navigate] = useLocation();
   const [step, setStep] = useState<"payment" | "pix">("payment");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [pixData, setPixData] = useState<{ pixCode: string; qrCodeBase64: string; txid: string; expiresIn: number } | null>(null);
+  const [pixData, setPixData] = useState<{ pixCode: string; qrCodeBase64: string; txid: string; expiresIn: number; amount?: number } | null>(null);
   const [orderId, setOrderId] = useState<number | null>(null);
 
   // Restaurar pagamento pendente do sessionStorage
@@ -77,6 +77,12 @@ export default function Checkout() {
     }
   };
 
+  const handleBack = () => {
+    sessionStorage.removeItem("pix_payment");
+    sessionStorage.removeItem("pix_expiry_time");
+    navigate("/");
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="h-screen flex items-center justify-center bg-background p-6">
@@ -118,17 +124,13 @@ export default function Checkout() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col pt-20 px-4 pb-10">
-      <div className="container max-w-2xl mx-auto flex flex-col h-full">
-        <div className="flex items-center gap-4 mb-8">
+    <div className="h-screen bg-background flex flex-col overflow-hidden" style={{ paddingTop: "54px" }}>
+      <div className="container max-w-2xl mx-auto flex flex-col h-full overflow-hidden">
+        <div className="flex items-center gap-4 mb-4 flex-shrink-0">
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => {
-              sessionStorage.removeItem("pix_payment");
-              sessionStorage.removeItem("pix_expiry_time");
-              navigate("/cart");
-            }} 
+            onClick={handleBack}
             disabled={step === "pix" && pixData !== null}
             className="font-black uppercase tracking-widest text-[10px] hover:bg-accent/10"
           >
@@ -138,13 +140,14 @@ export default function Checkout() {
           <h1 className="text-3xl font-black tracking-tighter uppercase">PAGA<span className="text-accent">MENTO</span></h1>
         </div>
 
-        <div className="flex-1 flex flex-col items-center justify-center">
+        <div className="flex-1 flex flex-col items-center justify-center overflow-y-auto">
           {step === "pix" && pixData && orderId && (
             <div className="w-full animate-in fade-in zoom-in duration-500">
               <PixPayment 
                 pixCode={pixData.pixCode}
                 qrCodeBase64={pixData.qrCodeBase64}
                 expiresIn={600}
+                amount={pixData.amount}
                 onPaymentConfirmed={() => {
                   sessionStorage.removeItem("pix_payment");
                   sessionStorage.removeItem("pix_expiry_time");

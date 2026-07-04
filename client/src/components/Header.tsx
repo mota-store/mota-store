@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Menu, X, User, LogOut, Zap, Sun, Moon } from "lucide-react";
+import { ShoppingCart, Menu, X, User, LogOut, Zap, Sun, Moon, CreditCard } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useCart } from "@/contexts/CartContext";
 import { useLocation } from "wouter";
@@ -16,6 +16,9 @@ export function Header() {
   const { theme, toggleTheme } = useTheme();
   const [isPulsing, setIsPulsing] = useState(false);
   const [prevCount, setPrevCount] = useState(cartCount);
+  const [hasPendingPayment, setHasPendingPayment] = useState(() => {
+    return typeof window !== "undefined" && !!sessionStorage.getItem("pix_payment");
+  });
 
   React.useEffect(() => {
     if (cartCount > prevCount) {
@@ -61,7 +64,7 @@ export function Header() {
           </a>
         </nav>
 
-        {/* Right Side - Auth & Cart */}
+        {/* Right Side - Auth & Cart & Payment */}
         <div className="flex items-center gap-4">
           {/* Theme Toggle - Desktop */}
           <button
@@ -71,6 +74,19 @@ export function Header() {
           >
             {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
           </button>
+          {/* Pending Payment Badge - Only visible when authenticated and has pending payment */}
+          {isAuthenticated && hasPendingPayment && (
+            <motion.button
+              id="payment-icon"
+              onClick={() => navigate("/checkout?direct=true")}
+              className="relative p-2 hover:bg-muted rounded-lg transition-colors"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <CreditCard className="h-5 w-5 text-yellow-500" />
+              <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-yellow-500 animate-pulse" />
+            </motion.button>
+          )}
           {/* Cart - Only visible when authenticated */}
           {isAuthenticated && (
             <motion.button

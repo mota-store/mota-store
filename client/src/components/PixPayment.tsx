@@ -8,6 +8,7 @@ interface PixPaymentProps {
   qrCodeBase64?: string;
   pixCode?: string;
   expiresIn?: number; // em segundos
+  amount?: number; // valor total em centavos
   onPaymentConfirmed?: () => void;
 }
 
@@ -15,6 +16,7 @@ export function PixPayment({
   qrCodeBase64, 
   pixCode = "00020126360014br.gov.bcb.pix0114+55919848864735204000053039865802BR5910MOTA STORE6009SAO PAULO62070503***6304E2B9", 
   expiresIn = 600,
+  amount,
   onPaymentConfirmed 
 }: PixPaymentProps) {
   // Inicializar timeLeft a partir do sessionStorage se existir, para persistir após refresh
@@ -33,6 +35,7 @@ export function PixPayment({
   
   const [copied, setCopied] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
+  const [bankCopied, setBankCopied] = useState<string | null>(null); // qual banco já copiou
 
   useEffect(() => {
     if (timeLeft <= 0) return;
@@ -48,14 +51,6 @@ export function PixPayment({
     }, 1000);
     return () => clearInterval(timer);
   }, [timeLeft]);
-
-  useEffect(() => {
-    if (pixCode && !copied) {
-      // Pequeno delay para garantir que o componente montou antes de copiar
-      const t = setTimeout(() => copyPixCode(true), 1000);
-      return () => clearTimeout(t);
-    }
-  }, [pixCode]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -84,8 +79,11 @@ export function PixPayment({
   };
 
   const openBankApp = (appName: string, intentLink: string, fallbackScheme: string) => {
-    // Sempre copiar o código PIX antes de tentar abrir o app
-    copyPixCode(true);
+    // Copiar o código PIX apenas na primeira vez que clicar neste banco
+    if (bankCopied !== appName) {
+      copyPixCode(true);
+      setBankCopied(appName);
+    }
     
     const encodedCode = encodeURIComponent(pixCode || "");
     const intentUrl = intentLink.replace("CODIGO_PIX", encodedCode);
@@ -104,6 +102,7 @@ export function PixPayment({
   };
 
   const qrCodeSrc = getQrCodeSrc();
+  const amountDisplay = amount ? `R$ ${(amount / 100).toFixed(2).replace(".", ",")}` : "";
 
   return (
     <Card className="p-8 bg-card/40 border-border/40 backdrop-blur-xl rounded-[2.5rem] shadow-2xl max-w-md mx-auto border-t-accent/20">
@@ -117,6 +116,9 @@ export function PixPayment({
             Pagamento Seguro via PIX
           </div>
           <h3 className="text-2xl font-black text-foreground tracking-tighter uppercase">Finalize seu Pedido</h3>
+          {amountDisplay && (
+            <p className="text-accent font-black text-3xl tracking-tighter">{amountDisplay}</p>
+          )}
           <p className="text-xs text-muted-foreground font-medium px-4">Escaneie o QR Code abaixo ou utilize o botão Copia e Cola</p>
         </div>
 
