@@ -47,7 +47,11 @@ export const appRouter = router({
           console.log(`[Register Auto-Login] Sucesso para: ${input.email}`);
           
           // Envio síncrono obrigatório
-          await emailService.sendWelcomeEmail(input.email, input.name);
+          try {
+            await emailService.sendWelcomeEmail(input.email, input.name);
+          } catch (e) {
+            console.error("[Register] Failed to send welcome email:", e);
+          }
 
           return { success: true, user: result.user };
         }
@@ -132,7 +136,11 @@ export const appRouter = router({
         await setResetToken(user.id, token, expires);
         
         // Envio síncrono obrigatório
-        await emailService.sendPasswordResetEmail(user.email!, user.name || "Cliente", token);
+        try {
+          await emailService.sendPasswordResetEmail(user.email!, user.name || "Cliente", token);
+        } catch (e) {
+          console.error("[ForgotPassword] Failed to send reset email:", e);
+        }
         
         return { success: true };
       }),
@@ -165,7 +173,11 @@ export const appRouter = router({
         await setResetToken(ctx.user.id, code, expires);
         
         // Envio síncrono obrigatório
-        await emailService.sendVerificationCodeEmail(ctx.user.email!, ctx.user.name || "Cliente", code);
+        try {
+          await emailService.sendVerificationCodeEmail(ctx.user.email!, ctx.user.name || "Cliente", code);
+        } catch (e) {
+          console.error("[VerificationCode] Failed to send code email:", e);
+        }
         
         return { success: true };
       }),

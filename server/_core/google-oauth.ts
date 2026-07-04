@@ -113,9 +113,14 @@ export function registerGoogleOAuthRoutes(app: Express) {
         lastSignedIn: new Date(),
       });
 
-      // Passo 4.3: Envio de e-mail assíncrono sem await
+      // Passo 4.3: Envio de e-mail síncrono com await
       if (isNewUser && email) {
-        import("../email").then(m => m.sendWelcomeEmail(email, name || "Cliente")).catch(console.error);
+        try {
+          const emailService = await import("../email");
+          await emailService.sendWelcomeEmail(email, name || "Cliente");
+        } catch (e) {
+          console.error("[Google OAuth] Failed to send welcome email:", e);
+        }
       }
 
       // Criar token de sessão
