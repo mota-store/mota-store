@@ -88,7 +88,6 @@ export default function Checkout() {
       setPixData(pixWithExpiry);
       sessionStorage.setItem("pix_payment", JSON.stringify(pixWithExpiry));
       setStep("pix");
-      toast.success("Pedido registrado! Aguardando pagamento PIX.");
     } catch (err) {
       toast.error("Erro ao processar pedido. Tente novamente.");
     } finally {
@@ -243,66 +242,76 @@ export default function Checkout() {
           )}
           
           {/* Payment Method Selection */}
-          {step === "payment" && !isSubmitting && (
-            <div className="space-y-4 w-full">
-              <div className="text-center mb-6">
-                <h2 className="text-xl font-black tracking-tighter uppercase mb-1">Escolha o Método</h2>
-                <p className="text-xs text-muted-foreground">Selecione como deseja pagar</p>
+          {step === "payment" && (
+            <div className="w-full max-w-md mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="text-center space-y-1">
+                <h2 className="text-2xl font-black tracking-tighter uppercase">Escolha o <span className="text-accent">Método</span></h2>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Selecione sua forma de pagamento</p>
               </div>
 
-              {/* Option: Pay with Balance */}
-              {canPayWithBalance && (
+              <div className="space-y-3">
+                {/* Option: Pay with Balance */}
+                {canPayWithBalance && (
+                  <button
+                    onClick={() => setStep("balance_confirm")}
+                    disabled={isSubmitting}
+                    className="w-full group relative overflow-hidden rounded-[2rem] border border-green-500/20 bg-green-500/5 p-6 text-left transition-all hover:bg-green-500/10 hover:border-green-500/40 active:scale-[0.98] disabled:opacity-50"
+                  >
+                    <div className="flex items-center gap-5">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-green-500/10 text-green-500 transition-transform group-hover:scale-110 group-hover:rotate-3">
+                        <Wallet className="h-8 w-8" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-sm font-black uppercase tracking-widest text-green-500">Pagar com Saldo</h3>
+                        <p className="text-[10px] font-medium text-muted-foreground mt-1 uppercase tracking-wider">Descontar da carteira</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs font-black text-green-500 uppercase tracking-tighter">R$ {((balance || 0) / 100).toFixed(2).replace(".", ",")}</p>
+                        <p className="text-[8px] font-black text-green-500/60 uppercase tracking-widest mt-1">Disponível</p>
+                      </div>
+                    </div>
+                  </button>
+                )}
+
+                {/* Option: PIX */}
                 <button
-                  onClick={() => setStep("balance_confirm")}
-                  className="w-full p-6 rounded-2xl bg-green-500/5 border border-green-500/20 hover:bg-green-500/10 transition-all text-left group"
+                  onClick={handleConfirmOrder}
+                  disabled={isSubmitting}
+                  className="w-full group relative overflow-hidden rounded-[2rem] border border-accent/20 bg-accent/5 p-6 text-left transition-all hover:bg-accent/10 hover:border-accent/40 active:scale-[0.98] disabled:opacity-50"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-xl bg-green-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Wallet className="h-6 w-6 text-green-500" />
+                  <div className="flex items-center gap-5">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/10 text-accent transition-transform group-hover:scale-110 group-hover:-rotate-3">
+                      {isSubmitting ? <Loader2 className="h-8 w-8 animate-spin" /> : <QrCode className="h-8 w-8" />}
                     </div>
                     <div className="flex-1">
-                      <p className="font-black text-sm text-green-500">Pagar com Saldo</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">Saldo disponível: R$ {((balance || 0) / 100).toFixed(2).replace(".", ",")}</p>
+                      <h3 className="text-sm font-black uppercase tracking-widest text-accent">Pagar com PIX</h3>
+                      <p className="text-[10px] font-medium text-muted-foreground mt-1 uppercase tracking-wider">Aprovação imediata</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs font-black text-green-500">✓ Suficiente</p>
+                      <p className="text-xs font-black text-accent uppercase tracking-tighter">R$ {(total / 100).toFixed(2).replace(".", ",")}</p>
+                      <p className="text-[8px] font-black text-accent/60 uppercase tracking-widest mt-1">Total</p>
                     </div>
                   </div>
                 </button>
-              )}
 
-              {!canPayWithBalance && balance !== undefined && (
-                <div className="p-4 rounded-2xl bg-muted/10 border border-border/30">
-                  <div className="flex items-center justify-between text-[10px]">
-                    <span className="text-muted-foreground">Saldo atual: R$ {((balance || 0) / 100).toFixed(2).replace(".", ",")}</span>
-                    <span className="text-red-500 font-black">Insuficiente</span>
+                {/* Insufficient Balance Message */}
+                {!canPayWithBalance && balance !== undefined && (
+                  <div className="px-6 py-3 text-center">
+                    <p className="text-[9px] font-black uppercase tracking-[0.15em] text-muted-foreground/60">
+                      Saldo insuficiente (R$ {((balance || 0) / 100).toFixed(2).replace(".", ",")}) para pagar com carteira
+                    </p>
                   </div>
-                </div>
-              )}
-
-              {/* Option: PIX */}
-              <button
-                onClick={handleConfirmOrder}
-                className="w-full p-6 rounded-2xl bg-accent/5 border border-accent/20 hover:bg-accent/10 transition-all text-left group"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-xl bg-accent/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <QrCode className="h-6 w-6 text-accent" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-black text-sm text-accent">Pagar com PIX</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">Copiar e colar ou usar app do banco</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs font-black text-accent">R$ {(total / 100).toFixed(2).replace(".", ",")}</p>
-                  </div>
-                </div>
-              </button>
+                )}
+              </div>
 
               {isSubmitting && (
-                <div className="text-center space-y-3 mt-6">
-                  <div className="h-10 w-10 border-3 border-accent/20 border-t-accent animate-spin rounded-full mx-auto" />
-                  <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Processando...</p>
+                <div className="flex flex-col items-center gap-3 py-4 animate-in fade-in zoom-in">
+                  <div className="flex gap-1">
+                    <div className="h-1.5 w-1.5 rounded-full bg-accent animate-bounce [animation-delay:-0.3s]" />
+                    <div className="h-1.5 w-1.5 rounded-full bg-accent animate-bounce [animation-delay:-0.15s]" />
+                    <div className="h-1.5 w-1.5 rounded-full bg-accent animate-bounce" />
+                  </div>
+                  <p className="text-[9px] font-black uppercase tracking-[0.2em] text-accent animate-pulse">Processando pedido...</p>
                 </div>
               )}
             </div>

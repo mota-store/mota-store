@@ -232,10 +232,10 @@ export const appRouter = router({
         return createCoupon({
           code: input.code,
           value: input.value,
-          description: input.description || null,
+          description: input.description ?? null,
           maxRedemptions: input.maxRedemptions ?? 1,
           expiresAt: input.expiresAt ? new Date(input.expiresAt) : null,
-        });
+        } as any);
       }),
 
     listCoupons: adminProcedure.query(async () => {
