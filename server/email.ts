@@ -13,26 +13,61 @@ const baseStyles = {
   fontFamily: "'Inter', -apple-system, sans-serif",
 };
 
-export async function sendWelcomeEmail(email: string, firstName: string) {
-  console.log(`[Email Action] Tentando Boas-vindas via SSL (465) -> ${email}`);
+// Função principal de envio usando 'service: gmail' que é mais compatível com o Render
+async function sendMail(options: { to: string; subject: string; html: string }) {
+  console.log(`[Email Action] Tentando envio via 'service: gmail' -> ${options.to}`);
   
+  // Criar transporter usando o serviço pré-configurado do Nodemailer para Gmail
   const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
+    service: 'gmail',
     auth: {
       user: SMTP_USER,
       pass: SMTP_PASS,
     },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
+    // Configurações de timeout mais agressivas para falhar rápido e não travar o server
+    connectionTimeout: 5000,
+    greetingTimeout: 5000,
     socketTimeout: 10000,
-    // Forçar IPv4 para evitar ENETUNREACH no Render
-    tls: {
-      rejectUnauthorized: false
-    }
   });
 
+  try {
+    const info = await transporter.sendMail({
+      from: `"MOTA STORE" <${SMTP_USER}>`,
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+    });
+    console.log(`[Email Success] Enviado com sucesso: ${info.messageId}`);
+    return true;
+  } catch (error: any) {
+    console.error(`[Email Error] Falha via 'service: gmail': ${error.message}`);
+    
+    // Fallback para porta 465 manual caso o 'service' falhe
+    try {
+      console.log("[Email Retry] Tentando via porta 465 SSL manual...");
+      const manualTransporter = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        auth: { user: SMTP_USER, pass: SMTP_PASS },
+        connectionTimeout: 5000,
+      });
+      await manualTransporter.sendMail({
+        from: `"MOTA STORE" <${SMTP_USER}>`,
+        to: options.to,
+        subject: options.subject,
+        html: options.html,
+      });
+      console.log(`[Email Success] Enviado via porta 465 manual para ${options.to}`);
+      return true;
+    } catch (retryError: any) {
+      console.error(`[Email Fatal] Todos os métodos falharam: ${retryError.message}`);
+      throw retryError;
+    }
+  }
+}
+
+export async function sendWelcomeEmail(email: string, firstName: string) {
   const html = `
     <div style="background: ${baseStyles.bodyBg}; color: ${baseStyles.textColor}; padding: 40px; font-family: ${baseStyles.fontFamily};">
       <div style="background: ${baseStyles.cardBg}; padding: 30px; border-radius: 16px; border: 1px solid #333;">
@@ -51,59 +86,11 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
     </div>
   `;
 
-  try {
-    await transporter.sendMail({
-      from: `"MOTA STORE" <${SMTP_USER}>`,
-      to: email,
-      subject: 'Bem-vindo à MOTA STORE! 🎉',
-      html,
-    });
-    console.log(`[Email Success] Boas-vindas enviado via SSL para ${email}`);
-    return true;
-  } catch (error: any) {
-    console.error(`[Email Error] Falha via SSL: ${error.message}`);
-    try {
-      console.log("[Email Retry] Tentando via fallback 'service: gmail'...");
-      const fallback = nodemailer.createTransport({ 
-        service: 'gmail', 
-        auth: { user: SMTP_USER, pass: SMTP_PASS } 
-      });
-      await fallback.sendMail({ 
-        from: `"MOTA STORE" <${SMTP_USER}>`, 
-        to: email, 
-        subject: 'Bem-vindo à MOTA STORE! 🎉', 
-        html 
-      });
-      console.log(`[Email Success] Boas-vindas enviado via fallback para ${email}`);
-      return true;
-    } catch (retryError: any) {
-      console.error(`[Email Fatal] Fallback também falhou: ${retryError.message}`);
-      throw retryError;
-    }
-  }
+  return sendMail({ to: email, subject: 'Bem-vindo à MOTA STORE! 🎉', html });
 }
 
 export async function sendPasswordResetEmail(email: string, firstName: string, token: string) {
-  console.log(`[Email Action] Tentando Redefinição via SSL (465) -> ${email}`);
-  
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    auth: {
-      user: SMTP_USER,
-      pass: SMTP_PASS,
-    },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 10000,
-    tls: {
-      rejectUnauthorized: false
-    }
-  });
-
   const resetLink = `${APP_URL}/reset-password?token=${token}`;
-
   const html = `
     <div style="background: ${baseStyles.bodyBg}; color: ${baseStyles.textColor}; padding: 40px; font-family: ${baseStyles.fontFamily};">
       <div style="background: ${baseStyles.cardBg}; padding: 30px; border-radius: 16px; border: 1px solid #333;">
@@ -123,57 +110,10 @@ export async function sendPasswordResetEmail(email: string, firstName: string, t
     </div>
   `;
 
-  try {
-    await transporter.sendMail({
-      from: `"MOTA STORE" <${SMTP_USER}>`,
-      to: email,
-      subject: 'Redefinição de Senha — MOTA STORE',
-      html,
-    });
-    console.log(`[Email Success] Redefinição enviada via SSL para ${email}`);
-    return true;
-  } catch (error: any) {
-    console.error(`[Email Error] Falha via SSL: ${error.message}`);
-    try {
-      console.log("[Email Retry] Tentando via fallback 'service: gmail'...");
-      const fallback = nodemailer.createTransport({ 
-        service: 'gmail', 
-        auth: { user: SMTP_USER, pass: SMTP_PASS } 
-      });
-      await fallback.sendMail({ 
-        from: `"MOTA STORE" <${SMTP_USER}>`, 
-        to: email, 
-        subject: 'Redefinição de Senha — MOTA STORE', 
-        html 
-      });
-      console.log(`[Email Success] Redefinição enviada via fallback para ${email}`);
-      return true;
-    } catch (retryError: any) {
-      console.error(`[Email Fatal] Fallback também falhou: ${retryError.message}`);
-      throw retryError;
-    }
-  }
+  return sendMail({ to: email, subject: 'Redefinição de Senha — MOTA STORE', html });
 }
 
 export async function sendVerificationCodeEmail(email: string, firstName: string, code: string) {
-  console.log(`[Email Action] Tentando Código (${code}) via SSL (465) -> ${email}`);
-  
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    auth: {
-      user: SMTP_USER,
-      pass: SMTP_PASS,
-    },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 10000,
-    tls: {
-      rejectUnauthorized: false
-    }
-  });
-
   const html = `
     <div style="background: ${baseStyles.bodyBg}; color: ${baseStyles.textColor}; padding: 40px; font-family: ${baseStyles.fontFamily};">
       <div style="background: ${baseStyles.cardBg}; padding: 30px; border-radius: 16px; border: 1px solid #333;">
@@ -193,34 +133,5 @@ export async function sendVerificationCodeEmail(email: string, firstName: string
     </div>
   `;
 
-  try {
-    await transporter.sendMail({
-      from: `"MOTA STORE" <${SMTP_USER}>`,
-      to: email,
-      subject: `${code} é seu código de verificação — MOTA STORE`,
-      html,
-    });
-    console.log(`[Email Success] Código enviado via SSL para ${email}`);
-    return true;
-  } catch (error: any) {
-    console.error(`[Email Error] Falha via SSL: ${error.message}`);
-    try {
-      console.log("[Email Retry] Tentando via fallback 'service: gmail'...");
-      const fallback = nodemailer.createTransport({ 
-        service: 'gmail', 
-        auth: { user: SMTP_USER, pass: SMTP_PASS } 
-      });
-      await fallback.sendMail({ 
-        from: `"MOTA STORE" <${SMTP_USER}>`, 
-        to: email, 
-        subject: `${code} é seu código de verificação — MOTA STORE`, 
-        html 
-      });
-      console.log(`[Email Success] Código enviado via fallback para ${email}`);
-      return true;
-    } catch (retryError: any) {
-      console.error(`[Email Fatal] Fallback também falhou: ${retryError.message}`);
-      throw retryError;
-    }
-  }
+  return sendMail({ to: email, subject: `${code} é seu código de verificação — MOTA STORE`, html });
 }
