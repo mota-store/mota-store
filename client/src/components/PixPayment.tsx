@@ -83,16 +83,24 @@ export function PixPayment({
     }
   };
 
-  const openBankApp = (appName: string, deepLink: string) => {
-    // Copiar antes de tentar abrir o app para garantir que o usuário tenha o código
+  const openBankApp = (appName: string, intentLink: string, fallbackScheme: string) => {
+    // Sempre copiar o código PIX antes de tentar abrir o app
     copyPixCode(true);
     
-    const url = deepLink.replace("CODIGO_PIX", encodeURIComponent(pixCode || ""));
-    
-    // Tentar abrir o app
-    window.location.href = url;
-    
-    toast.info(`Abrindo ${appName}... Se o app não abrir, cole o código manualmente.`);
+    const encodedCode = encodeURIComponent(pixCode || "");
+    const intentUrl = intentLink.replace("CODIGO_PIX", encodedCode);
+    const fallbackUrl = fallbackScheme.replace("CODIGO_PIX", encodedCode);
+
+    // Tentar abrir com intent:// primeiro (Android)
+    window.location.href = intentUrl;
+
+    // Fallback após 1500ms: tentar scheme simples (iOS / navegadores)
+    setTimeout(() => {
+      window.location.href = fallbackUrl;
+    }, 1500);
+
+    // Mensagem informativa para o usuário
+    toast.info(`Tentando abrir ${appName}... Se não abrir automaticamente, cole o código PIX manualmente no app do banco.`);
   };
 
   const qrCodeSrc = getQrCodeSrc();
@@ -143,14 +151,38 @@ export function PixPayment({
           <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Pagar com meu banco</p>
           <div className="grid grid-cols-4 gap-3">
             {[
-              { name: "Nubank", color: "#820AD1", icon: "/assets/banks/nubank.png", link: "nubank://nu/pix/copia-e-cola?code=CODIGO_PIX" },
-              { name: "Inter", color: "#FF6B00", icon: "/assets/banks/inter.png", link: "inter://pix?code=CODIGO_PIX" },
-              { name: "Itaú", color: "#EC7000", icon: "/assets/banks/itau.png", link: "itau-empresas://pix/copia-e-cola?code=CODIGO_PIX" },
-              { name: "Bradesco", color: "#cc092f", icon: "/assets/banks/bradesco.png", link: "bradesco://pix?code=CODIGO_PIX" }
+              {
+                name: "Nubank",
+                color: "#820AD1",
+                icon: "/assets/banks/nubank.png",
+                intentLink: "intent://nu/pix/copia-e-cola?code=CODIGO_PIX#Intent;scheme=nubank;package=com.nubank;end",
+                fallbackScheme: "nubank://nu/pix/copia-e-cola?code=CODIGO_PIX"
+              },
+              {
+                name: "Inter",
+                color: "#FF6B00",
+                icon: "/assets/banks/inter.png",
+                intentLink: "intent://pix?code=CODIGO_PIX#Intent;scheme=inter;package=br.com.intermedium;end",
+                fallbackScheme: "inter://pix?code=CODIGO_PIX"
+              },
+              {
+                name: "Itaú",
+                color: "#EC7000",
+                icon: "/assets/banks/itau.png",
+                intentLink: "intent://pix/copia-e-cola?code=CODIGO_PIX#Intent;scheme=itau-empresas;package=com.itau;end",
+                fallbackScheme: "itau-empresas://pix/copia-e-cola?code=CODIGO_PIX"
+              },
+              {
+                name: "Bradesco",
+                color: "#cc092f",
+                icon: "/assets/banks/bradesco.png",
+                intentLink: "intent://pix?code=CODIGO_PIX#Intent;scheme=bradesco;package=com.bradesco;end",
+                fallbackScheme: "bradesco://pix?code=CODIGO_PIX"
+              }
             ].map((bank) => (
               <button
                 key={bank.name}
-                onClick={() => openBankApp(bank.name, bank.link)}
+                onClick={() => openBankApp(bank.name, bank.intentLink, bank.fallbackScheme)}
                 className="flex flex-col items-center gap-2 p-3 rounded-2xl border border-border/50 bg-muted/20 hover:bg-muted/40 transition-all active:scale-90 group"
               >
                 <div className="w-10 h-10 rounded-xl overflow-hidden shadow-md group-hover:shadow-lg transition-all">

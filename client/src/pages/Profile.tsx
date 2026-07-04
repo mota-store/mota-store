@@ -25,12 +25,16 @@ export default function Profile() {
       utils.auth.me.invalidate();
       setNewPassword("");
       setConfirmNewPassword("");
+      setVerificationCode("");
       setShowPasswordFields(false);
+      setPasswordsMatch(null);
     },
     onError: () => {
       toast.error("Erro ao atualizar perfil.");
     }
   });
+
+  const requestCodeMutation = trpc.auth.requestVerificationCode.useMutation();
 
   const [isDark, setIsDark] = useState(false);
   const [name, setName] = useState(user?.name || "");
@@ -38,51 +42,81 @@ export default function Profile() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showCodeModal, setShowCodeModal] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [identityVerified, setIdentityVerified] = useState(false);
+  const [isSendingCode, setIsSendingCode] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+  const [passwordsMatch, setPasswordsMatch] = useState<true | false | null>(null);
 
-  const requestCodeMutation = trpc.auth.requestVerificationCode.useMutation();
-  const verifyCodeMutation = trpc.auth.verifyCodeAndShowPassword.useMutation();
-
-  const handleShowCurrentPassword = async () => {
-    if (user?.loginMethod === "google") {
-      toast.info("Contas Google não possuem senha definida no sistema. Crie uma senha abaixo se desejar.");
+  // Validação em tempo real das senhas
+  useEffect(() => {
+    if (newPassword.length === 0 && confirmNewPassword.length === 0) {
+      setPasswordsMatch(null);
       return;
     }
-    try {
-      setIsVerifying(true);
-      await requestCodeMutation.mutateAsync();
-      setShowCodeModal(true);
-      toast.success("Código de verificação enviado para seu e-mail!");
-    } catch (err: any) {
-      toast.error("Erro ao enviar código: " + err.message);
-    } finally {
-      setIsVerifying(false);
+    if (newPassword.length >= 6 && confirmNewPassword.length >= 6) {
+      setPasswordsMatch(newPassword === confirmNewPassword);
+    } else if (confirmNewPassword.length >= 6 && newPassword.length >= 6) {
+      setPasswordsMatch(false);
+    } else {
+      setPasswordsMatch(null);
+    }
+  }, [newPassword, confirmNewPassword]);
+
+  // Enviar código quando o campo de verificação for focado pela primeira vez
+  const handleCodeFieldFocus = async () => {
+    if (!codeSent && !isSendingCode) {
+      try {
+        setIsSendingCode(true);
+        await requestCodeMutation.mutateAsync();
+        setCodeSent(true);
+        toast.success("Código de 4 dígitos enviado para seu e-mail!");
+      } catch (err: any) {
+        toast.error("Erro ao enviar código: " + err.message);
+      } finally {
+        setIsSendingCode(false);
+      }
     }
   };
 
-  const handleVerifyCode = async () => {
-    if (verificationCode.length !== 4) {
-      toast.error("O código deve ter 4 dígitos");
-      return;
-    }
-
+  const handleResendCode = async () => {
     try {
-      setIsVerifying(true);
-      const result = await verifyCodeMutation.mutateAsync({ code: verificationCode });
-      if (result.success) {
-        setShowCodeModal(false);
-        setIdentityVerified(true);
-        toast.success("Identidade confirmada! Por segurança, as senhas são criptografadas. Você pode alterá-la abaixo.");
-      } else {
-        toast.error(result.error || "Código inválido");
-      }
+      setIsSendingCode(true);
+      await requestCodeMutation.mutateAsync();
+      setCodeSent(true);
+      toast.success("Novo código enviado para seu e-mail!");
     } catch (err: any) {
-      toast.error("Erro ao verificar código: " + err.message);
+      toast.error("Erro ao enviar código: " + err.message);
     } finally {
-      setIsVerifying(false);
+      setIsSendingCode(false);
+    }
+  };
+
+  // Verificar se o botão deve estar ativo
+  const canSubmitPassword = 
+    newPassword.length >= 6 &&
+    confirmNewPassword.length >= 6 &&
+    newPassword === confirmNewPassword &&
+    verificationCode.length === 4;
+
+  const handleUpdateProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (showPasswordFields) {
+      if (newPassword.length < 6) {
+        toast.error("A senha deve ter pelo menos 6 caracteres.");
+        return;
+      }
+      if (newPassword !== confirmNewPassword) {
+        toast.error("As senhas não conferem.");
+        return;
+      }
+      if (verificationCode.length !== 4) {
+        toast.error("Digite o código de 4 dígitos enviado no seu e-mail.");
+        return;
+      }
+      updateProfile.mutate({ name, password: newPassword, verificationCode });
+    } else {
+      updateProfile.mutate({ name });
     }
   };
 
@@ -110,23 +144,6 @@ export default function Profile() {
     }
   };
 
-  const handleUpdateProfile = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (showPasswordFields) {
-      if (newPassword.length < 6) {
-        toast.error("A senha deve ter pelo menos 6 caracteres.");
-        return;
-      }
-      if (newPassword !== confirmNewPassword) {
-        toast.error("As senhas não conferem.");
-        return;
-      }
-      updateProfile.mutate({ name, password: newPassword });
-    } else {
-      updateProfile.mutate({ name });
-    }
-  };
-
   useEffect(() => {
     if (!user) {
       navigate("/");
@@ -137,58 +154,6 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-background text-foreground pt-16">
-      {/* Modal de Código de Verificação */}
-      <AnimatePresence>
-        {showCodeModal && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-card border border-border p-8 rounded-[2rem] max-w-sm w-full shadow-2xl"
-            >
-              <div className="text-center space-y-4">
-                <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/20 text-accent mb-2">
-                  <Mail className="h-8 w-8" />
-                </div>
-                <h2 className="text-xl font-black uppercase tracking-tight">Verifique seu e-mail</h2>
-                <p className="text-sm text-muted-foreground">
-                  Enviamos um código de 4 dígitos para <span className="text-foreground font-bold">{user?.email}</span>. Digite-o abaixo para continuar.
-                </p>
-                
-                <div className="pt-4">
-                  <Input
-                    type="text"
-                    maxLength={4}
-                    placeholder="0000"
-                    value={verificationCode}
-                    onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ""))}
-                    className="text-center text-3xl font-black tracking-[1rem] h-16 bg-muted/50 border-2 border-accent/30 rounded-2xl focus:border-accent"
-                  />
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  <Button
-                    variant="ghost"
-                    className="flex-1 font-bold uppercase tracking-widest text-xs"
-                    onClick={() => setShowCodeModal(false)}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    className="flex-1 bg-accent hover:bg-accent/90 font-black uppercase tracking-widest text-xs"
-                    onClick={handleVerifyCode}
-                    disabled={isVerifying || verificationCode.length !== 4}
-                  >
-                    {isVerifying ? "Verificando..." : "Confirmar"}
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
       {isOnboarding && (
         <div className="bg-accent text-accent-foreground py-3 px-4 text-center font-black uppercase tracking-widest text-xs animate-pulse">
           Bem-vindo! Por favor, confirme seu nome e foto de perfil abaixo.
@@ -263,87 +228,144 @@ export default function Profile() {
                       <p className="font-bold text-sm truncate">{user.email}</p>
                     </div>
 
+                    {/* Seção de Alterar Senha */}
                     {!showPasswordFields ? (
-                      <div className="space-y-3">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setShowPasswordFields(true)}
-                          className="w-full h-12 rounded-xl border-accent/20 text-accent font-bold text-xs uppercase tracking-widest hover:bg-accent/10"
-                        >
-                          <Lock className="h-4 w-4 mr-2" />
-                          Alterar Senha
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={handleShowCurrentPassword}
-                          disabled={isVerifying}
-                          className="w-full h-10 rounded-xl text-accent/70 font-bold text-[10px] uppercase tracking-widest hover:bg-accent/5"
-                        >
-                          {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : "Ver Senha Atual"}
-                        </Button>
-                        
-                        {identityVerified && (
-                          <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-xl flex items-center gap-2">
-                            <Check className="h-4 w-4 text-green-500" />
-                            <span className="text-[9px] font-black text-green-500 uppercase tracking-widest">Identidade Verificada</span>
-                          </div>
-                        )}
-                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setShowPasswordFields(true);
+                          setNewPassword("");
+                          setConfirmNewPassword("");
+                          setVerificationCode("");
+                          setPasswordsMatch(null);
+                          setCodeSent(false);
+                        }}
+                        className="w-full h-12 rounded-xl border-accent/20 text-accent font-bold text-xs uppercase tracking-widest hover:bg-accent/10"
+                      >
+                        <Lock className="h-4 w-4 mr-2" />
+                        Alterar Senha
+                      </Button>
                     ) : (
                       <div className="space-y-4 p-4 rounded-2xl bg-accent/5 border border-accent/20 animate-in fade-in slide-in-from-top-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-accent">Nova Senha</span>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-accent">Alterar Senha</span>
                           <button 
                             type="button" 
-                            onClick={() => setShowPasswordFields(false)}
+                            onClick={() => {
+                              setShowPasswordFields(false);
+                              setNewPassword("");
+                              setConfirmNewPassword("");
+                              setVerificationCode("");
+                              setPasswordsMatch(null);
+                              setCodeSent(false);
+                            }}
                             className="text-[10px] font-black text-muted-foreground hover:text-foreground"
                           >
                             CANCELAR
                           </button>
                         </div>
+
                         {user.loginMethod === "google" && (
                           <p className="text-[10px] text-yellow-500/80 font-medium mb-2">
                             Você entrou com o Google. Defina uma senha para acesso manual.
                           </p>
                         )}
-                        
-                        <div className="space-y-3">
+
+                        {/* Campo Nova Senha */}
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Nova Senha</label>
                           <div className="relative">
                             <Input
                               type={showNewPassword ? "text" : "password"}
-                              placeholder="Nova senha (min. 6)"
+                              placeholder="Mínimo 6 caracteres"
                               value={newPassword}
                               onChange={(e) => setNewPassword(e.target.value)}
-                              className="h-10 rounded-lg bg-background/50 border-border/50 text-sm"
+                              className="h-12 rounded-xl bg-background/50 border-border/50 text-sm pr-12"
                             />
                             <button
                               type="button"
                               onClick={() => setShowNewPassword(!showNewPassword)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                             >
-                              {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              {showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                             </button>
                           </div>
-                          
-                          <Input
-                            type="password"
-                            placeholder="Confirme a nova senha"
-                            value={confirmNewPassword}
-                            onChange={(e) => setConfirmNewPassword(e.target.value)}
-                            className="h-10 rounded-lg bg-background/50 border-border/50 text-sm"
-                          />
-                          
-                          <Button
-                            type="button"
-                            onClick={handleUpdateProfile}
-                            disabled={updateProfile.isPending}
-                            className="w-full bg-accent text-accent-foreground font-black h-10 rounded-lg"
-                          >
-                            {updateProfile.isPending ? "SALVANDO..." : "SALVAR SENHA"}
-                          </Button>
+                          {newPassword.length > 0 && newPassword.length < 6 && (
+                            <p className="text-[10px] text-red-400">Mínimo 6 caracteres</p>
+                          )}
                         </div>
+
+                        {/* Campo Confirmar Senha */}
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Confirmar Nova Senha</label>
+                          <div className="relative">
+                            <Input
+                              type={showConfirmPassword ? "text" : "password"}
+                              placeholder="Confirme a nova senha"
+                              value={confirmNewPassword}
+                              onChange={(e) => setConfirmNewPassword(e.target.value)}
+                              className="h-12 rounded-xl bg-background/50 border-border/50 text-sm pr-12"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                              {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                            </button>
+                          </div>
+                          {passwordsMatch === false && (
+                            <p className="text-[10px] text-red-400 font-bold">As senhas não coincidem</p>
+                          )}
+                          {passwordsMatch === true && (
+                            <p className="text-[10px] text-green-400 font-bold">Senhas coincidem ✓</p>
+                          )}
+                        </div>
+
+                        {/* Campo Código de Verificação */}
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                            Código de Verificação
+                          </label>
+                          <Input
+                            type="text"
+                            maxLength={4}
+                            placeholder="0000"
+                            value={verificationCode}
+                            onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ""))}
+                            onFocus={handleCodeFieldFocus}
+                            className="text-center text-2xl font-black tracking-[0.75rem] h-14 rounded-xl bg-background/50 border-2 border-accent/30 focus:border-accent"
+                          />
+                          <p className="text-[10px] text-muted-foreground/70">
+                            Verifique seu spam caso não tenha recebido o código.
+                          </p>
+                          {codeSent && (
+                            <button
+                              type="button"
+                              onClick={handleResendCode}
+                              disabled={isSendingCode}
+                              className="text-[10px] text-accent hover:text-accent/80 font-black uppercase tracking-widest"
+                            >
+                              {isSendingCode ? "Enviando..." : "Reenviar código"}
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Botão Alterar Senha */}
+                        <Button
+                          type="button"
+                          onClick={handleUpdateProfile}
+                          disabled={!canSubmitPassword || updateProfile.isPending}
+                          className="w-full bg-accent text-accent-foreground font-black h-12 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {updateProfile.isPending ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              ALTERANDO...
+                            </>
+                          ) : "ALTERAR SENHA"}
+                        </Button>
                       </div>
                     )}
                   </div>

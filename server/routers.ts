@@ -82,12 +82,24 @@ export const appRouter = router({
       .input(z.object({ 
         name: z.string().optional(), 
         avatarUrl: z.string().optional(),
-        password: z.string().min(6).optional()
+        password: z.string().min(6).optional(),
+        verificationCode: z.string().length(4).optional()
       }))
       .mutation(async ({ ctx, input }) => {
         const updateData: any = { name: input.name, avatarUrl: input.avatarUrl };
         
         if (input.password) {
+          // Se um código de verificação foi fornecido, validar antes de alterar a senha
+          if (input.verificationCode) {
+            const { getUserByResetToken, clearResetToken } = await import("./db");
+            const user = await getUserByResetToken(input.verificationCode);
+            if (!user || user.id !== ctx.user.id || !user.resetTokenExpires || user.resetTokenExpires < new Date()) {
+              return { success: false, error: "Código de verificação inválido ou expirado" };
+            }
+            // Limpar o código após uso
+            await clearResetToken(ctx.user.id);
+          }
+
           const bcrypt = await import("bcrypt");
           updateData.passwordHash = await bcrypt.hash(input.password, 10);
         }

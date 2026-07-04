@@ -38,23 +38,61 @@ function encodeSubject(subject: string) {
 }
 
 /**
+ * Gera um Message-ID único com timestamp e valor aleatório
+ */
+function generateMessageId(): string {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substring(2, 10);
+  return `<${timestamp}-${random}@mota-store.onrender.com>`;
+}
+
+/**
+ * Formata a data atual no padrão RFC 2822 para o cabeçalho Date
+ */
+function formatDateHeader(): string {
+  const date = new Date();
+  return date.toUTCString();
+}
+
+/**
  * Função para codificar o e-mail no formato exigido pela API do Gmail (Base64URL)
- * Melhorada com cabeçalhos MIME corretos para evitar SPAM e erros de encoding.
+ * Melhorada com cabeçalhos MIME completos para evitar SPAM e erros de encoding.
+ * Inclui: Reply-To, X-Mailer, Message-ID, Date, e versão text/plain enriquecida.
  */
 function createRawMessage(options: { to: string; subject: string; html: string }) {
   const utf8Subject = encodeSubject(options.subject);
   const boundary = "__MOTA_STORE_BOUNDARY__";
-  
+  const messageId = generateMessageId();
+  const dateHeader = formatDateHeader();
+
+  // Texto plano enriquecido para o part text/plain — ajuda filtros anti-spam
+  const subjectText = options.subject.replace(/\ud83c[\udf00-\udfff]|\ud83d[\udc00-\ude4f\ude80-\udeff]|[\u2600-\u2B55]/g, '').trim();
+  const plainText = `Olá!\n\n` +
+    `Você está recebendo este e-mail da MOTA STORE.\n` +
+    `Assunto: ${subjectText}\n\n` +
+    `Este e-mail contém informações importantes da sua conta. ` +
+    `Para visualizar o conteúdo completo, por favor, use um leitor de e-mail compatível com HTML.\n\n` +
+    `Se você não solicitou este e-mail, por favor, ignore esta mensagem.\n\n` +
+    `--\n` +
+    `MOTA STORE\n` +
+    `Site: ${APP_URL}\n` +
+    `WhatsApp Suporte: +55 91 8488-6473\n` +
+    `© 2026 MOTA STORE. Todos os direitos reservados.`;
+
   const str = [
     `MIME-Version: 1.0\n`,
     `To: ${options.to}\n`,
     `From: "MOTA STORE" <${SMTP_USER}>\n`,
+    `Reply-To: ${SMTP_USER}\n`,
     `Subject: ${utf8Subject}\n`,
+    `Date: ${dateHeader}\n`,
+    `Message-ID: ${messageId}\n`,
+    `X-Mailer: MOTA STORE Mailer v1.0\n`,
     `Content-Type: multipart/alternative; boundary="${boundary}"\n\n`,
     `--${boundary}\n`,
     `Content-Type: text/plain; charset="UTF-8"\n`,
     `Content-Transfer-Encoding: quoted-printable\n\n`,
-    `Para visualizar esta mensagem, use um leitor de e-mail compatível com HTML.\n\n`,
+    `${plainText}\n\n`,
     `--${boundary}\n`,
     `Content-Type: text/html; charset="UTF-8"\n`,
     `Content-Transfer-Encoding: base64\n\n`,

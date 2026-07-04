@@ -119,6 +119,14 @@ export async function setResetToken(userId: number, token: string, expires: Date
     .where(eq(users.id, userId));
 }
 
+export async function clearResetToken(userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users)
+    .set({ resetToken: null, resetTokenExpires: null })
+    .where(eq(users.id, userId));
+}
+
 export async function getProducts() {
   const db = await getDb();
   if (!db) return [];
