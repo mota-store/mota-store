@@ -105,8 +105,8 @@ export function PixPayment({
   const amountDisplay = amount ? `R$ ${(amount / 100).toFixed(2).replace(".", ",")}` : "";
 
   return (
-    <Card className="p-8 bg-card/40 border-border/40 backdrop-blur-xl rounded-[2.5rem] shadow-2xl max-w-md mx-auto border-t-accent/20">
-      <div className="flex flex-col items-center text-center space-y-8">
+    <Card className="p-6 bg-card/40 border-border/40 backdrop-blur-xl rounded-[2.5rem] shadow-2xl max-w-md mx-auto border-t-accent/20 overflow-hidden">
+      <div className="flex flex-col items-center text-center space-y-6">
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 border border-accent/20 text-accent text-[10px] font-black uppercase tracking-widest mb-2">
             <span className="relative flex h-2 w-2">
@@ -119,17 +119,17 @@ export function PixPayment({
           {amountDisplay && (
             <p className="text-accent font-black text-3xl tracking-tighter">{amountDisplay}</p>
           )}
-          <p className="text-xs text-muted-foreground font-medium px-4">Escaneie o QR Code abaixo ou utilize o botão Copia e Cola</p>
+          <p className="text-[10px] text-muted-foreground font-medium px-4">Escaneie o QR Code ou utilize o Copia e Cola</p>
         </div>
 
         {/* QR Code */}
         <div className="relative group">
-          <div className="w-64 h-64 bg-white p-6 rounded-[2rem] shadow-2xl flex items-center justify-center overflow-hidden border-4 border-accent/5 transition-transform group-hover:scale-[1.02]">
+          <div className="w-48 h-48 bg-white p-4 rounded-[2rem] shadow-2xl flex items-center justify-center overflow-hidden border-4 border-accent/5 transition-transform group-hover:scale-[1.02]">
             {qrCodeSrc ? (
               <img src={qrCodeSrc} alt="QR Code PIX" className="w-full h-full object-contain" />
             ) : (
               <div className="flex flex-col items-center text-slate-300">
-                <QrCode className="w-20 h-20 mb-2 opacity-10" />
+                <QrCode className="w-12 h-12 mb-2 opacity-10" />
                 <span className="text-[10px] font-black opacity-20 uppercase tracking-widest">Gerando...</span>
               </div>
             )}
@@ -149,7 +149,7 @@ export function PixPayment({
         </div>
 
         {/* Bancos */}
-        <div className="w-full space-y-4 pt-4">
+        <div className="w-full space-y-4 -mt-2">
           <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Pagar com meu banco</p>
           <div className="grid grid-cols-4 gap-3">
             {[
@@ -187,17 +187,17 @@ export function PixPayment({
                 onClick={() => openBankApp(bank.name, bank.intentLink, bank.fallbackScheme)}
                 className="flex flex-col items-center gap-2 p-3 rounded-2xl border border-border/50 bg-muted/20 hover:bg-muted/40 transition-all active:scale-90 group"
               >
-                <div className="w-10 h-10 rounded-xl overflow-hidden shadow-md group-hover:shadow-lg transition-all">
+                <div className="w-8 h-8 rounded-xl overflow-hidden shadow-md group-hover:shadow-lg transition-all">
                   <img src={bank.icon} alt={bank.name} className="w-full h-full object-cover" />
                 </div>
-                <span className="text-[9px] font-black uppercase tracking-tighter text-muted-foreground group-hover:text-foreground">{bank.name}</span>
+                <span className="text-[8px] font-black uppercase tracking-tighter text-muted-foreground group-hover:text-foreground">{bank.name}</span>
               </button>
             ))}
           </div>
         </div>
 
         {/* Copia e Cola */}
-        <div className="w-full space-y-3 pt-2">
+        <div className="w-full space-y-3 -mt-1">
           <Button
             className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-black py-8 rounded-[1.5rem] shadow-xl shadow-accent/20 transition-all active:scale-95 text-sm uppercase tracking-widest flex items-center justify-center gap-3"
             onClick={() => copyPixCode()}

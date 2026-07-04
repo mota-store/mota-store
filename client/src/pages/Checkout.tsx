@@ -101,7 +101,11 @@ export default function Checkout() {
       sessionStorage.removeItem("pix_payment");
       sessionStorage.removeItem("pix_expiry_time");
     }
+    // Limpar carrinho ao voltar
+    sessionStorage.removeItem("lastOrder");
     navigate("/");
+    // Forçar reload para atualizar estado
+    setTimeout(() => window.location.href = "/", 100);
   };
 
   if (!isAuthenticated) {
@@ -148,16 +152,13 @@ export default function Checkout() {
     <div className="h-screen bg-background flex flex-col overflow-hidden" style={{ paddingTop: "54px" }}>
       <div className="container max-w-2xl mx-auto flex flex-col h-full overflow-hidden">
         <div className="flex items-center gap-4 mb-4 flex-shrink-0">
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <button
             onClick={handleBack}
-            disabled={step === "pix" && pixData !== null}
-            className="font-black uppercase tracking-widest text-[10px] hover:bg-accent/10"
+            className="font-black uppercase tracking-widest text-[10px] hover:bg-accent/10 flex items-center gap-2 text-foreground/70 hover:text-foreground transition-colors"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <ArrowLeft className="h-4 w-4" />
             Voltar
-          </Button>
+          </button>
           <h1 className="text-3xl font-black tracking-tighter uppercase">PAGA<span className="text-accent">MENTO</span></h1>
         </div>
 
@@ -169,7 +170,7 @@ export default function Checkout() {
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col items-center justify-center overflow-y-auto">
+        <div className="flex-1 flex flex-col items-center justify-center overflow-hidden">
           {/* Saldo Confirmation */}
           {step === "balance_confirm" && (
             <div className="text-center space-y-6 animate-in fade-in zoom-in duration-500">
