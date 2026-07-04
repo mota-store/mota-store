@@ -31,17 +31,35 @@ oauth2Client.setCredentials({
 const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 
 /**
+ * Função para codificar o assunto em UTF-8 Base64 para evitar erros de caracteres estranhos
+ */
+function encodeSubject(subject: string) {
+  return `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
+}
+
+/**
  * Função para codificar o e-mail no formato exigido pela API do Gmail (Base64URL)
+ * Melhorada com cabeçalhos MIME corretos para evitar SPAM e erros de encoding.
  */
 function createRawMessage(options: { to: string; subject: string; html: string }) {
+  const utf8Subject = encodeSubject(options.subject);
+  const boundary = "__MOTA_STORE_BOUNDARY__";
+  
   const str = [
-    `Content-Type: text/html; charset="UTF-8"\n`,
     `MIME-Version: 1.0\n`,
-    `Content-Transfer-Encoding: 7bit\n`,
-    `to: ${options.to}\n`,
-    `from: "MOTA STORE" <${SMTP_USER}>\n`,
-    `subject: ${options.subject}\n\n`,
-    options.html,
+    `To: ${options.to}\n`,
+    `From: "MOTA STORE" <${SMTP_USER}>\n`,
+    `Subject: ${utf8Subject}\n`,
+    `Content-Type: multipart/alternative; boundary="${boundary}"\n\n`,
+    `--${boundary}\n`,
+    `Content-Type: text/plain; charset="UTF-8"\n`,
+    `Content-Transfer-Encoding: quoted-printable\n\n`,
+    `Para visualizar esta mensagem, use um leitor de e-mail compatível com HTML.\n\n`,
+    `--${boundary}\n`,
+    `Content-Type: text/html; charset="UTF-8"\n`,
+    `Content-Transfer-Encoding: base64\n\n`,
+    Buffer.from(options.html).toString('base64'),
+    `\n--${boundary}--`,
   ].join('');
 
   return Buffer.from(str)
