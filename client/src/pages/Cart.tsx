@@ -4,7 +4,8 @@ import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { ArrowLeft, Trash2, ShoppingCart, Plus, Minus } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function Cart() {
   const { isAuthenticated } = useAuth();
@@ -16,14 +17,36 @@ export default function Cart() {
   });
   const { data: products } = trpc.products.list.useQuery();
   
+  // Estado local para atualização otimista
+  const [localQuantities, setLocalQuantities] = useState<Record<number, number>>({});
+
+  // Sincronizar estado local quando os dados do servidor mudarem
+  useEffect(() => {
+    if (cartItems) {
+      const quantities: Record<number, number> = {};
+      cartItems.forEach(item => {
+        quantities[item.productId] = (quantities[item.productId] || 0) + item.quantity;
+      });
+      setLocalQuantities(quantities);
+    }
+  }, [cartItems]);
+
   const removeItem = trpc.cart.removeItem.useMutation({
     onSuccess: () => {
+      utils.cart.getItems.invalidate();
+    },
+    onError: () => {
+      toast.error("Erro ao remover item");
       utils.cart.getItems.invalidate();
     }
   });
 
   const addItemMutation = trpc.cart.addItem.useMutation({
     onSuccess: () => {
+      utils.cart.getItems.invalidate();
+    },
+    onError: (error) => {
+      toast.error("Erro ao atualizar quantidade");
       utils.cart.getItems.invalidate();
     }
   });
@@ -39,23 +62,25 @@ export default function Cart() {
     return null;
   }
 
-  // Agrupar itens por productId
+  // Agrupar itens por productId para exibição, usando as quantidades locais se disponíveis
   const groupedItemsMap = new Map<number, any>();
   
-  cartItems?.forEach(item => {
-    const product = products?.find(p => p.id === item.productId);
+  // Usamos os produtos e os cartItems para construir a lista, mas a quantidade vem do localQuantities
+  const productIds = Array.from(new Set(cartItems?.map(item => item.productId) || []));
+  
+  productIds.forEach(productId => {
+    const product = products?.find(p => p.id === productId);
     if (!product) return;
 
-    if (groupedItemsMap.has(item.productId)) {
-      const existing = groupedItemsMap.get(item.productId);
-      existing.quantity += item.quantity;
-      existing.ids.push(item.id); // Guardar todos os IDs do banco para remover depois
-    } else {
-      groupedItemsMap.set(item.productId, {
-        productId: item.productId,
+    const itemsForProduct = cartItems?.filter(item => item.productId === productId) || [];
+    const quantity = localQuantities[productId] ?? itemsForProduct.reduce((sum, item) => sum + item.quantity, 0);
+
+    if (quantity > 0) {
+      groupedItemsMap.set(productId, {
+        productId,
         product,
-        quantity: item.quantity,
-        ids: [item.id]
+        quantity,
+        ids: itemsForProduct.map(item => item.id)
       });
     }
   });
@@ -65,19 +90,42 @@ export default function Cart() {
   const originalTotal = subtotal * 2;
   const total = subtotal;
 
-  const handleRemoveOne = (item: any) => {
-    if (item.quantity > 1) {
-      addItemMutation.mutate({ productId: item.productId, quantity: -1 });
-    } else {
-      // Se só tem 1 (ou o agrupamento resultou em 1), remove o primeiro ID
-      removeItem.mutate(item.ids[0]);
+  const handleUpdateQuantity = (productId: number, delta: number) => {
+    const currentQty = localQuantities[productId] || 0;
+    const newQty = currentQty + delta;
+
+    if (newQty <= 0) {
+      const item = groupedItems.find(i => i.productId === productId);
+      if (item && item.ids.length > 0) {
+        // Otimista: remove do estado local
+        setLocalQuantities(prev => {
+          const next = { ...prev };
+          delete next[productId];
+          return next;
+        });
+        removeItem.mutate(item.ids[0]);
+      }
+      return;
     }
+
+    // Atualização otimista do estado local
+    setLocalQuantities(prev => ({
+      ...prev,
+      [productId]: newQty
+    }));
+
+    // Chamar API em segundo plano
+    addItemMutation.mutate({ productId, quantity: delta });
   };
 
   const handleRemoveAll = (item: any) => {
-    // Para remover todos os itens agrupados, precisamos remover cada ID individualmente
-    // Como o backend deleta por ID único de linha, vamos deletar o primeiro e o cache vai atualizar
-    // Mas para ser "limpo", deletamos o primeiro ID e o backend lida com o resto no próximo render
+    // Otimista: remove do estado local
+    setLocalQuantities(prev => {
+      const next = { ...prev };
+      delete next[item.productId];
+      return next;
+    });
+
     item.ids.forEach((id: number) => {
       removeItem.mutate(id);
     });
@@ -109,7 +157,7 @@ export default function Cart() {
           </span>
         </div>
 
-        {isLoading ? (
+        {isLoading && groupedItems.length === 0 ? (
           <div className="space-y-4">
             {[1, 2].map((i) => (
               <div key={i} className="h-32 bg-muted rounded-3xl animate-pulse" />
@@ -157,14 +205,14 @@ export default function Cart() {
                     <div className="flex flex-col items-center gap-4 w-full">
                       <div className="flex items-center bg-background/50 rounded-2xl p-1.5 border border-border/50 shadow-inner">
                         <button
-                          onClick={() => handleRemoveOne(item)}
+                          onClick={() => handleUpdateQuantity(item.productId, -1)}
                           className="h-10 w-10 rounded-xl hover:bg-accent hover:text-accent-foreground flex items-center justify-center transition-all active:scale-90"
                         >
                           <Minus className="h-4 w-4" />
                         </button>
                         <span className="text-sm font-black w-12 text-center">{item.quantity}</span>
                         <button
-                          onClick={() => addItemMutation.mutate({ productId: item.productId, quantity: 1 })}
+                          onClick={() => handleUpdateQuantity(item.productId, 1)}
                           className="h-10 w-10 rounded-xl hover:bg-accent hover:text-accent-foreground flex items-center justify-center transition-all active:scale-90"
                         >
                           <Plus className="h-4 w-4" />

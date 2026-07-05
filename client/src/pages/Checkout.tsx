@@ -160,13 +160,15 @@ export default function Checkout() {
           <h1 className="text-3xl font-black tracking-tighter uppercase">PAGA<span className="text-accent">MENTO</span></h1>
         </div>
 
-        {/* Resumo do valor */}
-        <div className="flex-shrink-0 p-4 rounded-2xl bg-card/30 border border-border/30 mb-4">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Valor Total</span>
-            <span className="text-xl font-black text-accent">R$ {(total / 100).toFixed(2).replace(".", ",")}</span>
+        {/* Resumo do valor - Oculto nas etapas de pagamento e PIX conforme solicitado */}
+        {step === "balance_confirm" && (
+          <div className="flex-shrink-0 p-4 rounded-2xl bg-card/30 border border-border/30 mb-4">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Valor Total</span>
+              <span className="text-xl font-black text-accent">R$ {(total / 100).toFixed(2).replace(".", ",")}</span>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="flex-1 flex flex-col items-center justify-center overflow-hidden">
           {/* Saldo Confirmation */}
@@ -308,7 +310,7 @@ export default function Checkout() {
                     <div className="h-1.5 w-1.5 rounded-full bg-accent animate-bounce [animation-delay:-0.15s]" />
                     <div className="h-1.5 w-1.5 rounded-full bg-accent animate-bounce" />
                   </div>
-                  <p className="text-[9px] font-black uppercase tracking-[0.2em] text-accent animate-pulse">Processando pedido...</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Processando...</p>
                 </div>
               )}
             </div>
