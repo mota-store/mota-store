@@ -92,8 +92,9 @@ export default function Checkout() {
       setPixData(pixWithExpiry);
       sessionStorage.setItem("pix_payment", JSON.stringify(pixWithExpiry));
       setStep("pix");
-    } catch (err) {
-      toast.error("Erro ao processar pedido. Tente novamente.");
+    } catch (err: any) {
+      const message = err?.message || err?.data?.message || "Erro ao processar pedido. Tente novamente.";
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
