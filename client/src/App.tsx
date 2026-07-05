@@ -1,5 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { InstallPrompt } from "@/components/InstallPrompt";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -45,6 +46,7 @@ function App() {
         <TooltipProvider>
           <CartProvider>
             <Toaster />
+            <InstallPrompt />
             <Router />
           </CartProvider>
         </TooltipProvider>
