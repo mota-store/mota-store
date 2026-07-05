@@ -45,10 +45,40 @@ async function startServer() {
   const adminUsername = process.env.ADMIN_USERNAME || "whtxz";
   const adminPassword = process.env.ADMIN_PASSWORD || "arthur2003";
   
-  app.post("/api/admin/login", express.json(), (req, res) => {
+  app.post("/api/admin/login", express.json(), async (req, res) => {
     const { username, password } = req.body;
     if (username === adminUsername && password === adminPassword) {
-      res.json({ success: true });
+      try {
+        const { sdk } = await import("./sdk");
+        const { getDb } = await import("../db");
+        const { users } = await import("../../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        const { getSessionCookieOptions } = await import("./cookies");
+        const { COOKIE_NAME, ONE_YEAR_MS } = await import("@shared/const");
+
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+
+        const [adminUser] = await db.select().from(users).where(eq(users.email, "arthuremanuelmota@gmail.com")).limit(1);
+
+        if (adminUser) {
+          const token = await sdk.createSessionToken(adminUser.openId, {
+            name: adminUser.name || "Admin",
+          });
+
+          const cookieOptions = getSessionCookieOptions(req);
+          res.cookie(COOKIE_NAME, token, {
+            ...cookieOptions,
+            maxAge: ONE_YEAR_MS,
+          });
+          console.log("[Admin Login] Session created for:", adminUser.email);
+        }
+
+        res.json({ success: true });
+      } catch (error) {
+        console.error("[Admin Login] Error creating session:", error);
+        res.json({ success: true });
+      }
     } else {
       res.status(401).json({ success: false, error: "Credenciais inválidas" });
     }

@@ -544,7 +544,7 @@ function AdminDashboard() {
                       value: Math.round(parseFloat(newCoupon.value) * 100),
                       maxRedemptions: parseInt(newCoupon.maxRedemptions) || 1,
                       description: newCoupon.description || undefined,
-                      expiresAt: newCoupon.expiresAt ? new Date(newCoupon.expiresAt) : undefined,
+                      expiresAt: newCoupon.expiresAt ? new Date(newCoupon.expiresAt).toISOString() : undefined,
                     });
                   }} className="bg-accent font-black text-xs uppercase tracking-widest">
                     Criar Cupom
