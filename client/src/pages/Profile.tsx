@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
-import { ArrowLeft, LogOut, ShoppingBag, Moon, Sun, Check, Loader2, Lock, Eye, EyeOff, Mail, ShoppingCart, Gift, Wallet } from "lucide-react";
+import { ArrowLeft, LogOut, ShoppingBag, Moon, Sun, Check, Loader2, Lock, Eye, EyeOff, Mail, ShoppingCart, Gift, Wallet, Send } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -65,28 +65,12 @@ export default function Profile() {
     }
   }, [newPassword, confirmNewPassword]);
 
-  // Enviar código quando o campo de verificação for focado pela primeira vez
-  const handleCodeFieldFocus = async () => {
-    if (!codeSent && !isSendingCode) {
-      try {
-        setIsSendingCode(true);
-        await requestCodeMutation.mutateAsync();
-        setCodeSent(true);
-        toast.success("Código de 4 dígitos enviado para seu e-mail!");
-      } catch (err: any) {
-        toast.error("Erro ao enviar código: " + err.message);
-      } finally {
-        setIsSendingCode(false);
-      }
-    }
-  };
-
-  const handleResendCode = async () => {
+  const handleSendCode = async () => {
     try {
       setIsSendingCode(true);
       await requestCodeMutation.mutateAsync();
       setCodeSent(true);
-      toast.success("Novo código enviado para seu e-mail!");
+      toast.success("Código de 4 dígitos enviado para seu e-mail!");
     } catch (err: any) {
       toast.error("Erro ao enviar código: " + err.message);
     } finally {
@@ -376,32 +360,46 @@ export default function Profile() {
                         </div>
 
                         {/* Campo Código de Verificação */}
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                            Código de Verificação
-                          </label>
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                              Código de Verificação
+                            </label>
+                            {!codeSent ? (
+                              <button
+                                type="button"
+                                onClick={handleSendCode}
+                                disabled={isSendingCode}
+                                className="text-[10px] text-accent hover:text-accent/80 font-black uppercase tracking-widest flex items-center gap-1"
+                              >
+                                {isSendingCode ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                                Enviar código
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={handleSendCode}
+                                disabled={isSendingCode}
+                                className="text-[10px] text-accent hover:text-accent/80 font-black uppercase tracking-widest flex items-center gap-1"
+                              >
+                                {isSendingCode ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                                Reenviar código
+                              </button>
+                            )}
+                          </div>
                           <Input
                             type="text"
                             maxLength={4}
                             placeholder="0000"
                             value={verificationCode}
                             onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ""))}
-                            onFocus={handleCodeFieldFocus}
                             className="text-center text-2xl font-black tracking-[0.75rem] h-14 rounded-xl bg-background/50 border-2 border-accent/30 focus:border-accent"
                           />
                           <p className="text-[10px] text-muted-foreground/70">
-                            Verifique seu spam caso não tenha recebido o código.
+                            {codeSent 
+                              ? "Verifique seu e-mail (e a pasta spam) para obter o código." 
+                              : "Clique em 'Enviar código' para receber o código de 4 dígitos."}
                           </p>
-                          {codeSent && (
-                            <button
-                              type="button"
-                              onClick={handleResendCode}
-                              disabled={isSendingCode}
-                              className="text-[10px] text-accent hover:text-accent/80 font-black uppercase tracking-widest"
-                            >
-                              {isSendingCode ? "Enviando..." : "Reenviar código"}
-                            </button>
-                          )}
                         </div>
 
                         {/* Botão Alterar Senha */}
