@@ -358,6 +358,16 @@ export const appRouter = router({
         return checkoutWithBalance(ctx.user.id, input.amount, input.cartItems);
       }),
 
+    checkoutWithBalanceAndPix: protectedProcedure
+      .input(z.object({
+        totalAmount: z.number().positive(),
+        balanceToUse: z.number().positive(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { checkoutWithBalanceAndPix } = await import("./db");
+        return checkoutWithBalanceAndPix(ctx.user.id, input.totalAmount, input.balanceToUse);
+      }),
+
     createDepositPix: protectedProcedure
       .input(z.object({ amount: z.number().min(100) }))
       .mutation(async ({ ctx, input }) => {

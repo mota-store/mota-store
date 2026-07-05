@@ -593,3 +593,55 @@ export async function getAllOrders() {
     userEmail: r.userEmail,
   }));
 }
+
+export async function checkoutWithBalanceAndPix(
+  userId: number,
+  totalAmount: number,
+  balanceToUse: number
+): Promise<{ success: boolean; orderId?: number; remainingAmount?: number; error?: string; newBalance?: number }> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.transaction(async (tx) => {
+    // 1. Obter saldo atual com FOR UPDATE para evitar race condition
+    const [currentUser] = await tx
+      .select({ balance: users.balance })
+      .from(users)
+      .where(eq(users.id, userId))
+      .for("update")
+      .limit(1);
+
+    if (!currentUser) return { success: false, error: "Usuário não encontrado" };
+    if (currentUser.balance < balanceToUse) return { success: false, error: "Saldo insuficiente para o valor parcial" };
+
+    const remainingAmount = totalAmount - balanceToUse;
+    if (remainingAmount <= 0) return { success: false, error: "Use a opção de pagamento por saldo completo" };
+
+    // 2. Deduzir saldo do usuário
+    const newBalance = currentUser.balance - balanceToUse;
+    await tx.update(users).set({ balance: newBalance }).where(eq(users.id, userId));
+
+    // 3. Registrar transação de débito parcial
+    await tx.insert(balanceTransactions).values({
+      userId,
+      amount: -balanceToUse,
+      type: "purchase",
+      description: `Pagamento parcial via saldo (R$ ${(balanceToUse / 100).toFixed(2).replace(".", ",")}) - restante via PIX`,
+      newBalance,
+    });
+
+    // 4. Criar pedido com status "pending" (aguardando PIX para o restante)
+    const [orderResult] = await tx.insert(orders).values({
+      userId,
+      totalAmount,
+      status: "pending",
+      paymentMethod: "balance_pix",
+    });
+
+    const orderId = orderResult.insertId;
+
+    return { success: true, orderId, remainingAmount, newBalance };
+  });
+
+  return result;
+}

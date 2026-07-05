@@ -10,7 +10,7 @@ import { toast } from "sonner";
 export default function Checkout() {
   const { isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
-  const [step, setStep] = useState<"payment" | "pix" | "balance_confirm">("payment");
+  const [step, setStep] = useState<"payment" | "pix" | "balance_confirm" | "balance_pix_confirm">("payment");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pixData, setPixData] = useState<{ pixCode: string; qrCodeBase64: string; txid: string; expiresIn: number; amount?: number } | null>(null);
   const [orderId, setOrderId] = useState<number | null>(null);
@@ -24,6 +24,7 @@ export default function Checkout() {
   const createOrder = trpc.orders.create.useMutation();
   const createPix = trpc.payments.createPix.useMutation();
   const checkoutWithBalance = trpc.wallet.checkoutWithBalance.useMutation();
+  const checkoutWithBalanceAndPix = trpc.wallet.checkoutWithBalanceAndPix.useMutation();
 
   const enrichedItems = cartItems?.map(item => ({
     ...item,
@@ -35,6 +36,7 @@ export default function Checkout() {
   const discountAmount = hasCashback ? Math.floor(total * 0.1) : 0;
   const finalTotal = total - discountAmount;
   const canPayWithBalance = balance !== undefined && balance > 0 && balance >= finalTotal;
+  const canPayWithBalanceAndPix = balance !== undefined && balance > 0 && balance < finalTotal;
 
   // Restaurar pagamento pendente do sessionStorage
   useEffect(() => {
@@ -71,6 +73,41 @@ export default function Checkout() {
       }
     } catch (err) {
       toast.error("Erro ao processar pagamento. Tente novamente.");
+      setStep("payment");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleBalanceAndPix = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const balanceToUse = balance || 0;
+      const result = await checkoutWithBalanceAndPix.mutateAsync({
+        totalAmount: finalTotal,
+        balanceToUse,
+      });
+
+      if (!result.success) {
+        toast.error(result.error || "Erro ao processar pagamento parcial");
+        setStep("payment");
+        return;
+      }
+
+      const remainingAmount = result.remainingAmount!;
+      setOrderId(result.orderId!);
+
+      const pix = await createPix.mutateAsync({ orderId: result.orderId!, amount: remainingAmount / 100 });
+      const pixWithExpiry = { ...pix, expiresIn: 600, orderId: result.orderId!, amount: remainingAmount };
+
+      sessionStorage.removeItem("pix_expiry_time");
+      setPixData(pixWithExpiry);
+      sessionStorage.setItem("pix_payment", JSON.stringify(pixWithExpiry));
+      setStep("pix");
+    } catch (err: any) {
+      const message = err?.message || err?.data?.message || "Erro ao processar pagamento. Tente novamente.";
+      toast.error(message);
       setStep("payment");
     } finally {
       setIsSubmitting(false);
@@ -237,6 +274,54 @@ export default function Checkout() {
             </div>
           )}
 
+          {step === "balance_pix_confirm" && (
+            <div className="text-center space-y-6 animate-in fade-in zoom-in duration-500">
+              <div className="inline-flex items-center justify-center h-20 w-20 rounded-[2rem] bg-blue-500/10 border border-blue-500/20">
+                <Wallet className="h-10 w-10 text-blue-500" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-black tracking-tighter uppercase">Saldo + <span className="text-blue-500">PIX</span></h2>
+                <p className="text-xs text-muted-foreground mt-2">Seu saldo será usado e o restante será cobrado via PIX</p>
+              </div>
+              <div className="bg-card/30 rounded-2xl p-6 border border-border/30 space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Total do pedido</span>
+                  <span className="font-black text-accent">R$ {(finalTotal / 100).toFixed(2).replace(".", ",")}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Saldo a usar</span>
+                  <span className="font-black text-green-500">- R$ {((balance || 0) / 100).toFixed(2).replace(".", ",")}</span>
+                </div>
+                <div className="h-px bg-border/50" />
+                <div className="flex justify-between text-sm font-black">
+                  <span>Valor do PIX</span>
+                  <span className="text-blue-500">R$ {((finalTotal - (balance || 0)) / 100).toFixed(2).replace(".", ",")}</span>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => setStep("payment")}
+                  variant="ghost"
+                  className="font-black text-xs uppercase tracking-widest"
+                >
+                  Voltar
+                </Button>
+                <Button
+                  onClick={handleBalanceAndPix}
+                  disabled={isSubmitting}
+                  className="bg-blue-600 hover:bg-blue-700 font-black rounded-2xl px-8 py-6 shadow-xl shadow-blue-600/20 uppercase tracking-widest"
+                >
+                  {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : (
+                    <>
+                      <QrCode className="h-5 w-5 mr-2" />
+                      Confirmar e Gerar PIX
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* PIX Payment */}
           {step === "pix" && pixData && orderId && (
             <div className="w-full animate-in fade-in zoom-in duration-500">
@@ -300,6 +385,32 @@ export default function Checkout() {
                           </p>
                         </div>
                         <p className="text-[8px] font-black text-green-500/60 uppercase tracking-widest mt-1">Pagar com Saldo</p>
+                      </div>
+                    </div>
+                  </button>
+                )}
+
+                {canPayWithBalanceAndPix && (
+                  <button
+                    onClick={() => setStep("balance_pix_confirm")}
+                    disabled={isSubmitting}
+                    className="w-full group relative overflow-hidden rounded-[2rem] border border-blue-500/20 bg-blue-500/5 p-6 text-left transition-all hover:bg-blue-500/10 hover:border-blue-500/40 active:scale-[0.98] disabled:opacity-50"
+                  >
+                    <div className="flex items-center gap-5">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-500 transition-transform group-hover:scale-110 group-hover:rotate-3">
+                        <Wallet className="h-8 w-8" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-sm font-black uppercase tracking-widest text-blue-500">Saldo + PIX</h3>
+                        <p className="text-[10px] font-medium text-muted-foreground mt-1 uppercase tracking-wider">
+                          Usar R$ {((balance || 0) / 100).toFixed(2).replace(".", ",")} do saldo + PIX para o restante
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs font-black text-blue-500 uppercase tracking-tighter">
+                          PIX: R$ {((finalTotal - (balance || 0)) / 100).toFixed(2).replace(".", ",")}
+                        </p>
+                        <p className="text-[8px] font-black text-blue-500/60 uppercase tracking-widest mt-1">Restante</p>
                       </div>
                     </div>
                   </button>
