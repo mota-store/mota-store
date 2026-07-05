@@ -206,7 +206,14 @@ function AdminDashboard() {
         {activeTab === "users" && (
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-black uppercase tracking-tighter">{allUsers?.length} Usuários</h2>
+              <div className="flex items-center gap-4">
+                <h2 className="text-xl font-black uppercase tracking-tighter">{allUsers?.length} Usuários</h2>
+                <div className="px-4 py-1.5 rounded-xl bg-accent/10 border border-accent/20">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-accent">
+                    Saldo total: <span className="text-xs ml-1">R$ {((allUsers?.reduce((acc, user) => acc + user.balance, 0) || 0) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </p>
+                </div>
+              </div>
             </div>
 
             <div className="mb-6">
