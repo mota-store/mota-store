@@ -380,7 +380,28 @@ export const appRouter = router({
       .input(z.object({ amount: z.number().positive(), txid: z.string() }))
       .mutation(async ({ ctx, input }) => {
         const { depositBalance } = await import("./db");
+        const { efiPayment } = await import("./efi-payment");
+        
+        // Validar status do PIX antes de creditar (segurança)
+        const pixStatus = await efiPayment.checkPixStatus(input.txid);
+        if (pixStatus.status !== "COMPLETED") {
+          throw new Error("PIX não foi confirmado. Status: " + pixStatus.status);
+        }
+        
+        // Validar que o valor pago corresponde ao valor solicitado (tolerância de 1 centavo)
+        const amountDifference = Math.abs((pixStatus.amount || 0) - (input.amount / 100));
+        if (amountDifference > 0.01) {
+          throw new Error(`Valor do PIX (R$ ${pixStatus.amount?.toFixed(2)}) não corresponde ao valor solicitado (R$ ${(input.amount / 100).toFixed(2)})`);
+        }
+        
         return depositBalance(ctx.user.id, input.amount);
+      }),
+
+    checkDepositStatus: protectedProcedure
+      .input(z.object({ txid: z.string() }))
+      .query(async ({ input }) => {
+        const { efiPayment } = await import("./efi-payment");
+        return efiPayment.checkPixStatus(input.txid);
       }),
 
     getCashbackStatus: protectedProcedure.query(async ({ ctx }) => {

@@ -19,6 +19,7 @@ export default function WalletDeposit() {
   const { data: cashbackStatus } = trpc.wallet.getCashbackStatus.useQuery();
   const createPixMutation = trpc.wallet.createDepositPix.useMutation();
   const confirmDepositMutation = trpc.wallet.confirmDeposit.useMutation();
+  const checkDepositStatusMutation = trpc.wallet.checkDepositStatus.useMutation();
 
   const handleAmountSelect = (val: number) => {
     setAmount(val);
@@ -44,23 +45,36 @@ export default function WalletDeposit() {
     }
   };
 
-  // Polling para verificar pagamento
+  // Polling para verificar pagamento PIX automaticamente
   useEffect(() => {
-    if (pixData && !checkInterval) {
-      const interval = setInterval(async () => {
-        try {
-          // Aqui no projeto real teríamos uma rota de verificação, 
-          // mas conforme o PASSO 6 item 7, chamamos confirmDeposit no onPaymentConfirmed.
-          // Para uma melhor UX, vamos simular que o PixPayment lida com a confirmação visual
-          // e o usuário clica ou o sistema detecta.
-        } catch (e) {
-          console.error("Erro ao verificar status", e);
+    if (!pixData) return;
+    
+    let stopped = false;
+    const interval = setInterval(async () => {
+      if (stopped) return;
+      
+      try {
+        const status = await checkDepositStatusMutation.mutateAsync({ txid: pixData.txid });
+        
+        if (status.status === "COMPLETED") {
+          stopped = true;
+          clearInterval(interval);
+          setCheckInterval(null);
+          
+          // Chamar handlePaymentConfirmed automaticamente quando PIX for confirmado
+          await handlePaymentConfirmed();
         }
-      }, 5000);
-      setCheckInterval(interval);
-      return () => clearInterval(interval);
-    }
-  }, [pixData]);
+      } catch (e) {
+        console.error("Erro ao verificar status do PIX", e);
+      }
+    }, 5000);
+    
+    setCheckInterval(interval);
+    return () => {
+      stopped = true;
+      clearInterval(interval);
+    };
+  }, [pixData, checkDepositStatusMutation]);
 
   const handlePaymentConfirmed = async () => {
     if (!pixData) return;
@@ -73,6 +87,12 @@ export default function WalletDeposit() {
       });
 
       if (result.success) {
+        // Limpar intervalo de polling
+        if (checkInterval) {
+          clearInterval(checkInterval);
+          setCheckInterval(null);
+        }
+        
         toast.success(`R$ ${Number(amount).toFixed(2)} creditados com sucesso!`);
         if (result.cashbackActivated) {
           toast.success("🎉 Cashback de 10% ativado! Sua próxima compra terá desconto automático.", {
@@ -81,8 +101,10 @@ export default function WalletDeposit() {
         }
         navigate("/profile");
       }
-    } catch (error) {
-      toast.error("Erro ao confirmar depósito");
+    } catch (error: any) {
+      const errorMsg = error?.message || "Erro ao confirmar depósito";
+      toast.error(errorMsg);
+      console.error("Erro ao confirmar depósito:", error);
     }
   };
 
