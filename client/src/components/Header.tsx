@@ -53,8 +53,8 @@ export function Header() {
           className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
           onClick={() => navigate("/")}
         >
-          <div className="h-10 w-10 rounded-xl overflow-hidden shadow-lg shadow-accent/20 border border-accent/20">
-            <img src="/assets/cross-logo.jpg" alt="Mota Store" className="w-full h-full object-cover" />
+          <div className="h-10 w-10 flex items-center justify-center">
+            <img src="/assets/cross-logo.png" alt="Mota Store" className="h-full w-auto object-contain" />
           </div>
           <span className="text-2xl font-black tracking-tighter text-accent">MOTA STORE</span>
         </div>

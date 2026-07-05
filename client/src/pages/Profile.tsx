@@ -219,8 +219,8 @@ export default function Profile() {
             <span>Voltar</span>
           </button>
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg overflow-hidden border border-accent/20">
-              <img src="/assets/cross-logo.jpg" alt="Mota Store" className="w-full h-full object-cover" />
+            <div className="h-8 w-8 flex items-center justify-center">
+              <img src="/assets/cross-logo.png" alt="Mota Store" className="h-full w-auto object-contain" />
             </div>
             <span className="text-xl font-black text-accent">MOTA STORE</span>
           </div>
