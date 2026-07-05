@@ -159,15 +159,18 @@ function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-16 px-4 pb-10">
+    <div className="min-h-screen bg-background pt-24 px-4 pb-10">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-[100] border-b border-border bg-background/95 backdrop-blur">
-        <div className="container flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-4">
+        <div className="container flex h-auto items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-4 flex-1">
             <button onClick={() => navigate("/")} className="text-accent hover:text-accent/80 flex items-center gap-2 font-bold uppercase tracking-widest text-xs">
               <ArrowLeft className="h-5 w-5" /> Voltar
             </button>
-            <h1 className="text-2xl font-black tracking-tighter uppercase">Painel <span className="text-accent">Admin</span></h1>
+            <div>
+              <h1 className="text-2xl font-black tracking-tighter uppercase">MOTA STORE — <span className="text-accent">ADMIN</span></h1>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Gerencie sua loja com facilidade</p>
+            </div>
           </div>
           <Button variant="ghost" size="sm" onClick={handleLogout} className="text-destructive font-black uppercase tracking-widest text-xs">
             <LogOut className="h-4 w-4 mr-1" /> Sair
@@ -176,7 +179,7 @@ function AdminDashboard() {
       </header>
 
       {/* Tabs */}
-      <div className="max-w-7xl mx-auto mt-8">
+      <div className="max-w-7xl mx-auto mt-24">
         <div className="flex gap-2 mb-8">
           {([
             { key: "users", label: "Usuários", icon: <Users className="h-4 w-4" /> },
