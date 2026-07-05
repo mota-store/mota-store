@@ -438,7 +438,11 @@ function AdminDashboard() {
                       <Edit2 className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => deleteCoupon.mutate({ couponId: coupon.id })}
+                      onClick={() => {
+                        if (window.confirm("Tem certeza que deseja excluir este cupom? Esta ação não pode ser desfeita.")) {
+                          deleteCoupon.mutate({ couponId: coupon.id });
+                        }
+                      }}
                       className="p-2 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
                     >
                       <Trash2 className="h-4 w-4" />
