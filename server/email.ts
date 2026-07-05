@@ -6,18 +6,6 @@ const CLIENT_SECRET = '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';
 const REFRESH_TOKEN = '1//04CuXpN3UYnKpCgYIARAAGAQSNwF-L9IrmwyxlF_wSJhepkvW9MxjZ39qK1-_S-tEGPX7x6cTUsgKrduwnCk8lood4l6bNgBJHYA';
 const APP_URL = 'https://mota-store.onrender.com';
 
-const baseStyles = {
-  bodyBg: '#0a0a0a',
-  cardBg: '#111111',
-  accentColor: '#3b82f6',
-  textColor: '#ffffff',
-  mutedTextColor: '#94a3b8',
-  fontFamily: "'Inter', -apple-system, sans-serif",
-};
-
-/**
- * Configuração do cliente OAuth2 do Google
- */
 const oauth2Client = new google.auth.OAuth2(
   CLIENT_ID,
   CLIENT_SECRET,
@@ -30,69 +18,40 @@ oauth2Client.setCredentials({
 
 const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 
-/**
- * Função para codificar o assunto em UTF-8 Base64 para evitar erros de caracteres estranhos
- */
 function encodeSubject(subject: string) {
   return `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
 }
 
-/**
- * Gera um Message-ID único com timestamp e valor aleatório
- */
 function generateMessageId(): string {
   const timestamp = Date.now().toString(36);
   const random = Math.random().toString(36).substring(2, 10);
   return `<${timestamp}-${random}@mota-store.onrender.com>`;
 }
 
-/**
- * Formata a data atual no padrão RFC 2822 para o cabeçalho Date
- */
 function formatDateHeader(): string {
-  const date = new Date();
-  return date.toUTCString();
+  return new Date().toUTCString();
 }
 
-/**
- * Função para codificar o e-mail no formato exigido pela API do Gmail (Base64URL)
- * Melhorada com cabeçalhos MIME completos para evitar SPAM e erros de encoding.
- * Inclui: Reply-To, X-Mailer, Message-ID, Date, e versão text/plain enriquecida.
- */
-function createRawMessage(options: { to: string; subject: string; html: string }) {
+function createRawMessage(options: { to: string; subject: string; html: string; plainText: string }) {
   const utf8Subject = encodeSubject(options.subject);
-  const boundary = "__MOTA_STORE_BOUNDARY__";
+  const boundary = '__MOTA_STORE_BOUNDARY__';
   const messageId = generateMessageId();
   const dateHeader = formatDateHeader();
-
-  // Texto plano enriquecido para o part text/plain — ajuda filtros anti-spam
-  const subjectText = options.subject.replace(/\ud83c[\udf00-\udfff]|\ud83d[\udc00-\ude4f\ude80-\udeff]|[\u2600-\u2B55]/g, '').trim();
-  const plainText = `Olá!\n\n` +
-    `Você está recebendo este e-mail da MOTA STORE.\n` +
-    `Assunto: ${subjectText}\n\n` +
-    `Este e-mail contém informações importantes da sua conta. ` +
-    `Para visualizar o conteúdo completo, por favor, use um leitor de e-mail compatível com HTML.\n\n` +
-    `Se você não solicitou este e-mail, por favor, ignore esta mensagem.\n\n` +
-    `--\n` +
-    `MOTA STORE\n` +
-    `Site: ${APP_URL}\n` +
-    `WhatsApp Suporte: +55 91 8488-6473\n` +
-    `© 2026 MOTA STORE. Todos os direitos reservados.`;
 
   const str = [
     `MIME-Version: 1.0\n`,
     `To: ${options.to}\n`,
-    `From: "MOTA STORE" <${SMTP_USER}>\n`,
+    `From: "Mota Store" <${SMTP_USER}>\n`,
     `Reply-To: ${SMTP_USER}\n`,
     `Subject: ${utf8Subject}\n`,
     `Date: ${dateHeader}\n`,
     `Message-ID: ${messageId}\n`,
-    `X-Mailer: MOTA STORE Mailer v1.0\n`,
+    `X-Mailer: Mota Store Mailer v2.0\n`,
     `Content-Type: multipart/alternative; boundary="${boundary}"\n\n`,
     `--${boundary}\n`,
     `Content-Type: text/plain; charset="UTF-8"\n`,
     `Content-Transfer-Encoding: quoted-printable\n\n`,
-    `${plainText}\n\n`,
+    `${options.plainText}\n\n`,
     `--${boundary}\n`,
     `Content-Type: text/html; charset="UTF-8"\n`,
     `Content-Transfer-Encoding: base64\n\n`,
@@ -107,95 +66,210 @@ function createRawMessage(options: { to: string; subject: string; html: string }
     .replace(/=+$/, '');
 }
 
-/**
- * Função principal de envio via GMAIL HTTP API.
- * Ignora completamente protocolos SMTP e bloqueios de porta do Render.
- */
-async function sendMailViaAPI(options: { to: string; subject: string; html: string }) {
-  console.log(`[Email Action] - Iniciando envio via GMAIL HTTP API para ${options.to}`);
-  
+async function sendMailViaAPI(options: { to: string; subject: string; html: string; plainText: string }) {
+  console.log(`[Email] Enviando para ${options.to} - Assunto: ${options.subject}`);
   try {
     const raw = createRawMessage(options);
     const res = await gmail.users.messages.send({
       userId: 'me',
-      requestBody: {
-        raw: raw,
-      },
+      requestBody: { raw },
     });
-
-    console.log(`[Email Success] - Enviado com sucesso via API! ID: ${res.data.id}`);
+    console.log(`[Email] Enviado com sucesso. ID: ${res.data.id}`);
     return true;
   } catch (error: any) {
-    console.error(`[Email Fatal] - Falha crítica no envio via GMAIL API: ${error.message}`);
+    console.error(`[Email] Falha no envio: ${error.message}`);
     throw error;
   }
 }
 
 export async function sendWelcomeEmail(email: string, firstName: string) {
-  const html = `
-    <div style="background: ${baseStyles.bodyBg}; color: ${baseStyles.textColor}; padding: 40px; font-family: ${baseStyles.fontFamily};">
-      <div style="background: ${baseStyles.cardBg}; padding: 30px; border-radius: 16px; border: 1px solid #333;">
-        <h1 style="color: ${baseStyles.accentColor}; margin-top: 0;">MOTA STORE</h1>
-        <h2 style="color: #fff;">Bem-vindo, ${firstName}! 🎉</h2>
-        <p style="color: ${baseStyles.mutedTextColor}; line-height: 1.6;">Sua conta na Mota Store está pronta. Explore nossos serviços premium e aproveite as melhores ofertas.</p>
-        <div style="margin-top: 30px;">
-          <a href="${APP_URL}" style="display: inline-block; padding: 14px 28px; background: ${baseStyles.accentColor}; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">IR PARA A LOJA</a>
-        </div>
-        <hr style="border: 0; border-top: 1px solid #333; margin: 30px 0;">
-        <p style="font-size: 12px; color: #666;">
-          WhatsApp Suporte: +55 91 8488-6473<br>
-          © 2026 MOTA STORE. Todos os direitos reservados.
-        </p>
-      </div>
-    </div>
-  `;
+  const subject = `Sua conta na Mota Store foi criada`;
 
-  return sendMailViaAPI({ to: email, subject: 'Bem-vindo à MOTA STORE! 🎉', html });
+  const plainText = `Ola, ${firstName}!
+
+Sua conta na Mota Store foi criada com sucesso.
+
+Agora voce pode acessar a loja, adicionar produtos ao carrinho e aproveitar os melhores servicos digitais.
+
+Acesse sua conta em: ${APP_URL}
+
+Se precisar de ajuda, entre em contato pelo WhatsApp: +55 91 8488-6473
+
+Atenciosamente,
+Equipe Mota Store
+${APP_URL}`;
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bem-vindo a Mota Store</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f4f5;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0;max-width:600px;width:100%;">
+          <tr>
+            <td style="background-color:#1e40af;padding:32px 40px;text-align:center;">
+              <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;letter-spacing:1px;">MOTA STORE</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:40px;">
+              <h2 style="margin:0 0 16px 0;color:#1e293b;font-size:20px;font-weight:600;">Ola, ${firstName}!</h2>
+              <p style="margin:0 0 16px 0;color:#475569;font-size:15px;line-height:1.7;">Sua conta foi criada com sucesso. Estamos felizes em ter voce por aqui.</p>
+              <p style="margin:0 0 32px 0;color:#475569;font-size:15px;line-height:1.7;">Acesse a loja para explorar nossos produtos e servicos digitais.</p>
+              <table cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="background-color:#1e40af;border-radius:6px;">
+                    <a href="${APP_URL}" style="display:inline-block;padding:14px 32px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;letter-spacing:0.5px;">Acessar a Loja</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:24px 40px;border-top:1px solid #e2e8f0;background-color:#f8fafc;">
+              <p style="margin:0;color:#94a3b8;font-size:12px;line-height:1.6;">Suporte via WhatsApp: +55 91 8488-6473<br>Este e-mail foi enviado para ${email} porque voce criou uma conta na Mota Store.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  return sendMailViaAPI({ to: email, subject, html, plainText });
 }
 
 export async function sendPasswordResetEmail(email: string, firstName: string, token: string) {
   const resetLink = `${APP_URL}/reset-password?token=${token}`;
-  const html = `
-    <div style="background: ${baseStyles.bodyBg}; color: ${baseStyles.textColor}; padding: 40px; font-family: ${baseStyles.fontFamily};">
-      <div style="background: ${baseStyles.cardBg}; padding: 30px; border-radius: 16px; border: 1px solid #333;">
-        <h1 style="color: ${baseStyles.accentColor}; margin-top: 0;">MOTA STORE</h1>
-        <h2 style="color: #fff;">Redefinir Senha</h2>
-        <p style="color: ${baseStyles.mutedTextColor}; line-height: 1.6;">Olá ${firstName}, recebemos uma solicitação para redefinir sua senha. Clique no botão abaixo para prosseguir:</p>
-        <div style="margin-top: 30px;">
-          <a href="${resetLink}" style="display: inline-block; padding: 14px 28px; background: ${baseStyles.accentColor}; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">REDEFINIR MINHA SENHA</a>
-        </div>
-        <p style="margin-top: 20px; font-size: 14px; color: #666;">Se você não solicitou isso, ignore este e-mail.</p>
-        <hr style="border: 0; border-top: 1px solid #333; margin: 30px 0;">
-        <p style="font-size: 12px; color: #666;">
-          WhatsApp Suporte: +55 91 8488-6473<br>
-          © 2026 MOTA STORE. Todos os direitos reservados.
-        </p>
-      </div>
-    </div>
-  `;
+  const subject = `Redefinicao de senha - Mota Store`;
 
-  return sendMailViaAPI({ to: email, subject: 'Redefinição de Senha — MOTA STORE', html });
+  const plainText = `Ola, ${firstName}.
+
+Recebemos uma solicitacao para redefinir a senha da sua conta na Mota Store.
+
+Para criar uma nova senha, acesse o link abaixo:
+${resetLink}
+
+Este link expira em 1 hora.
+
+Se voce nao solicitou a redefinicao de senha, ignore este e-mail. Sua senha permanece a mesma.
+
+Atenciosamente,
+Equipe Mota Store
+${APP_URL}`;
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redefinicao de Senha</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f4f5;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0;max-width:600px;width:100%;">
+          <tr>
+            <td style="background-color:#1e40af;padding:32px 40px;text-align:center;">
+              <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;letter-spacing:1px;">MOTA STORE</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:40px;">
+              <h2 style="margin:0 0 16px 0;color:#1e293b;font-size:20px;font-weight:600;">Redefinicao de senha</h2>
+              <p style="margin:0 0 16px 0;color:#475569;font-size:15px;line-height:1.7;">Ola, ${firstName}. Recebemos uma solicitacao para redefinir a senha da sua conta.</p>
+              <p style="margin:0 0 32px 0;color:#475569;font-size:15px;line-height:1.7;">Clique no botao abaixo para criar uma nova senha. Este link e valido por 1 hora.</p>
+              <table cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="background-color:#1e40af;border-radius:6px;">
+                    <a href="${resetLink}" style="display:inline-block;padding:14px 32px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;letter-spacing:0.5px;">Redefinir Senha</a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:32px 0 0 0;color:#94a3b8;font-size:13px;line-height:1.6;">Se voce nao solicitou a redefinicao de senha, ignore este e-mail. Sua senha nao sera alterada.</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:24px 40px;border-top:1px solid #e2e8f0;background-color:#f8fafc;">
+              <p style="margin:0;color:#94a3b8;font-size:12px;line-height:1.6;">Suporte via WhatsApp: +55 91 8488-6473<br>Este e-mail foi enviado para ${email} a pedido do titular da conta.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  return sendMailViaAPI({ to: email, subject, html, plainText });
 }
 
 export async function sendVerificationCodeEmail(email: string, firstName: string, code: string) {
-  const html = `
-    <div style="background: ${baseStyles.bodyBg}; color: ${baseStyles.textColor}; padding: 40px; font-family: ${baseStyles.fontFamily};">
-      <div style="background: ${baseStyles.cardBg}; padding: 30px; border-radius: 16px; border: 1px solid #333;">
-        <h1 style="color: ${baseStyles.accentColor}; margin-top: 0;">MOTA STORE</h1>
-        <h2 style="color: #fff;">Código de Verificação</h2>
-        <p style="color: ${baseStyles.mutedTextColor}; line-height: 1.6;">Olá ${firstName}, use o código abaixo para verificar sua identidade e visualizar seus dados sensíveis:</p>
-        <div style="margin-top: 30px; background: #1a1a1a; padding: 20px; border-radius: 12px; text-align: center;">
-          <span style="font-size: 32px; font-weight: bold; color: ${baseStyles.accentColor}; letter-spacing: 8px;">${code}</span>
-        </div>
-        <p style="margin-top: 20px; font-size: 14px; color: #666;">Este código expira em 10 minutos.</p>
-        <hr style="border: 0; border-top: 1px solid #333; margin: 30px 0;">
-        <p style="font-size: 12px; color: #666;">
-          WhatsApp Suporte: +55 91 8488-6473<br>
-          © 2026 MOTA STORE. Todos os direitos reservados.
-        </p>
-      </div>
-    </div>
-  `;
+  const subject = `Seu codigo de verificacao: ${code}`;
 
-  return sendMailViaAPI({ to: email, subject: `${code} é seu código de verificação — MOTA STORE`, html });
+  const plainText = `Ola, ${firstName}.
+
+Seu codigo de verificacao da Mota Store e:
+
+${code}
+
+Este codigo e valido por 10 minutos.
+
+Se voce nao solicitou este codigo, ignore este e-mail.
+
+Atenciosamente,
+Equipe Mota Store
+${APP_URL}`;
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Codigo de Verificacao</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f4f5;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0;max-width:600px;width:100%;">
+          <tr>
+            <td style="background-color:#1e40af;padding:32px 40px;text-align:center;">
+              <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;letter-spacing:1px;">MOTA STORE</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:40px;text-align:center;">
+              <h2 style="margin:0 0 16px 0;color:#1e293b;font-size:20px;font-weight:600;">Codigo de verificacao</h2>
+              <p style="margin:0 0 32px 0;color:#475569;font-size:15px;line-height:1.7;">Ola, ${firstName}. Use o codigo abaixo para verificar sua identidade.</p>
+              <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
+                <tr>
+                  <td style="background-color:#f1f5f9;border:2px solid #e2e8f0;border-radius:8px;padding:20px 40px;text-align:center;">
+                    <span style="font-size:36px;font-weight:700;color:#1e40af;letter-spacing:12px;">${code}</span>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:24px 0 0 0;color:#94a3b8;font-size:13px;">Este codigo expira em 10 minutos.</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:24px 40px;border-top:1px solid #e2e8f0;background-color:#f8fafc;">
+              <p style="margin:0;color:#94a3b8;font-size:12px;line-height:1.6;">Suporte via WhatsApp: +55 91 8488-6473<br>Se voce nao solicitou este codigo, ignore este e-mail.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  return sendMailViaAPI({ to: email, subject, html, plainText });
 }
