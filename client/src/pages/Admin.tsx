@@ -151,7 +151,7 @@ function AdminDashboard() {
 
   // Novo cupom form
   const [newCoupon, setNewCoupon] = useState({
-    code: "", value: "", maxRedemptions: "1", description: "",
+    code: "", value: "", maxRedemptions: "1", description: "", expiresAt: "",
   });
 
   if (!checkAdminSession()) {
@@ -487,6 +487,10 @@ function AdminDashboard() {
                     <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Descrição</label>
                     <Input value={newCoupon.description} onChange={e => setNewCoupon({...newCoupon, description: e.target.value})} className="bg-background/50 rounded-xl" placeholder="Cupom de promoção..." />
                   </div>
+                  <div>
+                    <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Data de Expiração (opcional)</label>
+                    <Input type="date" value={newCoupon.expiresAt} onChange={e => setNewCoupon({...newCoupon, expiresAt: e.target.value})} className="bg-background/50 rounded-xl" />
+                  </div>
                 </div>
                 <div className="flex gap-2 mt-4">
                   <Button onClick={() => {
@@ -495,6 +499,7 @@ function AdminDashboard() {
                       value: Math.round(parseFloat(newCoupon.value) * 100),
                       maxRedemptions: parseInt(newCoupon.maxRedemptions) || 1,
                       description: newCoupon.description || undefined,
+                      expiresAt: newCoupon.expiresAt ? new Date(newCoupon.expiresAt) : undefined,
                     });
                   }} className="bg-accent font-black text-xs uppercase tracking-widest">
                     Criar Cupom
