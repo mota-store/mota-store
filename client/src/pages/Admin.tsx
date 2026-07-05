@@ -217,10 +217,11 @@ function AdminDashboard() {
                     <div className="h-10 w-10 rounded-xl overflow-hidden bg-muted">
                       <img src={user.avatarUrl || "/assets/default-avatar.jpg"} alt="" className="w-full h-full object-cover" />
                     </div>
-                    <div>
-                      <p className="font-black text-sm">{user.name || user.email?.split("@")[0] || `Usuário #${user.id}`}</p>
-                      <p className="text-[10px] text-muted-foreground">{user.email || "Sem email"}</p>
-                    </div>
+	                    <div>
+	                      <p className="font-black text-sm">{user.name || user.email?.split("@")[0] || `Usuário #${user.id}`}</p>
+	                      <p className="text-[10px] text-muted-foreground">{user.email || "Sem email"}</p>
+	                      <p className="text-[9px] text-muted-foreground">Desde: {new Date(user.createdAt).toLocaleDateString('pt-BR')}</p>
+	                    </div>
                   </div>
 	                  <div className="flex items-center gap-4">
 	                    <div className="text-right">
