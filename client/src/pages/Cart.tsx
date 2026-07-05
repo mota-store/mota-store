@@ -283,9 +283,7 @@ export default function Cart() {
                     <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Total a Pagar</span>
                     <span className="text-4xl font-black text-accent tracking-tighter">R$ {(total / 100).toFixed(2)}</span>
                   </div>
-                  <p className="text-xs font-black text-center text-muted-foreground mt-4">
-                    Frete grátis para todo o Brasil!
-                  </p>
+
                 </div>
 
                 <div className="space-y-4">
