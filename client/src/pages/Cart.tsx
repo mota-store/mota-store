@@ -183,8 +183,8 @@ export default function Cart() {
       </header>
 
       {/* Main Content */}
-      <div className="container py-6 max-w-5xl">
-        <div className="flex items-center justify-between mb-8">
+      <div className="container py-3 max-w-5xl">
+        <div className="flex items-center justify-between mb-4">
           <h1 className="text-3xl font-black tracking-tighter uppercase">MEU <span className="text-accent">CARRINHO</span></h1>
           <span className="text-xs font-black bg-accent/10 text-accent px-4 py-1.5 rounded-full uppercase tracking-widest">
             {groupedItems.reduce((sum, item) => sum + item.quantity, 0)} {groupedItems.reduce((sum, item) => sum + item.quantity, 0) === 1 ? 'PRODUTO' : 'PRODUTOS'}
@@ -192,7 +192,7 @@ export default function Cart() {
         </div>
 
         {isLoading && groupedItems.length === 0 ? (
-          <div className="space-y-4">
+          <div className="space-y-2">
             {[1, 2].map((i) => (
               <div key={i} className="h-32 bg-muted rounded-3xl animate-pulse" />
             ))}
@@ -209,12 +209,12 @@ export default function Cart() {
             </Button>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
             {/* Cart Items */}
-            <div className="lg:col-span-2 space-y-4">
+            <div className="lg:col-span-2 space-y-2">
               {groupedItems.map((item) => (
-                <Card key={item.productId} className="p-5 bg-card/40 backdrop-blur-md border-border/40 rounded-[2rem] hover:border-accent/30 transition-all group relative overflow-hidden">
-                  <div className="flex flex-col items-center text-center space-y-4">
+                <Card key={item.productId} className="p-3 bg-card/40 backdrop-blur-md border-border/40 rounded-[2rem] hover:border-accent/30 transition-all group relative overflow-hidden">
+                  <div className="flex flex-col items-center text-center space-y-2">
                     {/* Imagem Centralizada e Menor */}
                     <div className={`h-20 w-20 rounded-2xl flex items-center justify-center bg-gradient-to-br shadow-lg ${
                       item.product?.name.includes("Spotify") ? "from-green-500/20 to-green-900/40 border border-green-500/30" :
@@ -236,7 +236,7 @@ export default function Cart() {
                     </div>
 
                     {/* Controles Centralizados */}
-                    <div className="flex flex-col items-center gap-4 w-full">
+                    <div className="flex flex-col items-center gap-2 w-full">
                       <div className="flex items-center bg-background/50 rounded-2xl p-1.5 border border-border/50 shadow-inner">
                         <button
                           onClick={() => handleUpdateQuantity(item.productId, -1)}
@@ -276,7 +276,7 @@ export default function Cart() {
                   Resumo do Pedido
                 </h2>
 
-                <div className="space-y-5 mb-8">
+                <div className="space-y-3 mb-4">
                   <div className="flex justify-between text-[11px] font-black uppercase tracking-widest">
                     <span className="text-muted-foreground">Subtotal</span>
                     <span className="line-through opacity-40">R$ {(originalTotal / 100).toFixed(2)}</span>
@@ -287,7 +287,7 @@ export default function Cart() {
                   </div>
                 </div>
 
-                <div className="border-t border-border/50 pt-6 mb-8">
+                <div className="border-t border-border/50 pt-3 mb-4">
                   <div className="flex justify-between items-end">
                     <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Total a Pagar</span>
                     <span className="text-4xl font-black text-accent tracking-tighter">R$ {(total / 100).toFixed(2)}</span>
@@ -295,7 +295,7 @@ export default function Cart() {
 
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-2">
                   <Button
                     className="w-full bg-[#22c55e] hover:bg-[#22c55e]/90 text-white font-black py-8 rounded-[1.5rem] shadow-xl shadow-[#22c55e]/20 transition-all active:scale-95 text-base uppercase tracking-tighter"
                     onClick={() => navigate("/checkout?direct=true")}
