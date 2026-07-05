@@ -117,7 +117,7 @@ export default function Checkout() {
     );
   }
 
-  if (cartLoading || (isSubmitting && step === "payment")) {
+  if (cartLoading) {
     return (
       <div className="h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-6">
