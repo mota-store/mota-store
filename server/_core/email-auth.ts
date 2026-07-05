@@ -50,10 +50,7 @@ export async function registerUser(
       lastSignedIn: new Date(),
     });
 
-    // Enviar e-mail de boas-vindas real (sem aguardar para não travar o cadastro)
-    import("../email").then(m => m.sendWelcomeEmail(email, finalName)).catch(err => {
-      console.error("[Email Auth] Failed to send welcome email:", err);
-    });
+    // Removido o envio aqui para evitar duplicidade, pois server/routers.ts já realiza o envio.
 
     const userId = (result as any).insertId;
     return { success: true, userId, user: { id: userId, email, name: finalName, openId: `email_${email}` } };
