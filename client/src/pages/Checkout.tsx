@@ -34,7 +34,7 @@ export default function Checkout() {
   const hasCashback = cashbackStatus?.hasCashbackBenefit;
   const discountAmount = hasCashback ? Math.floor(total * 0.1) : 0;
   const finalTotal = total - discountAmount;
-  const canPayWithBalance = (balance || 0) >= finalTotal;
+  const canPayWithBalance = balance !== undefined && balance > 0 && balance >= finalTotal;
 
   // Restaurar pagamento pendente do sessionStorage
   useEffect(() => {
