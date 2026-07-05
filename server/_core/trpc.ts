@@ -27,11 +27,16 @@ const requireUser = t.middleware(async opts => {
 
 export const protectedProcedure = t.procedure.use(requireUser);
 
+import { ENV } from './env';
+
 export const adminProcedure = t.procedure.use(
   t.middleware(async opts => {
     const { ctx, next } = opts;
 
-    if (!ctx.user || ctx.user.role !== 'admin') {
+    const isOwner = ctx.user?.openId === ENV.ownerOpenId;
+    const isAdmin = ctx.user?.role === 'admin';
+
+    if (!ctx.user || (!isAdmin && !isOwner)) {
       throw new TRPCError({ code: "FORBIDDEN", message: NOT_ADMIN_ERR_MSG });
     }
 
