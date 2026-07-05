@@ -24,6 +24,7 @@ export const users = mysqlTable("users", {
   resetToken: varchar("resetToken", { length: 255 }),
   resetTokenExpires: timestamp("resetTokenExpires"),
   balance: int("balance").default(0).notNull(), // saldo em centavos
+  hasCashbackBenefit: int("has_cashback_benefit").default(0).notNull(),
 });
 
 export type User = typeof users.$inferSelect;

@@ -20,6 +20,7 @@ export default function Checkout() {
   });
   const { data: products } = trpc.products.list.useQuery();
   const { data: balance } = trpc.wallet.getBalance.useQuery(undefined, { enabled: isAuthenticated });
+  const { data: cashbackStatus } = trpc.wallet.getCashbackStatus.useQuery(undefined, { enabled: isAuthenticated });
   const createOrder = trpc.orders.create.useMutation();
   const createPix = trpc.payments.createPix.useMutation();
   const checkoutWithBalance = trpc.wallet.checkoutWithBalance.useMutation();
@@ -30,7 +31,10 @@ export default function Checkout() {
   })) || [];
 
   const total = enrichedItems.reduce((acc, item) => acc + (item.product?.price || 0) * (item.quantity || 1), 0);
-  const canPayWithBalance = (balance || 0) >= total;
+  const hasCashback = cashbackStatus?.hasCashbackBenefit;
+  const discountAmount = hasCashback ? Math.floor(total * 0.1) : 0;
+  const finalTotal = total - discountAmount;
+  const canPayWithBalance = (balance || 0) >= finalTotal;
 
   // Restaurar pagamento pendente do sessionStorage
   useEffect(() => {
@@ -188,12 +192,24 @@ export default function Checkout() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Valor da compra</span>
-                  <span className="font-black text-accent">R$ {(total / 100).toFixed(2).replace(".", ",")}</span>
+                  <span className={`font-black ${hasCashback ? "line-through text-muted-foreground/50" : "text-accent"}`}>
+                    R$ {(total / 100).toFixed(2).replace(".", ",")}
+                  </span>
                 </div>
+                {hasCashback && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-green-500 font-bold">Desconto Cashback (10%)</span>
+                    <span className="font-black text-green-500">- R$ {(discountAmount / 100).toFixed(2).replace(".", ",")}</span>
+                  </div>
+                )}
                 <div className="h-px bg-border/50" />
                 <div className="flex justify-between text-sm font-black">
+                  <span>Total a pagar</span>
+                  <span className="text-accent">R$ {(finalTotal / 100).toFixed(2).replace(".", ",")}</span>
+                </div>
+                <div className="flex justify-between text-sm font-black">
                   <span>Saldo após</span>
-                  <span className="text-green-500">R$ {(((balance || 0) - total) / 100).toFixed(2).replace(".", ",")}</span>
+                  <span className="text-green-500">R$ {(((balance || 0) - finalTotal) / 100).toFixed(2).replace(".", ",")}</span>
                 </div>
               </div>
               <div className="flex gap-3">
@@ -267,8 +283,22 @@ export default function Checkout() {
                         <p className="text-[10px] font-medium text-muted-foreground mt-1 uppercase tracking-wider">Descontar da carteira</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs font-black text-green-500 uppercase tracking-tighter">R$ {((balance || 0) / 100).toFixed(2).replace(".", ",")}</p>
-                        <p className="text-[8px] font-black text-green-500/60 uppercase tracking-widest mt-1">Disponível</p>
+                        <div className="flex flex-col items-end">
+                          {hasCashback && (
+                            <span className="px-1.5 py-0.5 rounded-md bg-green-500 text-[7px] font-black text-white uppercase mb-1">10% OFF</span>
+                          )}
+                          <p className="text-xs font-black text-green-500 uppercase tracking-tighter">
+                            {hasCashback ? (
+                              <>
+                                <span className="line-through opacity-50 mr-1 text-[10px]">R$ {(total / 100).toFixed(2).replace(".", ",")}</span>
+                                R$ {(finalTotal / 100).toFixed(2).replace(".", ",")}
+                              </>
+                            ) : (
+                              `R$ ${(total / 100).toFixed(2).replace(".", ",")}`
+                            )}
+                          </p>
+                        </div>
+                        <p className="text-[8px] font-black text-green-500/60 uppercase tracking-widest mt-1">Pagar com Saldo</p>
                       </div>
                     </div>
                   </button>
@@ -297,7 +327,7 @@ export default function Checkout() {
                 {!canPayWithBalance && balance !== undefined && (
                   <div className="px-6 py-3 text-center">
                     <p className="text-[9px] font-black uppercase tracking-[0.15em] text-muted-foreground/60">
-                      Saldo insuficiente (R$ {((balance || 0) / 100).toFixed(2).replace(".", ",")}) para pagar com carteira
+                      Saldo insuficiente (R$ {((balance || 0) / 100).toFixed(2).replace(".", ",")}) para pagar {hasCashback ? "R$ " + (finalTotal / 100).toFixed(2).replace(".", ",") : "com carteira"}
                     </p>
                   </div>
                 )}

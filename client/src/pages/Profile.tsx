@@ -227,7 +227,16 @@ export default function Profile() {
                       <Wallet className="h-5 w-5 text-green-500" />
                       <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Saldo</span>
                     </div>
-                    <p className="text-2xl font-black text-green-500">R$ {((balance || 0) / 100).toFixed(2).replace(".", ",")}</p>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-2xl font-black text-green-500">R$ {((balance || 0) / 100).toFixed(2).replace(".", ",")}</p>
+                      <Button 
+                        onClick={() => navigate("/wallet/deposit")}
+                        size="sm"
+                        className="h-8 bg-green-500 hover:bg-green-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl px-3"
+                      >
+                        Recarregar
+                      </Button>
+                    </div>
                     {transactions && transactions.length > 0 && (
                       <div className="mt-3 space-y-1 max-h-32 overflow-y-auto">
                         {transactions.slice(0, 5).map(tx => (

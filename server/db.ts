@@ -167,10 +167,45 @@ export async function getUserOrders(userId: number) {
   return db.select().from(orders).where(eq(orders.userId, userId));
 }
 
-export async function updateUser(userId: number, data: { name?: string; avatarUrl?: string; passwordHash?: string; balance?: number }) {
+export async function updateUser(userId: number, data: { name?: string; avatarUrl?: string; passwordHash?: string; balance?: number; hasCashbackBenefit?: number }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(users).set(data).where(eq(users.id, userId));
+}
+
+export async function depositBalance(userId: number, amount: number): Promise<{
+  success: boolean;
+  newBalance: number;
+  cashbackActivated: boolean;
+}> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db.transaction(async (tx) => {
+    // 1. Obter saldo atual com FOR UPDATE
+    const [user] = await tx.select().from(users).where(eq(users.id, userId)).for("update").limit(1);
+    if (!user) throw new Error("Usuário não encontrado");
+
+    const newBalance = user.balance + amount;
+    const cashbackActivated = amount >= 500 && user.hasCashbackBenefit === 0;
+    const hasCashbackBenefit = user.hasCashbackBenefit === 1 || amount >= 500 ? 1 : 0;
+
+    // 2. Atualizar usuário
+    await tx.update(users)
+      .set({ balance: newBalance, hasCashbackBenefit })
+      .where(eq(users.id, userId));
+
+    // 3. Registrar transação
+    await tx.insert(balanceTransactions).values({
+      userId,
+      amount,
+      type: "deposit",
+      description: `Recarga de carteira via PIX - R$ ${(amount / 100).toFixed(2).replace(".", ",")}`,
+      newBalance,
+    });
+
+    return { success: true, newBalance, cashbackActivated };
+  });
 }
 
 export async function createOrder(userId: number, totalAmount: number) {
@@ -354,16 +389,26 @@ export async function redeemCoupon(code: string, userId: number): Promise<{ succ
 // WALLET / CHECKOUT FUNCTIONS
 // ============================================
 
-export async function checkoutWithBalance(userId: number, amount: number, items: Array<{ productId: number; quantity: number; price: number }>): Promise<{ success: boolean; orderId?: number; error?: string; newBalance?: number }> {
+export async function checkoutWithBalance(userId: number, amount: number, items: Array<{ productId: number; quantity: number; price: number }>): Promise<{ success: boolean; orderId?: number; error?: string; newBalance?: number; cashbackApplied?: boolean; discountAmount?: number }> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
   const result = await db.transaction(async (tx) => {
-    // 1. Verificar saldo
-    const [currentUser] = await tx.select({ balance: users.balance }).from(users).where(eq(users.id, userId)).for("update").limit(1);
+    // 1. Verificar saldo e benefício de cashback
+    const [currentUser] = await tx.select({ balance: users.balance, hasCashbackBenefit: users.hasCashbackBenefit }).from(users).where(eq(users.id, userId)).for("update").limit(1);
     if (!currentUser) return { success: false, error: "Usuário não encontrado" };
 
-    if (currentUser.balance < amount) {
+    let finalAmount = amount;
+    let cashbackApplied = false;
+    let discountAmount = 0;
+
+    if (currentUser.hasCashbackBenefit === 1) {
+      discountAmount = Math.floor(amount * 0.1);
+      finalAmount = amount - discountAmount;
+      cashbackApplied = true;
+    }
+
+    if (currentUser.balance < finalAmount) {
       return { success: false, error: "Saldo insuficiente" };
     }
 
@@ -376,22 +421,24 @@ export async function checkoutWithBalance(userId: number, amount: number, items:
     }
 
     // 3. Deduzir saldo
-    const newBalance = currentUser.balance - amount;
+    const newBalance = currentUser.balance - finalAmount;
     await tx.update(users).set({ balance: newBalance }).where(eq(users.id, userId));
 
     // 4. Registrar transação
     await tx.insert(balanceTransactions).values({
       userId,
-      amount: -amount, // negativo = débito
+      amount: -finalAmount, // negativo = débito
       type: "purchase",
-      description: `Compra via saldo - ${items.length} item(ns)`,
+      description: cashbackApplied 
+        ? `Compra via saldo com 10% de cashback aplicado - ${items.length} item(ns)` 
+        : `Compra via saldo - ${items.length} item(ns)`,
       newBalance,
     });
 
     // 5. Criar ordem
     const [orderResult] = await tx.insert(orders).values({
       userId,
-      totalAmount: amount,
+      totalAmount: finalAmount,
       status: "completed", // já pago com saldo
       paymentMethod: "balance",
     });
@@ -411,7 +458,7 @@ export async function checkoutWithBalance(userId: number, amount: number, items:
     // 7. Limpar carrinho
     await tx.delete(cartItems).where(eq(cartItems.userId, userId));
 
-    return { success: true, orderId, newBalance };
+    return { success: true, orderId, newBalance, cashbackApplied, discountAmount };
   });
 
   return result;

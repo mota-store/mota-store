@@ -364,6 +364,27 @@ export const appRouter = router({
         const { checkoutWithBalance } = await import("./db");
         return checkoutWithBalance(ctx.user.id, input.amount, input.cartItems);
       }),
+
+    createDepositPix: protectedProcedure
+      .input(z.object({ amount: z.number().min(100) }))
+      .mutation(async ({ ctx, input }) => {
+        const { efiPayment } = await import("./efi-payment");
+        const txid = `DEP${Date.now()}${ctx.user.id}`;
+        return efiPayment.createPix(input.amount / 100, ctx.user.id, `Recarga de Carteira - MOTA STORE`);
+      }),
+
+    confirmDeposit: protectedProcedure
+      .input(z.object({ amount: z.number().positive(), txid: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const { depositBalance } = await import("./db");
+        return depositBalance(ctx.user.id, input.amount);
+      }),
+
+    getCashbackStatus: protectedProcedure.query(async ({ ctx }) => {
+      const { getUserByOpenId } = await import("./db");
+      const user = await getUserByOpenId(ctx.user.openId!);
+      return { hasCashbackBenefit: user?.hasCashbackBenefit === 1 };
+    }),
   }),
 
   products: router({

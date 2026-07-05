@@ -14,6 +14,7 @@ import OrderConfirmation from "./pages/OrderConfirmation";
 import ResetPassword from "./pages/ResetPassword";
 import Admin from "./pages/Admin";
 import RedeemCoupon from "./pages/RedeemCoupon";
+import WalletDeposit from "./pages/WalletDeposit";
 
 function Router() {
   return (
@@ -27,6 +28,7 @@ function Router() {
       <Route path={"/reset-password"} component={ResetPassword} />
       <Route path={"/admin"} component={Admin} />
       <Route path={"/redeem-coupon"} component={RedeemCoupon} />
+      <Route path={"/wallet/deposit"} component={WalletDeposit} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
