@@ -318,7 +318,9 @@ class SDKServer {
       lastSignedIn: signedInAt,
     });
 
-    return user;
+    // Re-fetch user to get updated role and data after upsert
+    const updatedUser = await db.getUserByOpenId(user.openId);
+    return updatedUser ?? user;
   }
 }
 
