@@ -101,13 +101,19 @@ export default function Profile() {
       setIsUploading(true);
       
       // 1. Obter URL de upload presignada
-      const { uploadUrl, publicUrl } = await getUploadUrlMutation.mutateAsync({
+      const uploadResult = await getUploadUrlMutation.mutateAsync({
         filename: file.name,
         contentType: file.type,
       });
 
-      // 2. Fazer o upload para o S3
-      const uploadResp = await fetch(uploadUrl, {
+      const { uploadUrl, publicUrl } = uploadResult;
+      // Se for upload local, precisamos passar a key na query string
+      const finalUploadUrl = (uploadResult as any).isLocal 
+        ? `${uploadUrl}?key=${(uploadResult as any).key}` 
+        : uploadUrl;
+
+      // 2. Fazer o upload
+      const uploadResp = await fetch(finalUploadUrl, {
         method: "PUT",
         body: file,
         headers: {

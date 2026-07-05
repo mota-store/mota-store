@@ -110,8 +110,20 @@ export const appRouter = router({
         const forgeUrl = ENV.forgeApiUrl?.replace(/\/+$/, "");
         const forgeKey = ENV.forgeApiKey;
         
+        // Se o serviço de storage não estiver configurado, usamos o fallback local
         if (!forgeUrl || !forgeKey) {
-          throw new Error("Storage service not configured");
+          const timestamp = Date.now();
+          const safeFilename = input.filename.replace(/[^a-zA-Z0-9.-]/g, "_");
+          const key = `avatars/${timestamp}_${safeFilename}`;
+          
+          // No ambiente local/sandbox, o frontend pode enviar para uma rota de API local
+          // que salva o arquivo no sistema de arquivos.
+          return { 
+            uploadUrl: "/api/upload-local", 
+            publicUrl: `/uploads/${key}`,
+            isLocal: true,
+            key: key
+          };
         }
 
         const key = `avatars/${Date.now()}_${input.filename}`;
@@ -125,7 +137,8 @@ export const appRouter = router({
         const { url: s3Url } = (await presignResp.json()) as { url: string };
         return { 
           uploadUrl: s3Url,
-          publicUrl: `/manus-storage/${key}` 
+          publicUrl: `/manus-storage/${key}`,
+          isLocal: false
         };
       }),
     requestPasswordReset: publicProcedure

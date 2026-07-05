@@ -2,6 +2,8 @@ import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
 import net from "net";
+import fs from "fs";
+import path from "path";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { registerGoogleOAuthRoutes } from "./google-oauth";
@@ -50,6 +52,27 @@ async function startServer() {
     } else {
       res.status(401).json({ success: false, error: "Credenciais inválidas" });
     }
+  });
+
+  // Local Upload Route for Avatar
+  app.put("/api/upload-local", express.raw({ type: "*/*", limit: "10mb" }), (req, res) => {
+    const key = req.query.key as string;
+    if (!key) return res.status(400).send("Missing key");
+
+    const filePath = path.join(process.cwd(), "client/public/uploads", key);
+    const dir = path.dirname(filePath);
+
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    fs.writeFile(filePath, req.body, (err) => {
+      if (err) {
+        console.error("[LocalUpload] Error saving file:", err);
+        return res.status(500).send("Error saving file");
+      }
+      res.status(200).send("File saved");
+    });
   });
   
   // tRPC API
