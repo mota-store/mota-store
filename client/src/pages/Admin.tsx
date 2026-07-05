@@ -95,6 +95,7 @@ function checkAdminSession() {
 function AdminDashboard() {
   const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState<"users" | "products" | "coupons" | "orders">("users");
+  const [userSearch, setUserSearch] = useState("");
   const [expandedUserId, setExpandedUserId] = useState<number | null>(null);
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [showAddCoupon, setShowAddCoupon] = useState(false);
@@ -207,7 +208,31 @@ function AdminDashboard() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-black uppercase tracking-tighter">{allUsers?.length} Usuários</h2>
             </div>
-            {allUsers?.map(user => (
+
+            <div className="mb-6">
+              <Input
+                placeholder="Buscar por nome ou e-mail..."
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                className="bg-background/50 rounded-xl border-border/50"
+              />
+            </div>
+
+            {(() => {
+              const filteredUsers = allUsers?.filter(user => 
+                (user.name?.toLowerCase().includes(userSearch.toLowerCase())) ||
+                (user.email?.toLowerCase().includes(userSearch.toLowerCase()))
+              );
+
+              if (filteredUsers?.length === 0) {
+                return (
+                  <div className="text-center py-10 bg-card/20 rounded-2xl border border-dashed border-border/40">
+                    <p className="text-muted-foreground font-medium">Nenhum usuário encontrado</p>
+                  </div>
+                );
+              }
+
+              return filteredUsers?.map(user => (
               <Card key={user.id} className="bg-card/30 border-border/40 rounded-2xl overflow-hidden">
                 <div
                   className="flex items-center justify-between p-5 cursor-pointer hover:bg-muted/10 transition-colors"
@@ -293,7 +318,8 @@ function AdminDashboard() {
                   </div>
                 )}
               </Card>
-            ))}
+            ));
+            })()}
           </div>
         )}
 
