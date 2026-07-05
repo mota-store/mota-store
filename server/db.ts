@@ -244,7 +244,21 @@ export async function updateOrderStatus(orderId: number, status: string) {
 export async function getAllUsers() {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(users).orderBy(desc(users.id));
+
+  const allUsers = await db.select().from(users).orderBy(desc(users.id));
+
+  const usersWithOrders = await Promise.all(allUsers.map(async (user) => {
+    const userOrders = await db.select({ count: sql<number>`count(*)` })
+      .from(orders)
+      .where(eq(orders.userId, user.id));
+
+    return {
+      ...user,
+      orderCount: Number(userOrders[0]?.count) || 0
+    };
+  }));
+
+  return usersWithOrders;
 }
 
 export async function getUserBalance(userId: number) {

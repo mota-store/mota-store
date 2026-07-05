@@ -219,6 +219,7 @@ export const appRouter = router({
         createdAt: u.createdAt,
         updatedAt: u.updatedAt,
         lastSignedIn: u.lastSignedIn,
+        orderCount: (u as any).orderCount ?? 0,
       }));
     }),
 

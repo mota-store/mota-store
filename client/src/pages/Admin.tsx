@@ -222,12 +222,12 @@ function AdminDashboard() {
                       <p className="text-[10px] text-muted-foreground">{user.email || "Sem email"}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <p className="text-xs font-black text-accent">R$ {(user.balance / 100).toFixed(2).replace(".", ",")}</p>
-                      <p className="text-[9px] text-muted-foreground uppercase">Saldo</p>
-                    </div>
-                    <span className="text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full bg-accent/10 text-accent">{user.role}</span>
+	                  <div className="flex items-center gap-4">
+	                    <div className="text-right">
+	                      <p className="text-xs font-black text-accent">R$ {(user.balance / 100).toFixed(2).replace(".", ",")}</p>
+	                      <p className="text-[9px] text-muted-foreground font-medium">{(user as any).orderCount ?? 0} compras</p>
+	                    </div>
+	                    <span className="text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full bg-accent/10 text-accent">{user.role}</span>
                     {expandedUserId === user.id ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                   </div>
                 </div>
