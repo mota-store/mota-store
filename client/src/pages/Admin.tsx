@@ -433,7 +433,10 @@ function AdminDashboard() {
                         </span>
                       </div>
                       <p className="text-[10px] text-muted-foreground mt-0.5">
-                        Valor: R$ {(coupon.value / 100).toFixed(2).replace(".", ",")} • Usos: {coupon.currentRedemptions}/{coupon.maxRedemptions}
+                        Valor: R$ {(coupon.value / 100).toFixed(2).replace(".", ",")}
+                      </p>
+                      <p className="text-[10px] font-semibold text-accent mt-1">
+                        {coupon.currentRedemptions} / {coupon.maxRedemptions} resgates
                       </p>
                       {coupon.expiresAt && (
                         <p className="text-[10px] text-muted-foreground">
