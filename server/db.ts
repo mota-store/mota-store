@@ -301,9 +301,10 @@ export async function createCoupon(input: InsertCoupon): Promise<any> {
   const [result] = await db.insert(coupons).values({
     code: input.code,
     value: input.value,
-    description: input.description,
+    description: input.description ?? null,
     maxRedemptions: input.maxRedemptions ?? 1,
-    expiresAt: input.expiresAt,
+    currentRedemptions: 0,
+    expiresAt: input.expiresAt ?? null,
     isActive: 1,
   });
 

@@ -112,7 +112,7 @@ function AdminDashboard() {
   });
   const createCoupon = trpc.admin.createCoupon.useMutation({
     onSuccess: () => { refetchCoupons(); setShowAddCoupon(false); toast.success("Cupom criado!"); },
-    onError: () => toast.error("Erro ao criar cupom"),
+    onError: (err: any) => toast.error("Erro ao criar cupom: " + (err.message || "Erro desconhecido")),
   });
   const toggleCoupon = trpc.admin.toggleCoupon.useMutation({
     onSuccess: () => { refetchCoupons(); toast.success("Cupom atualizado"); },
