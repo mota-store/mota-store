@@ -416,16 +416,30 @@ function AdminDashboard() {
                       <Gift className={`h-5 w-5 ${coupon.isActive ? "text-green-500" : "text-red-500"}`} />
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-black text-sm">{coupon.code}</p>
-                        <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${coupon.isActive ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"}`}>
-                          {coupon.isActive ? "Ativo" : "Inativo"}
+                        <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                          coupon.expiresAt && new Date(coupon.expiresAt) < new Date()
+                            ? "bg-gray-500/10 text-gray-500"
+                            : coupon.isActive
+                            ? "bg-green-500/10 text-green-500"
+                            : "bg-red-500/10 text-red-500"
+                        }`}>
+                          {coupon.expiresAt && new Date(coupon.expiresAt) < new Date()
+                            ? "Expirado"
+                            : coupon.isActive
+                            ? "Ativo"
+                            : "Inativo"}
                         </span>
                       </div>
                       <p className="text-[10px] text-muted-foreground mt-0.5">
                         Valor: R$ {(coupon.value / 100).toFixed(2).replace(".", ",")} • Usos: {coupon.currentRedemptions}/{coupon.maxRedemptions}
-                        {coupon.expiresAt && ` • Expira: ${new Date(coupon.expiresAt).toLocaleDateString("pt-BR")}`}
                       </p>
+                      {coupon.expiresAt && (
+                        <p className="text-[10px] text-muted-foreground">
+                          Expira: {new Date(coupon.expiresAt).toLocaleDateString("pt-BR")}
+                        </p>
+                      )}
                       {coupon.description && <p className="text-[10px] text-muted-foreground">{coupon.description}</p>}
                     </div>
                   </div>
