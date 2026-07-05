@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { ArrowLeft, Trash2, ShoppingCart, Plus, Minus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 
 export default function Cart() {
@@ -19,14 +19,32 @@ export default function Cart() {
   
   // Estado local para atualização otimista
   const [localQuantities, setLocalQuantities] = useState<Record<number, number>>({});
+  
+  // Contador de atualizações pendentes para evitar race condition
+  const pendingUpdates = useRef<Record<number, number>>({});
 
   // Sincronizar estado local quando os dados do servidor mudarem
   useEffect(() => {
     if (cartItems) {
       const quantities: Record<number, number> = {};
       cartItems.forEach(item => {
-        quantities[item.productId] = (quantities[item.productId] || 0) + item.quantity;
+        // Só sobrescreve se não houver atualizações pendentes para este produto
+        if (!pendingUpdates.current[item.productId]) {
+          quantities[item.productId] = (quantities[item.productId] || 0) + item.quantity;
+        } else {
+          // Mantém o valor local atual se houver pendências
+          quantities[item.productId] = localQuantities[item.productId];
+        }
       });
+      
+      // Também mantém itens que podem ter sido adicionados localmente mas ainda não voltaram do servidor
+      Object.keys(localQuantities).forEach(id => {
+        const productId = Number(id);
+        if (pendingUpdates.current[productId] && !quantities[productId]) {
+          quantities[productId] = localQuantities[productId];
+        }
+      });
+
       setLocalQuantities(quantities);
     }
   }, [cartItems]);
@@ -42,10 +60,12 @@ export default function Cart() {
   });
 
   const addItemMutation = trpc.cart.addItem.useMutation({
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      pendingUpdates.current[variables.productId] = Math.max(0, (pendingUpdates.current[variables.productId] || 0) - 1);
       utils.cart.getItems.invalidate();
     },
-    onError: (error) => {
+    onError: (error, variables) => {
+      pendingUpdates.current[variables.productId] = Math.max(0, (pendingUpdates.current[variables.productId] || 0) - 1);
       toast.error("Erro ao atualizar quantidade");
       utils.cart.getItems.invalidate();
     }
@@ -66,7 +86,10 @@ export default function Cart() {
   const groupedItemsMap = new Map<number, any>();
   
   // Usamos os produtos e os cartItems para construir a lista, mas a quantidade vem do localQuantities
-  const productIds = Array.from(new Set(cartItems?.map(item => item.productId) || []));
+  const productIds = Array.from(new Set([
+    ...(cartItems?.map(item => item.productId) || []),
+    ...Object.keys(localQuantities).map(Number)
+  ]));
   
   productIds.forEach(productId => {
     const product = products?.find(p => p.id === productId);
@@ -91,31 +114,32 @@ export default function Cart() {
   const total = subtotal;
 
   const handleUpdateQuantity = (productId: number, delta: number) => {
-    const currentQty = localQuantities[productId] || 0;
-    const newQty = currentQty + delta;
+    pendingUpdates.current[productId] = (pendingUpdates.current[productId] || 0) + 1;
 
-    if (newQty <= 0) {
-      const item = groupedItems.find(i => i.productId === productId);
-      if (item && item.ids.length > 0) {
-        // Otimista: remove do estado local
-        setLocalQuantities(prev => {
-          const next = { ...prev };
-          delete next[productId];
-          return next;
-        });
-        removeItem.mutate(item.ids[0]);
+    setLocalQuantities(prev => {
+      const currentQty = prev[productId] || 0;
+      const newQty = currentQty + delta;
+
+      if (newQty <= 0) {
+        const item = groupedItems.find(i => i.productId === productId);
+        if (item && item.ids.length > 0) {
+          removeItem.mutate(item.ids[0]);
+        }
+        const next = { ...prev };
+        delete next[productId];
+        // Reset pending updates for removed item
+        pendingUpdates.current[productId] = 0;
+        return next;
       }
-      return;
-    }
 
-    // Atualização otimista do estado local
-    setLocalQuantities(prev => ({
-      ...prev,
-      [productId]: newQty
-    }));
+      // Chamar API em segundo plano
+      addItemMutation.mutate({ productId, quantity: delta });
 
-    // Chamar API em segundo plano
-    addItemMutation.mutate({ productId, quantity: delta });
+      return {
+        ...prev,
+        [productId]: newQty
+      };
+    });
   };
 
   const handleRemoveAll = (item: any) => {
@@ -125,6 +149,8 @@ export default function Cart() {
       delete next[item.productId];
       return next;
     });
+    
+    pendingUpdates.current[item.productId] = 0;
 
     item.ids.forEach((id: number) => {
       removeItem.mutate(id);
@@ -153,7 +179,7 @@ export default function Cart() {
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-black tracking-tighter uppercase">MEU <span className="text-accent">CARRINHO</span></h1>
           <span className="text-xs font-black bg-accent/10 text-accent px-4 py-1.5 rounded-full uppercase tracking-widest">
-            {groupedItems.length} {groupedItems.length === 1 ? 'PRODUTO' : 'PRODUTOS'}
+            {groupedItems.reduce((sum, item) => sum + item.quantity, 0)} {groupedItems.reduce((sum, item) => sum + item.quantity, 0) === 1 ? 'PRODUTO' : 'PRODUTOS'}
           </span>
         </div>
 
@@ -257,11 +283,14 @@ export default function Cart() {
                     <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Total a Pagar</span>
                     <span className="text-4xl font-black text-accent tracking-tighter">R$ {(total / 100).toFixed(2)}</span>
                   </div>
+                  <p className="text-xs font-black text-center text-muted-foreground mt-4">
+                    Frete grátis para todo o Brasil!
+                  </p>
                 </div>
 
                 <div className="space-y-4">
                   <Button
-                    className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-black py-8 rounded-[1.5rem] shadow-xl shadow-accent/20 transition-all active:scale-95 text-base uppercase tracking-tighter"
+                    className="w-full bg-[#22c55e] hover:bg-[#22c55e]/90 text-white font-black py-8 rounded-[1.5rem] shadow-xl shadow-[#22c55e]/20 transition-all active:scale-95 text-base uppercase tracking-tighter"
                     onClick={() => navigate("/checkout?direct=true")}
                   >
                     FINALIZAR COMPRA
