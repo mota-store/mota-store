@@ -67,6 +67,16 @@ export default function Home() {
       return;
     }
 
+    // Obter a quantidade atual do produto no carrinho
+    const cartItems = utils.cart.getItems.getData();
+    const currentQty = cartItems?.filter(item => item.productId === productId).reduce((sum, item) => sum + item.quantity, 0) || 0;
+
+    // Bloquear se já atingiu o limite de 5
+    if (currentQty >= 5) {
+      toast.error("Limite máximo de 5 unidades por produto atingido.");
+      return;
+    }
+
     const rect = e.currentTarget.getBoundingClientRect();
     const startPos = {
       x: rect.left + rect.width / 2,

@@ -114,6 +114,14 @@ export default function Cart() {
   const total = subtotal;
 
   const handleUpdateQuantity = (productId: number, delta: number) => {
+    const currentQty = localQuantities[productId] || 0;
+
+    // Bloquear incremento se já atingiu o limite de 5
+    if (delta > 0 && currentQty >= 5) {
+      toast.error("Limite máximo de 5 unidades por produto atingido.");
+      return;
+    }
+
     pendingUpdates.current[productId] = (pendingUpdates.current[productId] || 0) + 1;
 
     setLocalQuantities(prev => {
@@ -239,7 +247,8 @@ export default function Cart() {
                         <span className="text-sm font-black w-12 text-center">{item.quantity}</span>
                         <button
                           onClick={() => handleUpdateQuantity(item.productId, 1)}
-                          className="h-10 w-10 rounded-xl hover:bg-accent hover:text-accent-foreground flex items-center justify-center transition-all active:scale-90"
+                          disabled={item.quantity >= 5}
+                          className="h-10 w-10 rounded-xl hover:bg-accent hover:text-accent-foreground flex items-center justify-center transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed"
                         >
                           <Plus className="h-4 w-4" />
                         </button>

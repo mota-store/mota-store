@@ -153,6 +153,19 @@ export async function getCartItems(userId: number) {
 export async function addToCart(userId: number, productId: number, quantity: number = 1) {
   const db = await getDb();
   if (!db) return;
+  
+  // Validar limite máximo de 5 unidades por produto
+  const existingItems = await db.select().from(cartItems).where(
+    and(eq(cartItems.userId, userId), eq(cartItems.productId, productId))
+  );
+  
+  const currentTotal = existingItems.reduce((sum, item) => sum + item.quantity, 0);
+  const newTotal = currentTotal + quantity;
+  
+  if (newTotal > 5) {
+    throw new Error("Limite máximo de 5 unidades por produto excedido");
+  }
+  
   await db.insert(cartItems).values({ userId, productId, quantity });
 }
 
