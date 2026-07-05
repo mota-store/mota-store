@@ -4,15 +4,16 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
-import { ArrowLeft, LogOut, ShoppingBag, Moon, Sun, Check, Loader2, Lock, Eye, EyeOff, Mail, ShoppingCart, Gift, Wallet, Send } from "lucide-react";
+import { ArrowLeft, LogOut, ShoppingBag, Moon, Sun, Check, Loader2, Lock, Eye, EyeOff, Mail, ShoppingCart, Gift, Wallet, Send, Camera } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 
 export default function Profile() {
   const { user, logout } = useAuth();
   const [, navigate] = useLocation();
   const utils = trpc.useUtils();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const searchParams = new URLSearchParams(window.location.search);
   const isOnboarding = searchParams.get("onboarding") === "true";
 
@@ -31,11 +32,12 @@ export default function Profile() {
       setShowPasswordFields(false);
       setPasswordsMatch(null);
     },
-    onError: () => {
-      toast.error("Erro ao atualizar perfil.");
+    onError: (err: any) => {
+      toast.error("Erro ao atualizar perfil: " + (err.message || "Erro desconhecido"));
     }
   });
 
+  const getUploadUrlMutation = trpc.auth.getUploadUrl.useMutation();
   const requestCodeMutation = trpc.auth.requestVerificationCode.useMutation();
 
   const [isDark, setIsDark] = useState(false);
@@ -49,6 +51,7 @@ export default function Profile() {
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
   const [passwordsMatch, setPasswordsMatch] = useState<true | false | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Validação em tempo real das senhas
   useEffect(() => {
@@ -75,6 +78,59 @@ export default function Profile() {
       toast.error("Erro ao enviar código: " + err.message);
     } finally {
       setIsSendingCode(false);
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validar tipo de arquivo
+    if (!file.type.startsWith("image/")) {
+      toast.error("Por favor, selecione uma imagem válida.");
+      return;
+    }
+
+    // Validar tamanho (máximo 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 5MB.");
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      
+      // 1. Obter URL de upload presignada
+      const { uploadUrl, publicUrl } = await getUploadUrlMutation.mutateAsync({
+        filename: file.name,
+        contentType: file.type,
+      });
+
+      // 2. Fazer o upload para o S3
+      const uploadResp = await fetch(uploadUrl, {
+        method: "PUT",
+        body: file,
+        headers: {
+          "Content-Type": file.type,
+        },
+      });
+
+      if (!uploadResp.ok) {
+        throw new Error("Falha no upload da imagem");
+      }
+
+      // 3. Atualizar o perfil com a nova URL
+      await updateProfile.mutateAsync({ avatarUrl: publicUrl });
+      toast.success("Foto de perfil atualizada!");
+      
+    } catch (err: any) {
+      console.error("[AvatarUpload] Error:", err);
+      toast.error("Erro ao atualizar foto de perfil: " + err.message);
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
 
@@ -178,14 +234,36 @@ export default function Profile() {
           <div className="lg:col-span-1">
             <Card className="p-8 sticky top-24 bg-card/30 backdrop-blur-sm border-border/50 rounded-[2.5rem] shadow-2xl">
               <div className="flex flex-col items-center text-center">
-                <div className="relative mb-8">
-                  <div className="h-32 w-32 rounded-[2.5rem] bg-accent/10 flex items-center justify-center overflow-hidden border-2 border-accent/20">
+                <div className="relative mb-8 group">
+                  <div className="h-32 w-32 rounded-[2.5rem] bg-accent/10 flex items-center justify-center overflow-hidden border-2 border-accent/20 relative">
                     <img 
                       src={user.avatarUrl || "/assets/default-avatar.jpg"} 
                       alt={user.name || "Avatar"} 
                       className="w-full h-full object-cover" 
                     />
+                    {isUploading && (
+                      <div className="absolute inset-0 bg-background/60 backdrop-blur-sm flex items-center justify-center">
+                        <Loader2 className="h-8 w-8 text-accent animate-spin" />
+                      </div>
+                    )}
                   </div>
+                  
+                  {/* Botão de Upload */}
+                  <button
+                    type="button"
+                    disabled={isUploading}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute -bottom-2 -right-2 h-10 w-10 bg-accent text-accent-foreground rounded-xl flex items-center justify-center shadow-lg hover:scale-110 transition-transform active:scale-95 border-4 border-card"
+                  >
+                    <Camera className="h-5 w-5" />
+                  </button>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    accept="image/*"
+                    className="hidden"
+                  />
                 </div>
 
                 {/* Carteira / Saldo */}
