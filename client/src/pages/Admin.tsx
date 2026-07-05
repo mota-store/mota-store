@@ -229,6 +229,14 @@ function AdminDashboard() {
 	                      <p className="text-[9px] text-muted-foreground font-medium">{(user as any).orderCount ?? 0} compras</p>
 	                    </div>
 	                    <span className="text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full bg-accent/10 text-accent">{user.role}</span>
+	                    <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${
+	                      user.loginMethod === "email" ? "bg-blue-500/10 text-blue-500" :
+	                      user.loginMethod === "google" ? "bg-red-500/10 text-red-500" :
+	                      user.loginMethod === "github" ? "bg-gray-500/10 text-gray-500" :
+	                      "bg-muted/10 text-muted-foreground"
+	                    }`}>
+	                      {user.loginMethod || "desconhecido"}
+	                    </span>
                     {expandedUserId === user.id ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                   </div>
                 </div>
