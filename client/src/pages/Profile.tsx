@@ -37,7 +37,7 @@ export default function Profile() {
     }
   });
 
-  const getUploadUrlMutation = trpc.auth.getUploadUrl.useMutation();
+  const uploadAvatarMutation = trpc.auth.uploadAvatar.useMutation();
   const requestCodeMutation = trpc.auth.requestVerificationCode.useMutation();
 
   const [isDark, setIsDark] = useState(false);
@@ -100,39 +100,72 @@ export default function Profile() {
     try {
       setIsUploading(true);
       
-      // 1. Obter URL de upload presignada
-      const uploadResult = await getUploadUrlMutation.mutateAsync({
-        filename: file.name,
-        contentType: file.type,
-      });
-
-      const { uploadUrl, publicUrl } = uploadResult;
-      // Se for upload local, precisamos passar a key na query string
-      const finalUploadUrl = (uploadResult as any).isLocal 
-        ? `${uploadUrl}?key=${(uploadResult as any).key}` 
-        : uploadUrl;
-
-      // 2. Fazer o upload
-      const uploadResp = await fetch(finalUploadUrl, {
-        method: "PUT",
-        body: file,
-        headers: {
-          "Content-Type": file.type,
-        },
-      });
-
-      if (!uploadResp.ok) {
-        throw new Error("Falha no upload da imagem");
-      }
-
-      // 3. Atualizar o perfil com a nova URL
-      await updateProfile.mutateAsync({ avatarUrl: publicUrl });
-      toast.success("Foto de perfil atualizada!");
-      
+      // 1. Ler arquivo como Data URL
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const dataUrl = event.target?.result as string;
+          
+          // 2. Redimensionar e comprimir imagem usando Canvas
+          const img = new Image();
+          img.onload = async () => {
+            const canvas = document.createElement("canvas");
+            const maxSize = 256; // máximo 256x256 pixels
+            let width = img.width;
+            let height = img.height;
+            
+            // Calcular novo tamanho mantendo proporção
+            if (width > height) {
+              if (width > maxSize) {
+                height = Math.round((height * maxSize) / width);
+                width = maxSize;
+              }
+            } else {
+              if (height > maxSize) {
+                width = Math.round((width * maxSize) / height);
+                height = maxSize;
+              }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) throw new Error("Não foi possível obter contexto do canvas");
+            
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // 3. Converter para base64 com compressão (qualidade 0.7)
+            const base64Data = canvas.toDataURL("image/jpeg", 0.7);
+            
+            // 4. Enviar para o servidor
+            await uploadAvatarMutation.mutateAsync({ base64Data });
+            toast.success("Foto de perfil atualizada!");
+            utils.auth.me.invalidate();
+            setIsUploading(false);
+            if (fileInputRef.current) {
+              fileInputRef.current.value = "";
+            }
+          };
+          img.onerror = () => {
+            throw new Error("Não foi possível carregar a imagem");
+          };
+          img.src = dataUrl;
+        } catch (err: any) {
+          console.error("[AvatarUpload] Error:", err);
+          toast.error("Erro ao processar imagem: " + err.message);
+          setIsUploading(false);
+          if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+          }
+        }
+      };
+      reader.onerror = () => {
+        throw new Error("Não foi possível ler o arquivo");
+      };
+      reader.readAsDataURL(file);
     } catch (err: any) {
       console.error("[AvatarUpload] Error:", err);
       toast.error("Erro ao atualizar foto de perfil: " + err.message);
-    } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";

@@ -103,43 +103,22 @@ export const appRouter = router({
         await updateUser(ctx.user.id, updateData);
         return { success: true };
       }),
-    getUploadUrl: protectedProcedure
-      .input(z.object({ filename: z.string(), contentType: z.string() }))
-      .mutation(async ({ input }) => {
-        const { ENV } = await import("./_core/env");
-        const forgeUrl = ENV.forgeApiUrl?.replace(/\/+$/, "");
-        const forgeKey = ENV.forgeApiKey;
-        
-        // Se o serviço de storage não estiver configurado, usamos o fallback local
-        if (!forgeUrl || !forgeKey) {
-          const timestamp = Date.now();
-          const safeFilename = input.filename.replace(/[^a-zA-Z0-9.-]/g, "_");
-          const key = `avatars/${timestamp}_${safeFilename}`;
-          
-          // No ambiente local/sandbox, o frontend pode enviar para uma rota de API local
-          // que salva o arquivo no sistema de arquivos.
-          return { 
-            uploadUrl: "/api/upload-local", 
-            publicUrl: `/uploads/${key}`,
-            isLocal: true,
-            key: key
-          };
+    uploadAvatar: protectedProcedure
+      .input(z.object({ base64Data: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        // Validar que é uma data URL válida
+        if (!input.base64Data.startsWith("data:image/")) {
+          throw new Error("Avatar inválido. Deve ser uma imagem em base64.");
         }
-
-        const key = `avatars/${Date.now()}_${input.filename}`;
-        const presignUrl = new URL("v1/storage/presign/put", forgeUrl + "/");
-        presignUrl.searchParams.set("path", key);
-
-        const presignResp = await fetch(presignUrl, {
-          headers: { Authorization: `Bearer ${forgeKey}` },
-        });
-
-        const { url: s3Url } = (await presignResp.json()) as { url: string };
-        return { 
-          uploadUrl: s3Url,
-          publicUrl: `/manus-storage/${key}`,
-          isLocal: false
-        };
+        
+        // Limitar tamanho (máximo ~500KB em base64, que corresponde a ~375KB de imagem)
+        if (input.base64Data.length > 600000) {
+          throw new Error("Imagem muito grande. Máximo 500KB.");
+        }
+        
+        // Atualizar o perfil com o base64 diretamente
+        await updateUser(ctx.user.id, { avatarUrl: input.base64Data });
+        return { success: true };
       }),
     requestPasswordReset: publicProcedure
       .input(z.object({ email: z.string().email() }))
