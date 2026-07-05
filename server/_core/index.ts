@@ -40,6 +40,13 @@ async function startServer() {
   registerStorageProxy(app);
   registerOAuthRoutes(app);
   registerGoogleOAuthRoutes(app);
+
+  // Serve local uploads
+  const uploadsPath = path.join(process.cwd(), "client/public/uploads");
+  if (!fs.existsSync(uploadsPath)) {
+    fs.mkdirSync(uploadsPath, { recursive: true });
+  }
+  app.use("/uploads", express.static(uploadsPath));
   
   // Admin Login Route
   const adminUsername = process.env.ADMIN_USERNAME || "whtxz";
