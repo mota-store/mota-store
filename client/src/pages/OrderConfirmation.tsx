@@ -21,8 +21,18 @@ export default function OrderConfirmation() {
         const whatsappNumber = "5591984886473";
         const now = new Date().toLocaleString('pt-BR');
         
+        // Agrupar produtos por nome para a mensagem do WhatsApp
+        const groupedItems: Record<string, number> = {};
+        parsedData.items.forEach((item: any) => {
+          groupedItems[item.name] = (groupedItems[item.name] || 0) + 1;
+        });
+
+        const productList = Object.entries(groupedItems)
+          .map(([name, qty]) => qty > 1 ? `${name} x${qty}` : name)
+          .join(", ");
+
         const message = `Olá! Acabei de realizar o pedido #${orderNumber} na MOTA STORE.
-Produto(s): ${parsedData.items.map((i: any) => i.name).join(", ")}
+Produto(s): ${productList}
 Total: R$ ${(parsedData.total / 100).toFixed(2)}
 Horário: ${now}
 Aguardo a ativação! 😊`;
@@ -42,13 +52,39 @@ Aguardo a ativação! 😊`;
   const whatsappNumber = "5591984886473";
   const now = new Date().toLocaleString('pt-BR');
   
+  // Agrupar produtos por nome para a mensagem do WhatsApp (botão manual)
+  const groupedItems: Record<string, number> = {};
+  orderData.items.forEach((item: any) => {
+    groupedItems[item.name] = (groupedItems[item.name] || 0) + 1;
+  });
+
+  const productList = Object.entries(groupedItems)
+    .map(([name, qty]) => qty > 1 ? `${name} x${qty}` : name)
+    .join(", ");
+
   const message = `Olá! Acabei de realizar o pedido #${orderNumber} na MOTA STORE.
-Produto(s): ${orderData.items.map((i: any) => i.name).join(", ")}
+Produto(s): ${productList}
 Total: R$ ${(orderData.total / 100).toFixed(2)}
 Horário: ${now}
 Aguardo a ativação! 😊`;
 
   const whatsappLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+
+  // Agrupar itens para exibição no card (resumo visual)
+  const displayItems: Array<{name: string, price: number, quantity: number}> = [];
+  const displayMap: Record<string, {price: number, quantity: number}> = {};
+  
+  orderData.items.forEach((item: any) => {
+    if (!displayMap[item.name]) {
+      displayMap[item.name] = { price: item.price, quantity: 1 };
+    } else {
+      displayMap[item.name].quantity += 1;
+    }
+  });
+
+  Object.entries(displayMap).forEach(([name, data]) => {
+    displayItems.push({ name, ...data });
+  });
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -95,10 +131,10 @@ Aguardo a ativação! 😊`;
             </div>
             
             <div className="space-y-3 mb-6">
-              {orderData.items.map((item: any, idx: number) => (
+              {displayItems.map((item: any, idx: number) => (
                 <div key={idx} className="flex justify-between text-sm">
-                  <span className="font-medium">{item.name}</span>
-                  <span className="text-muted-foreground">R$ {(item.price / 100).toFixed(2)}</span>
+                  <span className="font-medium">{item.name}{item.quantity > 1 ? ` x${item.quantity}` : ""}</span>
+                  <span className="text-muted-foreground">R$ {((item.price * item.quantity) / 100).toFixed(2)}</span>
                 </div>
               ))}
             </div>
