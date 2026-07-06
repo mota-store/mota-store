@@ -27,23 +27,34 @@ export default function Cart() {
   useEffect(() => {
     if (cartItems) {
       setLocalQuantities(prev => {
-        const quantities: Record<number, number> = {};
+        // Primeiro, calcular a quantidade total do servidor agrupada por productId
+        const serverTotals: Record<number, number> = {};
         cartItems.forEach(item => {
-          if (pendingUpdates.current[item.productId]) {
-            // Se houver pendências, mantemos o que está no estado local (otimista)
-            quantities[item.productId] = prev[item.productId] ?? (quantities[item.productId] || 0) + item.quantity;
+          serverTotals[item.productId] = (serverTotals[item.productId] || 0) + item.quantity;
+        });
+
+        const quantities: Record<number, number> = {};
+
+        // Para cada productId vindo do servidor
+        Object.entries(serverTotals).forEach(([id, serverQty]) => {
+          const productId = Number(id);
+          if (pendingUpdates.current[productId]) {
+            // Há atualizações pendentes: manter o valor otimista local
+            quantities[productId] = prev[productId] ?? serverQty;
           } else {
-            // Se não houver atualizações pendentes, substituímos com a soma dos registros do servidor
-            quantities[item.productId] = (quantities[item.productId] || 0) + item.quantity;
+            // Sem pendências: usar o valor do servidor
+            quantities[productId] = serverQty;
           }
         });
-        // Também mantém itens que podem ter sido adicionados localmente mas ainda não voltaram do servidor
+
+        // Manter itens que existem localmente mas ainda não voltaram do servidor (ex: recém-adicionados)
         Object.keys(prev).forEach(id => {
           const productId = Number(id);
-          if (pendingUpdates.current[productId] && !quantities[productId]) {
+          if (pendingUpdates.current[productId] && quantities[productId] === undefined) {
             quantities[productId] = prev[productId];
           }
         });
+
         return quantities;
       });
     }
@@ -115,40 +126,36 @@ export default function Cart() {
   const total = subtotal;
 
   const handleUpdateQuantity = (productId: number, delta: number) => {
-    const currentQty = localQuantities[productId] || 0;
+    const currentQty = localQuantities[productId] ?? 0;
 
-    // Bloquear incremento se já atingiu o limite de 5
     if (delta > 0 && currentQty >= 5) {
       toast.error("Limite máximo de 5 unidades por produto atingido.");
       return;
     }
 
-    pendingUpdates.current[productId] = (pendingUpdates.current[productId] || 0) + 1;
+    const newQty = currentQty + delta;
 
-    setLocalQuantities(prev => {
-      const currentQty = prev[productId] || 0;
-      const newQty = currentQty + delta;
-
-      if (newQty <= 0) {
-        const item = groupedItems.find(i => i.productId === productId);
-        if (item && item.ids.length > 0) {
-          removeItem.mutate(item.ids[0]);
-        }
-        const next = { ...prev };
-        delete next[productId];
-        // Reset pending updates for removed item
+    if (newQty <= 0) {
+      const item = groupedItems.find(i => i.productId === productId);
+      if (item && item.ids.length > 0) {
+        pendingUpdates.current[productId] = (pendingUpdates.current[productId] || 0) + 1;
+        setLocalQuantities(prev => {
+          const next = { ...prev };
+          delete next[productId];
+          return next;
+        });
+        removeItem.mutate(item.ids[0]);
         pendingUpdates.current[productId] = 0;
-        return next;
       }
+      return;
+    }
 
-      // Chamar API em segundo plano
-      addItemMutation.mutate({ productId, quantity: delta });
-
-      return {
-        ...prev,
-        [productId]: newQty
-      };
-    });
+    pendingUpdates.current[productId] = (pendingUpdates.current[productId] || 0) + 1;
+    setLocalQuantities(prev => ({
+      ...prev,
+      [productId]: newQty
+    }));
+    addItemMutation.mutate({ productId, quantity: delta });
   };
 
   const handleRemoveAll = (item: any) => {
