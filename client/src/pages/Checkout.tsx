@@ -18,9 +18,9 @@ export default function Checkout() {
   const { data: cartItems, isLoading: cartLoading } = trpc.cart.getItems.useQuery(undefined, {
     enabled: isAuthenticated,
   });
-  const { data: products } = trpc.products.list.useQuery();
-  const { data: balance } = trpc.wallet.getBalance.useQuery(undefined, { enabled: isAuthenticated });
-  const { data: cashbackStatus } = trpc.wallet.getCashbackStatus.useQuery(undefined, { enabled: isAuthenticated });
+  const { data: products, isLoading: productsLoading } = trpc.products.list.useQuery();
+  const { data: balance, isLoading: balanceLoading } = trpc.wallet.getBalance.useQuery(undefined, { enabled: isAuthenticated });
+  const { data: cashbackStatus, isLoading: cashbackLoading } = trpc.wallet.getCashbackStatus.useQuery(undefined, { enabled: isAuthenticated });
   const createOrder = trpc.orders.create.useMutation();
   const createPix = trpc.payments.createPix.useMutation();
   const checkoutWithBalance = trpc.wallet.checkoutWithBalance.useMutation();
@@ -53,10 +53,18 @@ export default function Checkout() {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
+      // Validar se todos os produtos foram carregados corretamente antes de prosseguir
+      const hasMissingProduct = enrichedItems.some(item => !item.product);
+      if (hasMissingProduct) {
+        toast.error("Alguns produtos não foram carregados corretamente. Tente recarregar a página.");
+        setIsSubmitting(false);
+        return;
+      }
+
       const cartItemsPayload = enrichedItems.map(item => ({
         productId: item.productId,
         quantity: item.quantity || 1,
-        price: item.product?.price || 0,
+        price: item.product!.price,
       }));
 
       const result = await checkoutWithBalance.mutateAsync({
@@ -83,10 +91,25 @@ export default function Checkout() {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
+      // Validar se todos os produtos foram carregados corretamente antes de prosseguir
+      const hasMissingProduct = enrichedItems.some(item => !item.product);
+      if (hasMissingProduct) {
+        toast.error("Alguns produtos não foram carregados corretamente. Tente recarregar a página.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const cartItemsPayload = enrichedItems.map(item => ({
+        productId: item.productId,
+        quantity: item.quantity || 1,
+        price: item.product!.price,
+      }));
+
       const balanceToUse = balance || 0;
       const result = await checkoutWithBalanceAndPix.mutateAsync({
         totalAmount: finalTotal,
         balanceToUse,
+        cartItems: cartItemsPayload,
       });
 
       if (!result.success) {
@@ -159,7 +182,7 @@ export default function Checkout() {
     );
   }
 
-  if (cartLoading) {
+  if (cartLoading || productsLoading || balanceLoading || cashbackLoading) {
     return (
       <div className="h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-6">

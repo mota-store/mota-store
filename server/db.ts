@@ -594,7 +594,8 @@ export async function getAllOrders() {
 export async function checkoutWithBalanceAndPix(
   userId: number,
   totalAmount: number,
-  balanceToUse: number
+  balanceToUse: number,
+  items: Array<{ productId: number; quantity: number; price: number }>
 ): Promise<{ success: boolean; orderId?: number; remainingAmount?: number; error?: string; newBalance?: number }> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -636,6 +637,19 @@ export async function checkoutWithBalanceAndPix(
     });
 
     const orderId = orderResult.insertId;
+
+    // 5. Criar itens da ordem
+    for (const item of items) {
+      const [product] = await tx.select().from(products).where(eq(products.id, item.productId)).limit(1);
+      if (product) {
+        await tx.insert(orderItems).values({
+          orderId,
+          productId: item.productId,
+          quantity: item.quantity,
+          priceAtPurchase: product.price,
+        });
+      }
+    }
 
     return { success: true, orderId, remainingAmount, newBalance };
   });
