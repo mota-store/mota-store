@@ -17,9 +17,14 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // Ignorar cache para requisições de API e garantir que o navegador sempre tente buscar a versão mais recente
+  if (event.request.url.includes('/api/')) {
+    return fetch(event.request);
+  }
+
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+    fetch(event.request).catch(() => {
+      return caches.match(event.request);
     })
   );
 });

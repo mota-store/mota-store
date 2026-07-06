@@ -39,17 +39,44 @@ class ErrorBoundary extends Component<Props, State> {
               </pre>
             </div>
 
-            <button
-              onClick={() => window.location.reload()}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-lg",
-                "bg-primary text-primary-foreground",
-                "hover:opacity-90 cursor-pointer"
-              )}
-            >
-              <RotateCcw size={16} />
-              Reload Page
-            </button>
+            <div className="flex flex-wrap gap-3 justify-center">
+              <button
+                onClick={() => window.location.reload()}
+                className={cn(
+                  "flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all",
+                  "bg-primary text-primary-foreground shadow-lg shadow-primary/20",
+                  "hover:scale-105 active:scale-95 cursor-pointer"
+                )}
+              >
+                <RotateCcw size={18} />
+                Recarregar Página
+              </button>
+
+              <button
+                onClick={() => {
+                  if (window.confirm("Isso irá limpar o cache local e deslogar você para resolver erros persistentes. Continuar?")) {
+                    sessionStorage.clear();
+                    localStorage.clear();
+                    // Tentar remover service workers
+                    if ('serviceWorker' in navigator) {
+                      navigator.serviceWorker.getRegistrations().then(registrations => {
+                        for (let registration of registrations) {
+                          registration.unregister();
+                        }
+                      });
+                    }
+                    window.location.href = "/";
+                  }
+                }}
+                className={cn(
+                  "flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all",
+                  "bg-destructive/10 text-destructive border border-destructive/20",
+                  "hover:bg-destructive hover:text-white cursor-pointer"
+                )}
+              >
+                Limpar Cache e Sair
+              </button>
+            </div>
           </div>
         </div>
       );
