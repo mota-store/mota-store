@@ -284,6 +284,11 @@ export default function Home() {
                         <div className="inline-block px-2 py-1 rounded bg-green-500/10 text-green-500 text-[10px] font-black uppercase tracking-widest">
                           ECONOMIZE 50%
                         </div>
+                        {!isAuthenticated && (
+                          <p className="text-[10px] text-muted-foreground font-semibold mt-1">
+                            Conta nova • E-mail novo • Garantia 30 dias
+                          </p>
+                        )}
                       </div>
 
                       <Button
