@@ -85,7 +85,7 @@ export default function ProductDetail() {
 
     addingProducts.current.add(product.id);
     triggerFlyAnimation(startPos);
-    addItem.mutate({ productId: product.id, quantity: 3 });
+    addItem.mutate({ productId: product.id, quantity: 1 });
   };
 
   if (!product && !isLoading) {

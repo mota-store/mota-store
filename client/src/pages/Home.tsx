@@ -89,7 +89,7 @@ export default function Home() {
 
     addingProducts.current.add(productId);
     triggerFlyAnimation(startPos);
-    addItem.mutate({ productId, quantity: 3 });
+    addItem.mutate({ productId, quantity: 1 });
   };
 
   // Lógica de Scroll Snap removida para melhorar performance (reduzir lag)
@@ -154,7 +154,7 @@ export default function Home() {
         </div>
       </section>
       )}
-							
+								
       {/* Trust Badges */}
       {!isAuthenticated && (
         <div className="container px-4 relative z-30 -mt-[362px] sm:-mt-[138px]">
@@ -316,8 +316,8 @@ export default function Home() {
                 icon: <ShieldCheck className="h-10 w-10 text-accent" />
               }
             ].map((f, i) => (
-              <div key={i} className="flex flex-col items-center text-center space-y-6 p-10 rounded-[2.5rem] bg-card/20 border border-border/30 hover:border-accent/30 transition-all group">
-                <div className="p-5 rounded-[2rem] bg-accent/10 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
+              <div key={i} className="flex flex-col items-center text-center space-y-6 p-10 rounded-[2.5rem] bg-card/20 border border-border/30 hover:border-accent/30 transition-all duration-500">
+                <div className="p-5 rounded-3xl bg-accent/10 text-accent mb-2">
                   {f.icon}
                 </div>
                 <h3 className="text-2xl font-black uppercase tracking-tight">{f.title}</h3>
@@ -328,27 +328,20 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Footer */}
+      <FlyAnimationsContainer animations={flyAnimations} onComplete={removeFlyAnimation} />
+      
       <footer className="py-12 border-t border-border/50">
-        <div className="container px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-            <div className="flex flex-col items-center md:items-start gap-2">
-              <span className="text-2xl font-black text-accent tracking-tighter">MOTA STORE</span>
-              <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">© 2024 TODOS OS DIREITOS RESERVADOS</p>
-            </div>
-            <div className="flex gap-8">
-              <a href="#" className="text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-accent transition-colors">Termos</a>
-              <a href="#" className="text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-accent transition-colors">Privacidade</a>
-              <a href="#" className="text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-accent transition-colors">Suporte</a>
-            </div>
+        <div className="container px-4 text-center">
+          <div className="flex items-center justify-center gap-2 mb-6">
+            <Zap className="h-6 w-6 text-accent fill-accent" />
+            <span className="text-2xl font-black tracking-tighter">MOTA STORE</span>
           </div>
+          <p className="text-muted-foreground text-sm font-medium">
+            © 2024 MOTA STORE. Todos os direitos reservados. <br />
+            As marcas citadas são de propriedade de seus respectivos donos.
+          </p>
         </div>
       </footer>
-
-      <FlyAnimationsContainer 
-        animations={flyAnimations} 
-        onAnimationComplete={removeFlyAnimation} 
-      />
     </div>
   );
 }
