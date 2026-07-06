@@ -58,6 +58,7 @@ export default function Home() {
       y: rect.top + rect.height / 2,
     };
 
+    if (addItem.isLoading) return;
     triggerFlyAnimation(startPos);
     addItem.mutate({ productId });
   };
@@ -274,7 +275,7 @@ export default function Home() {
 
                     <div className="p-8 flex flex-col flex-grow cursor-pointer" onClick={() => navigate(`/product/${product.id}`)}>
                       <h3 className="text-2xl font-black mb-2 group-hover:text-accent transition-colors line-clamp-1">{product.name}</h3>
-                      <p className="text-muted-foreground text-sm mb-6 line-clamp-2 font-medium">{product.description}</p>
+                      <p className="text-muted-foreground text-sm mb-6 font-medium">{product.description}</p>
                       
                       <div className="mb-8 mt-auto">
                         <div className="flex items-baseline gap-3 mb-1">

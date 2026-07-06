@@ -38,6 +38,7 @@ export default function ProductDetail() {
       toast.error("Limite máximo de 5 unidades por produto atingido.");
       return;
     }
+    if (addItem.isLoading) return;
     const rect = e.currentTarget.getBoundingClientRect();
     triggerFlyAnimation({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
     addItem.mutate({ productId: product!.id });
@@ -125,7 +126,7 @@ export default function ProductDetail() {
               {/* Descrição */}
               <div className="space-y-2">
                 <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Descrição</h2>
-                <p className="text-base text-foreground leading-relaxed">{product.description}</p>
+                <p className="text-base text-foreground leading-relaxed whitespace-pre-wrap">{product.description}</p>
               </div>
 
               {/* Benefícios */}
