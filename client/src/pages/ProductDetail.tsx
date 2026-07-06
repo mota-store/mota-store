@@ -58,6 +58,8 @@ export default function ProductDetail() {
 
   const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
+    e.stopPropagation();
+    
     if (!isAuthenticated) {
       window.location.href = "/login";
       return;
@@ -76,12 +78,14 @@ export default function ProductDetail() {
       return;
     }
 
-    if (addItem.isLoading) return;
-
     const rect = e.currentTarget.getBoundingClientRect();
-    
+    const startPos = {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
+    };
+
     addingProducts.current.add(product.id);
-    triggerFlyAnimation({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+    triggerFlyAnimation(startPos);
     addItem.mutate({ productId: product.id, quantity: 1 });
   };
 

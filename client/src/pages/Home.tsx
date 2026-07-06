@@ -238,11 +238,20 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <div className="p-8 flex flex-col flex-grow cursor-pointer" onClick={() => navigate(`/product/${product.id}`)}>
-                      <h3 className="text-2xl font-black mb-2 group-hover:text-accent transition-colors line-clamp-1">{product.name}</h3>
-                      <p className="text-muted-foreground text-sm mb-6 font-medium">{product.description}</p>
+                    <div className="p-8 flex flex-col flex-grow">
+                      <h3
+                        className="text-2xl font-black mb-2 group-hover:text-accent transition-colors line-clamp-1 cursor-pointer"
+                        onClick={() => navigate(`/product/${product.id}`)}
+                      >{product.name}</h3>
+                      <p
+                        className="text-muted-foreground text-sm mb-6 font-medium cursor-pointer"
+                        onClick={() => navigate(`/product/${product.id}`)}
+                      >{product.description}</p>
                       
-                      <div className="mb-8 mt-auto">
+                      <div
+                        className="mb-8 mt-auto cursor-pointer"
+                        onClick={() => navigate(`/product/${product.id}`)}
+                      >
                         <div className="flex items-baseline gap-3 mb-1">
                           <span className="text-4xl font-black text-accent tracking-tighter">R$ 5,00</span>
                           <span className="text-muted-foreground text-sm line-through opacity-50 font-bold">R$ 10,00</span>
