@@ -287,9 +287,14 @@ export default function Home() {
                       <Button
                         className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-black py-7 rounded-2xl shadow-xl shadow-accent/20 transition-all text-base active:scale-95"
                         onClick={(e) => handleAddToCart(e, product.id)}
+                        disabled={addItem.isLoading}
                       >
-                        <ShoppingCart className="h-5 w-5 mr-2" />
-                        ADICIONAR AO CARRINHO
+                        {addItem.isLoading ? (
+                          <div className="h-5 w-5 border-2 border-accent-foreground/30 border-t-accent-foreground rounded-full animate-spin mr-2" />
+                        ) : (
+                          <ShoppingCart className="h-5 w-5 mr-2" />
+                        )}
+                        {addItem.isLoading ? "ADICIONANDO..." : "ADICIONAR AO CARRINHO"}
                       </Button>
                     </div>
                   </Card>
