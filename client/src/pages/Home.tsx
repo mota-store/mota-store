@@ -32,10 +32,15 @@ export default function Home() {
       utils.cart.getItems.setData(undefined, (old) => {
         if (!old) return old;
         const existing = old.find((item) => item.productId === variables.productId);
+        
+        // Se já existe e a nova quantidade ultrapassaria 5, não atualiza otimisticamente além do limite
         if (existing) {
+          const newQty = existing.quantity + (variables.quantity ?? 1);
+          if (newQty > 5) return old;
+          
           return old.map((item) =>
             item.productId === variables.productId
-              ? { ...item, quantity: item.quantity + (variables.quantity ?? 1) }
+              ? { ...item, quantity: newQty }
               : item
           );
         }
