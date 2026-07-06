@@ -87,32 +87,12 @@ export default function Cart() {
   });
 
   const addItemMutation = trpc.cart.addItem.useMutation({
-    onMutate: async (variables) => {
-      await utils.cart.getItems.cancel();
-      const previousItems = utils.cart.getItems.getData();
-      utils.cart.getItems.setData(undefined, (old) => {
-        if (!old) return old;
-        const existing = old.find((item) => item.productId === variables.productId);
-        if (existing) {
-          return old.map((item) =>
-            item.productId === variables.productId
-              ? { ...item, quantity: item.quantity + (variables.quantity ?? 1) }
-              : item
-          );
-        }
-        return old;
-      });
-      return { previousItems };
-    },
     onSuccess: (_, variables) => {
       pendingUpdates.current[variables.productId] = Math.max(0, (pendingUpdates.current[variables.productId] || 0) - 1);
       utils.cart.getItems.invalidate();
     },
-    onError: (_error, variables, context) => {
+    onError: (_error, variables) => {
       pendingUpdates.current[variables.productId] = Math.max(0, (pendingUpdates.current[variables.productId] || 0) - 1);
-      if (context?.previousItems) {
-        utils.cart.getItems.setData(undefined, context.previousItems);
-      }
       toast.error("Erro ao atualizar quantidade");
       utils.cart.getItems.invalidate();
     }
