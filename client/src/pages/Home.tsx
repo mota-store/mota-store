@@ -89,7 +89,7 @@ export default function Home() {
 
     addingProducts.current.add(productId);
     triggerFlyAnimation(startPos);
-    addItem.mutate({ productId, quantity: 1 });
+    addItem.mutate({ productId, quantity: 3 });
   };
 
   // Lógica de Scroll Snap removida para melhorar performance (reduzir lag)
