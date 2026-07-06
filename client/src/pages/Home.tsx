@@ -35,6 +35,9 @@ export default function Home() {
   });
 
   const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>, productId: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (!isAuthenticated) {
       window.location.href = "/login";
       return;

@@ -154,19 +154,30 @@ export async function addToCart(userId: number, productId: number, quantity: num
   const db = await getDb();
   if (!db) return;
   
-  // Validar limite máximo de 5 unidades por produto
-  const existingItems = await db.select().from(cartItems).where(
-    and(eq(cartItems.userId, userId), eq(cartItems.productId, productId))
-  );
-  
-  const currentTotal = existingItems.reduce((sum, item) => sum + item.quantity, 0);
-  const newTotal = currentTotal + quantity;
-  
-  if (newTotal > 5) {
-    throw new Error("Limite máximo de 5 unidades por produto excedido");
-  }
-  
-  await db.insert(cartItems).values({ userId, productId, quantity });
+  // Usar transação para garantir atomicidade e evitar race conditions
+  await db.transaction(async (tx) => {
+    // 1. Buscar item existente para este usuário e produto
+    const [existingItem] = await tx.select().from(cartItems).where(
+      and(eq(cartItems.userId, userId), eq(cartItems.productId, productId))
+    ).limit(1);
+    
+    const currentQty = existingItem?.quantity || 0;
+    const newQty = currentQty + quantity;
+    
+    // 2. Validar limite máximo de 5 unidades
+    if (newQty > 5) {
+      throw new Error("Limite máximo de 5 unidades por produto excedido");
+    }
+    
+    // 3. Upsert: Se existe, atualiza a quantidade; se não, insere novo
+    if (existingItem) {
+      await tx.update(cartItems)
+        .set({ quantity: newQty })
+        .where(eq(cartItems.id, existingItem.id));
+    } else {
+      await tx.insert(cartItems).values({ userId, productId, quantity: newQty });
+    }
+  });
 }
 
 export async function removeFromCart(cartItemId: number) {
