@@ -33,8 +33,8 @@ export default function Checkout() {
     product: products?.find(p => p.id === item.productId)
   })) || [];
 
-  // Lógica de Preço: 50% de desconto promocional sobre o preço do banco
-  const total = enrichedItems.reduce((acc, item) => acc + Math.floor((item.product?.price || 0) * 0.5) * (item.quantity || 1), 0);
+  // Lógica de Preço: 50% de desconto promocional (R$ 5,00 por item)
+  const total = enrichedItems.reduce((acc, item) => acc + 500 * (item.quantity || 1), 0);
   const hasCashback = user?.hasCashbackBenefit === 1;
   const discountAmount = hasCashback ? Math.floor(total * 0.1) : 0;
   const finalTotal = total - discountAmount;
@@ -67,7 +67,7 @@ export default function Checkout() {
       const cartItemsPayload = enrichedItems.map(item => ({
         productId: item.productId,
         quantity: Math.max(1, parseInt(String(item.quantity ?? 1), 10) || 1),
-        price: Math.floor(item.product!.price * 0.5),
+        price: 500,
       }));
 
       const result = await checkoutWithBalance.mutateAsync({
@@ -82,7 +82,7 @@ export default function Checkout() {
         const orderInfo = {
           id: result.orderId,
           total: finalTotal,
-          items: enrichedItems.map(i => ({ name: i.product?.name, price: Math.floor((i.product?.price || 0) * 0.5) }))
+          items: enrichedItems.map(i => ({ name: i.product?.name, price: 500 }))
         };
         sessionStorage.setItem("lastOrder", JSON.stringify(orderInfo));
         
@@ -119,7 +119,7 @@ export default function Checkout() {
       const cartItemsPayload = enrichedItems.map(item => ({
         productId: item.productId,
         quantity: Math.max(1, parseInt(String(item.quantity ?? 1), 10) || 1),
-        price: Math.floor(item.product!.price * 0.5),
+        price: 500,
       }));
 
       const balanceToUse = balance || 0;
@@ -376,7 +376,7 @@ export default function Checkout() {
                   const orderInfo = {
                     id: orderId,
                     total: finalTotal,
-                    items: enrichedItems.map(i => ({ name: i.product?.name, price: Math.floor((i.product?.price || 0) * 0.5) }))
+                    items: enrichedItems.map(i => ({ name: i.product?.name, price: 500 }))
                   };
                   sessionStorage.setItem("lastOrder", JSON.stringify(orderInfo));
                   navigate(`/order-confirmation?id=${orderId}`);

@@ -109,9 +109,9 @@ export default function Cart() {
   });
 
   const groupedItems = Array.from(groupedItemsMap.values());
-  // Subtotal agora aplica o desconto de 50% promocional
-  const subtotal = groupedItems.reduce((sum, item) => sum + Math.floor((item.product?.price || 0) * 0.5) * (item.quantity || 1), 0);
-  const originalTotal = groupedItems.reduce((sum, item) => sum + (item.product?.price || 0) * (item.quantity || 1), 0);
+  // Subtotal agora aplica o desconto de 50% promocional (R$ 5,00 por item)
+  const subtotal = groupedItems.reduce((sum, item) => sum + 500 * (item.quantity || 1), 0);
+  const originalTotal = groupedItems.reduce((sum, item) => sum + 1000 * (item.quantity || 1), 0);
   const total = subtotal;
 
   const handleUpdateQuantity = (productId: number, delta: number) => {
@@ -233,7 +233,7 @@ export default function Cart() {
                     {/* Info Centralizada */}
                     <div className="space-y-1">
                       <h3 className="font-black text-base uppercase tracking-tight">{item.product?.name}</h3>
-                      <p className="font-black text-accent text-lg">R$ {(Math.floor((item.product?.price || 0) * 0.5) / 100).toFixed(2)}</p>
+                      <p className="font-black text-accent text-lg">R$ 5,00</p>
                     </div>
 
                     {/* Controles Centralizados */}
