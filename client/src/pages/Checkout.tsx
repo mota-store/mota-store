@@ -158,11 +158,11 @@ export default function Checkout() {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      const order = await createOrder.mutateAsync({ totalAmount: total });
+      const order = await createOrder.mutateAsync({ totalAmount: finalTotal });
       setOrderId(order.id);
       
-      const pix = await createPix.mutateAsync({ orderId: order.id, amount: total / 100 });
-      const pixWithExpiry = { ...pix, expiresIn: 600, orderId: order.id, amount: total };
+      const pix = await createPix.mutateAsync({ orderId: order.id, amount: finalTotal / 100 });
+      const pixWithExpiry = { ...pix, expiresIn: 600, orderId: order.id, amount: finalTotal };
       
       sessionStorage.removeItem("pix_expiry_time");
       

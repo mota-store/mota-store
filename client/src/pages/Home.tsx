@@ -22,7 +22,7 @@ export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   const productsRef = useRef<HTMLElement>(null);
-  const isScrolling = useRef(false);
+
 
   const addItem = trpc.cart.addItem.useMutation({
     onSuccess: () => {
@@ -63,78 +63,11 @@ export default function Home() {
     addItem.mutate({ productId });
   };
 
-  // Lógica de Scroll Snap Programático Simplificada
+  // Lógica de Scroll Snap removida para melhorar performance (reduzir lag)
+  // O site agora utiliza o comportamento de scroll nativo do navegador.
   useEffect(() => {
-    if (isAuthenticated) return;
-
-    const container = containerRef.current;
-    if (!container) return;
-
-    let touchStartY = 0;
-
-    const performSnap = (target: HTMLElement | null) => {
-      if (!target || isScrolling.current) return;
-      
-      isScrolling.current = true;
-      target.scrollIntoView({ behavior: 'smooth' });
-      
-      setTimeout(() => {
-        isScrolling.current = false;
-      }, 800);
-    };
-
-    const handleWheel = (e: WheelEvent) => {
-      if (isScrolling.current) return;
-      
-      const scrollTop = container.scrollTop;
-      const heroHeight = heroRef.current?.offsetHeight || window.innerHeight;
-      
-      // REGRA 1: Hero -> Produtos (Scroll Down)
-      if (e.deltaY > 0 && scrollTop < 50) {
-        e.preventDefault();
-        performSnap(productsRef.current);
-      } 
-      // REGRA 2: Produtos -> Hero (Scroll Up)
-      else if (e.deltaY < 0 && Math.abs(scrollTop - heroHeight) <= 20) {
-        e.preventDefault();
-        performSnap(heroRef.current);
-      }
-    };
-
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStartY = e.touches[0].clientY;
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (isScrolling.current) return;
-      
-      const touchCurrentY = e.touches[0].clientY;
-      const deltaY = touchStartY - touchCurrentY; 
-      const scrollTop = container.scrollTop;
-      const heroHeight = heroRef.current?.offsetHeight || window.innerHeight;
-
-      // REGRA 1: Hero -> Produtos (Scroll Down)
-      if (deltaY > 10 && scrollTop < 50) {
-        if (e.cancelable) e.preventDefault();
-        performSnap(productsRef.current);
-      }
-      // REGRA 2: Produtos -> Hero (Scroll Up)
-      else if (deltaY < -10 && Math.abs(scrollTop - heroHeight) <= 20) {
-        if (e.cancelable) e.preventDefault();
-        performSnap(heroRef.current);
-      }
-    };
-
-    container.addEventListener('wheel', handleWheel, { passive: false });
-    container.addEventListener('touchstart', handleTouchStart, { passive: true });
-    container.addEventListener('touchmove', handleTouchMove, { passive: false });
-
-    return () => {
-      container.removeEventListener('wheel', handleWheel);
-      container.removeEventListener('touchstart', handleTouchStart);
-      container.removeEventListener('touchmove', handleTouchMove);
-    };
-  }, [isAuthenticated]);
+    // Scroll snap nativo pode ser configurado via CSS se necessário
+  }, []);
 
   return (
     <div 
