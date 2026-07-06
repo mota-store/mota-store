@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, ArrowLeft, Loader2, Wallet, QrCode } from "lucide-react";
 import { useLocation } from "wouter";
@@ -9,6 +10,7 @@ import { toast } from "sonner";
 
 export default function Checkout() {
   const { isAuthenticated } = useAuth();
+  const queryClient = useQueryClient();
   const [, navigate] = useLocation();
   const [step, setStep] = useState<"payment" | "pix" | "balance_confirm" | "balance_pix_confirm">("payment");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -74,13 +76,27 @@ export default function Checkout() {
 
       if (result.success) {
         toast.success("Pagamento realizado com sucesso!");
+        
+        // Salvar informações para a tela de confirmação antes de navegar
+        const orderInfo = {
+          id: result.orderId,
+          total: total,
+          items: enrichedItems.map(i => ({ name: i.product?.name, price: i.product?.price }))
+        };
+        sessionStorage.setItem("lastOrder", JSON.stringify(orderInfo));
+        
+        // Recarregar o estado do carrinho após a compra
+        queryClient.invalidateQueries({ queryKey: [["cart", "getItems"]] });
+        queryClient.invalidateQueries({ queryKey: [["wallet", "getBalance"]] });
+        
         navigate(`/order-confirmation?id=${result.orderId}`);
       } else {
         toast.error(result.error || "Erro ao processar pagamento");
         setStep("payment");
       }
-    } catch (err) {
-      toast.error("Erro ao processar pagamento. Tente novamente.");
+    } catch (err: any) {
+      const message = err?.message || err?.data?.message || "Erro ao processar pagamento. Tente novamente.";
+      toast.error(message);
       setStep("payment");
     } finally {
       setIsSubmitting(false);

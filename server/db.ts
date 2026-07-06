@@ -425,13 +425,17 @@ export async function checkoutWithBalance(userId: number, amount: number, items:
   const result = await db.transaction(async (tx) => {
     // 1. Verificar saldo e benefício de cashback
     const [currentUser] = await tx.select({ balance: users.balance, hasCashbackBenefit: users.hasCashbackBenefit }).from(users).where(eq(users.id, userId)).for("update").limit(1);
-    if (!currentUser) return { success: false, error: "Usuário não encontrado" };
+    if (!currentUser) {
+      console.error(`[CheckoutWithBalance] Usuário ${userId} não encontrado`);
+      return { success: false, error: "Usuário não encontrado" };
+    }
 
     const finalAmount = amount;
     const cashbackApplied = currentUser.hasCashbackBenefit === 1;
     const discountAmount = cashbackApplied ? Math.floor((amount / 0.9) * 0.1) : 0; // Apenas para registro na transação
 
     if (currentUser.balance < finalAmount) {
+      console.error(`[CheckoutWithBalance] Saldo insuficiente para usuário ${userId}: tem ${currentUser.balance}, precisa de ${finalAmount}`);
       return { success: false, error: "Saldo insuficiente" };
     }
 
@@ -439,6 +443,7 @@ export async function checkoutWithBalance(userId: number, amount: number, items:
     for (const item of items) {
       const [product] = await tx.select().from(products).where(eq(products.id, item.productId)).limit(1);
       if (!product) {
+        console.error(`[CheckoutWithBalance] Produto ${item.productId} não encontrado`);
         return { success: false, error: `Produto não encontrado: ID ${item.productId}` };
       }
       // Se houver discrepância de preço, usamos o preço do banco de dados para garantir integridade
