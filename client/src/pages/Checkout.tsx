@@ -65,7 +65,7 @@ export default function Checkout() {
 
       const cartItemsPayload = enrichedItems.map(item => ({
         productId: item.productId,
-        quantity: item.quantity || 1,
+        quantity: Math.max(1, parseInt(String(item.quantity ?? 1), 10) || 1),
         price: item.product!.price,
       }));
 
@@ -117,7 +117,7 @@ export default function Checkout() {
 
       const cartItemsPayload = enrichedItems.map(item => ({
         productId: item.productId,
-        quantity: item.quantity || 1,
+        quantity: Math.max(1, parseInt(String(item.quantity ?? 1), 10) || 1),
         price: item.product!.price,
       }));
 
