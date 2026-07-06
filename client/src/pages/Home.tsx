@@ -25,39 +25,12 @@ export default function Home() {
   const isScrolling = useRef(false);
 
   const addItem = trpc.cart.addItem.useMutation({
-    onMutate: async (newItem) => {
-      await utils.cart.getItems.cancel();
-      const previousItems = utils.cart.getItems.getData();
-      utils.cart.getItems.setData(undefined, (old) => {
-        const existingItem = old?.find(item => item.productId === newItem.productId);
-        if (existingItem) {
-          return old?.map(item => 
-            item.productId === newItem.productId 
-              ? { ...item, quantity: item.quantity + 1 } 
-              : item
-          );
-        }
-        return [...(old || []), { 
-          productId: newItem.productId, 
-          quantity: 1, 
-          id: Math.random(),
-          userId: 0,
-          addedAt: new Date()
-        }];
-      });
-      return { previousItems };
-    },
-    onError: (err, newItem, context) => {
-      if (context?.previousItems) {
-        utils.cart.getItems.setData(undefined, context.previousItems);
-      }
-      toast.error("Erro ao adicionar ao carrinho");
-    },
-    onSettled: () => {
-      invalidateCart();
-    },
     onSuccess: () => {
       toast.success("Produto adicionado ao carrinho!");
+      invalidateCart();
+    },
+    onError: () => {
+      toast.error("Erro ao adicionar ao carrinho");
     }
   });
 
