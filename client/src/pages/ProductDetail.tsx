@@ -59,20 +59,19 @@ export default function ProductDetail() {
   const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (!isAuthenticated) {
       window.location.href = "/login";
       return;
     }
-    
+
     if (!product) return;
 
-    // Bloquear se já está adicionando este produto específico
     if (addingProducts.current.has(product.id)) return;
 
     const cartItems = utils.cart.getItems.getData();
     const isAlreadyInCart = cartItems?.some(item => item.productId === product.id);
-    
+
     if (isAlreadyInCart) {
       toast.info("Este item já está no seu carrinho.");
       return;

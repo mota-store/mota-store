@@ -65,20 +65,17 @@ export default function Home() {
   const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>, productId: number) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (!isAuthenticated) {
       window.location.href = "/login";
       return;
     }
 
-    // Bloquear se já está adicionando este produto específico
     if (addingProducts.current.has(productId)) return;
 
-    // Obter a quantidade atual do produto no carrinho
     const cartItems = utils.cart.getItems.getData();
     const isAlreadyInCart = cartItems?.some(item => item.productId === productId);
 
-    // Bloquear se o item já está no carrinho
     if (isAlreadyInCart) {
       toast.info("Este item já está no seu carrinho.");
       return;
@@ -217,7 +214,7 @@ export default function Home() {
                   whileHover={{ y: -12 }}
                   className="group"
                 >
-                  <Card className="h-full flex flex-col overflow-hidden bg-card/30 border-border/50 backdrop-blur-sm rounded-[2.5rem] transition-all duration-500 group-hover:border-accent/50 group-hover:shadow-2xl group-hover:shadow-accent/10 cursor-pointer">
+                  <Card className="h-full flex flex-col overflow-hidden bg-card/30 border-border/50 backdrop-blur-sm rounded-[2.5rem] transition-all duration-500 group-hover:border-accent/50 group-hover:shadow-2xl group-hover:shadow-accent/10">
                     <div 
                       className="relative h-56 overflow-hidden bg-gradient-to-br from-accent/10 to-accent/5 flex items-center justify-center p-8 cursor-pointer"
                       onClick={() => navigate(`/product/${product.id}`)}
