@@ -96,7 +96,7 @@ export default function Cart() {
     if (!product) return;
 
     const itemsForProduct = cartItems?.filter(item => item.productId === productId) || [];
-    const quantity = localQuantities[productId] || itemsForProduct.reduce((sum, item) => sum + item.quantity, 0);
+    const quantity = localQuantities[productId] ?? itemsForProduct.reduce((sum, item) => sum + item.quantity, 0);
 
     if (quantity > 0) {
       groupedItemsMap.set(productId, {
@@ -152,14 +152,14 @@ export default function Cart() {
   };
 
   const handleRemoveAll = (item: any) => {
-    // Otimista: remove do estado local
-    setLocalQuantities(prev => {
-      const next = { ...prev };
-      delete next[item.productId];
-      return next;
-    });
-    
-    pendingUpdates.current[item.productId] = 0;
+    // Otimista: marca como 0 imediatamente para sumir da tela
+    setLocalQuantities(prev => ({
+      ...prev,
+      [item.productId]: 0
+    }));
+
+    // Incrementar pendingUpdates para bloquear sobrescrita pelo servidor
+    pendingUpdates.current[item.productId] = (pendingUpdates.current[item.productId] || 0) + item.ids.length;
 
     item.ids.forEach((id: number) => {
       removeItem.mutate(id);
