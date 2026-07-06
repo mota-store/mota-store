@@ -20,7 +20,7 @@ export default function Checkout() {
   });
   const { data: products, isLoading: productsLoading } = trpc.products.list.useQuery();
   const { data: balance, isLoading: balanceLoading } = trpc.wallet.getBalance.useQuery(undefined, { enabled: isAuthenticated });
-  const { data: cashbackStatus, isLoading: cashbackLoading } = trpc.wallet.getCashbackStatus.useQuery(undefined, { enabled: isAuthenticated });
+  const { data: user } = trpc.auth.me.useQuery(undefined, { enabled: isAuthenticated });
   const createOrder = trpc.orders.create.useMutation();
   const createPix = trpc.payments.createPix.useMutation();
   const checkoutWithBalance = trpc.wallet.checkoutWithBalance.useMutation();
@@ -32,7 +32,7 @@ export default function Checkout() {
   })) || [];
 
   const total = enrichedItems.reduce((acc, item) => acc + (item.product?.price || 0) * (item.quantity || 1), 0);
-  const hasCashback = cashbackStatus?.hasCashbackBenefit;
+  const hasCashback = user?.hasCashbackBenefit === 1;
   const discountAmount = hasCashback ? Math.floor(total * 0.1) : 0;
   const finalTotal = total - discountAmount;
   const canPayWithBalance = balance !== undefined && balance > 0 && balance >= finalTotal;
@@ -182,7 +182,7 @@ export default function Checkout() {
     );
   }
 
-  if (cartLoading || productsLoading || balanceLoading || cashbackLoading) {
+  if (cartLoading || productsLoading || balanceLoading) {
     return (
       <div className="h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-6">
