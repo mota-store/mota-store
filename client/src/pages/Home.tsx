@@ -23,6 +23,7 @@ export default function Home() {
   const heroRef = useRef<HTMLElement>(null);
   const productsRef = useRef<HTMLElement>(null);
   const addingProducts = useRef<Set<number>>(new Set());
+  const lastClickTime = useRef<number>(0);
 
 
   const addItem = trpc.cart.addItem.useMutation({
@@ -65,6 +66,11 @@ export default function Home() {
   const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>, productId: number) => {
     e.preventDefault();
     e.stopPropagation();
+
+    // Throttle de 1 segundo para evitar duplo clique rápido
+    const now = Date.now();
+    if (now - lastClickTime.current < 1000) return;
+    lastClickTime.current = now;
 
     if (!isAuthenticated) {
       window.location.href = "/login";

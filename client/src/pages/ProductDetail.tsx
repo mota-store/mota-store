@@ -15,6 +15,7 @@ export default function ProductDetail() {
   const { invalidateCart, triggerFlyAnimation } = useCart();
   const utils = trpc.useUtils();
   const addingProducts = useRef<Set<number>>(new Set());
+  const lastClickTime = useRef<number>(0);
 
   const { data: products, isLoading } = trpc.products.list.useQuery();
   const product = products?.find(p => p.id === Number(id));
@@ -59,6 +60,11 @@ export default function ProductDetail() {
   const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
+
+    // Throttle de 1 segundo para evitar duplo clique rápido
+    const now = Date.now();
+    if (now - lastClickTime.current < 1000) return;
+    lastClickTime.current = now;
 
     if (!isAuthenticated) {
       window.location.href = "/login";
