@@ -26,7 +26,6 @@ export default function Home() {
 
   const addItem = trpc.cart.addItem.useMutation({
     onSuccess: () => {
-      toast.success("Produto adicionado ao carrinho!");
       invalidateCart();
     },
     onError: () => {
