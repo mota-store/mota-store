@@ -22,14 +22,38 @@ export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   const productsRef = useRef<HTMLElement>(null);
+  const addingProducts = useRef<Set<number>>(new Set());
 
 
   const addItem = trpc.cart.addItem.useMutation({
-    onSuccess: () => {
+    onMutate: async (variables) => {
+      await utils.cart.getItems.cancel();
+      const previousItems = utils.cart.getItems.getData();
+      utils.cart.getItems.setData(undefined, (old) => {
+        if (!old) return old;
+        const existing = old.find((item) => item.productId === variables.productId);
+        if (existing) {
+          return old.map((item) =>
+            item.productId === variables.productId
+              ? { ...item, quantity: item.quantity + (variables.quantity ?? 1) }
+              : item
+          );
+        }
+        return old;
+      });
+      return { previousItems };
+    },
+    onSuccess: (_data, variables) => {
+      addingProducts.current.delete(variables.productId);
       invalidateCart();
     },
-    onError: () => {
+    onError: (_error, variables, context) => {
+      addingProducts.current.delete(variables.productId);
+      if (context?.previousItems) {
+        utils.cart.getItems.setData(undefined, context.previousItems);
+      }
       toast.error("Erro ao adicionar ao carrinho");
+      utils.cart.getItems.invalidate();
     }
   });
 
@@ -41,6 +65,9 @@ export default function Home() {
       window.location.href = "/login";
       return;
     }
+
+    // Bloquear se já está adicionando este produto específico
+    if (addingProducts.current.has(productId)) return;
 
     // Obter a quantidade atual do produto no carrinho
     const cartItems = utils.cart.getItems.getData();
@@ -58,7 +85,7 @@ export default function Home() {
       y: rect.top + rect.height / 2,
     };
 
-    if (addItem.isLoading) return;
+    addingProducts.current.add(productId);
     triggerFlyAnimation(startPos);
     addItem.mutate({ productId, quantity: 1 });
   };
@@ -125,7 +152,7 @@ export default function Home() {
         </div>
       </section>
       )}
-						
+							
       {/* Trust Badges */}
       {!isAuthenticated && (
         <div className="container px-4 relative z-30 -mt-[362px] sm:-mt-[138px]">
@@ -301,13 +328,16 @@ export default function Home() {
             <div className="flex gap-8">
               <a href="#" className="text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-accent transition-colors">Termos</a>
               <a href="#" className="text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-accent transition-colors">Privacidade</a>
-              <a href="#" className="text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-accent transition-colors">Contato</a>
+              <a href="#" className="text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-accent transition-colors">Suporte</a>
             </div>
           </div>
         </div>
       </footer>
 
-      <FlyAnimationsContainer animations={flyAnimations} onAnimationComplete={removeFlyAnimation} />
+      <FlyAnimationsContainer 
+        animations={flyAnimations} 
+        onAnimationComplete={removeFlyAnimation} 
+      />
     </div>
   );
 }

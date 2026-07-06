@@ -1,3 +1,4 @@
+import React, { useRef } from "react";
 import { useParams, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -13,16 +14,40 @@ export default function ProductDetail() {
   const { isAuthenticated } = useAuth();
   const { invalidateCart, triggerFlyAnimation } = useCart();
   const utils = trpc.useUtils();
+  const addingProducts = useRef<Set<number>>(new Set());
 
   const { data: products, isLoading } = trpc.products.list.useQuery();
   const product = products?.find(p => p.id === Number(id));
 
   const addItem = trpc.cart.addItem.useMutation({
-    onSuccess: () => {
+    onMutate: async (variables) => {
+      await utils.cart.getItems.cancel();
+      const previousItems = utils.cart.getItems.getData();
+      utils.cart.getItems.setData(undefined, (old) => {
+        if (!old) return old;
+        const existing = old.find((item) => item.productId === variables.productId);
+        if (existing) {
+          return old.map((item) =>
+            item.productId === variables.productId
+              ? { ...item, quantity: item.quantity + (variables.quantity ?? 1) }
+              : item
+          );
+        }
+        return old;
+      });
+      return { previousItems };
+    },
+    onSuccess: (_data, variables) => {
+      addingProducts.current.delete(variables.productId);
       invalidateCart();
     },
-    onError: () => {
+    onError: (_error, variables, context) => {
+      addingProducts.current.delete(variables.productId);
+      if (context?.previousItems) {
+        utils.cart.getItems.setData(undefined, context.previousItems);
+      }
       toast.error("Erro ao adicionar ao carrinho");
+      utils.cart.getItems.invalidate();
     }
   });
 
@@ -32,16 +57,27 @@ export default function ProductDetail() {
       window.location.href = "/login";
       return;
     }
+    
+    if (!product) return;
+
+    // Bloquear se já está adicionando este produto específico
+    if (addingProducts.current.has(product.id)) return;
+
     const cartItems = utils.cart.getItems.getData();
-    const currentQty = cartItems?.filter(item => item.productId === product!.id).reduce((sum, item) => sum + item.quantity, 0) || 0;
+    const currentQty = cartItems?.filter(item => item.productId === product.id).reduce((sum, item) => sum + item.quantity, 0) || 0;
+    
     if (currentQty >= 5) {
       toast.error("Limite máximo de 5 unidades por produto atingido.");
       return;
     }
+
     if (addItem.isLoading) return;
+
     const rect = e.currentTarget.getBoundingClientRect();
+    
+    addingProducts.current.add(product.id);
     triggerFlyAnimation({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
-    addItem.mutate({ productId: product!.id });
+    addItem.mutate({ productId: product.id, quantity: 1 });
   };
 
   if (!product && !isLoading) {
