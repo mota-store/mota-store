@@ -16,6 +16,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Admin from "./pages/Admin";
 import RedeemCoupon from "./pages/RedeemCoupon";
 import WalletDeposit from "./pages/WalletDeposit";
+import ProductDetail from "./pages/ProductDetail";
 
 function Router() {
   return (
@@ -24,6 +25,7 @@ function Router() {
       <Route path={"/login"} component={Login} />
       <Route path={"/profile"} component={Profile} />
       <Route path={"/cart"} component={Cart} />
+      <Route path={"/product/:id"} component={ProductDetail} />
       <Route path={"/checkout"} component={Checkout} />
       <Route path={"/order-confirmation"} component={OrderConfirmation} />
       <Route path={"/reset-password"} component={ResetPassword} />

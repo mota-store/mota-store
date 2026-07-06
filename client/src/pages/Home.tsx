@@ -251,8 +251,11 @@ export default function Home() {
                   whileHover={{ y: -12 }}
                   className="group"
                 >
-                  <Card className="h-full flex flex-col overflow-hidden bg-card/30 border-border/50 backdrop-blur-sm rounded-[2.5rem] transition-all duration-500 group-hover:border-accent/50 group-hover:shadow-2xl group-hover:shadow-accent/10">
-                    <div className="relative h-56 overflow-hidden bg-gradient-to-br from-accent/10 to-accent/5 flex items-center justify-center p-8">
+                  <Card className="h-full flex flex-col overflow-hidden bg-card/30 border-border/50 backdrop-blur-sm rounded-[2.5rem] transition-all duration-500 group-hover:border-accent/50 group-hover:shadow-2xl group-hover:shadow-accent/10 cursor-pointer">
+                    <div 
+                      className="relative h-56 overflow-hidden bg-gradient-to-br from-accent/10 to-accent/5 flex items-center justify-center p-8 cursor-pointer"
+                      onClick={() => navigate(`/product/${product.id}`)}
+                    >
                       {product.imageUrl ? (
                         <img
                           src={product.imageUrl}
@@ -269,7 +272,7 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <div className="p-8 flex flex-col flex-grow">
+                    <div className="p-8 flex flex-col flex-grow cursor-pointer" onClick={() => navigate(`/product/${product.id}`)}>
                       <h3 className="text-2xl font-black mb-2 group-hover:text-accent transition-colors line-clamp-1">{product.name}</h3>
                       <p className="text-muted-foreground text-sm mb-6 line-clamp-2 font-medium">{product.description}</p>
                       
