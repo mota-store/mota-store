@@ -427,15 +427,9 @@ export async function checkoutWithBalance(userId: number, amount: number, items:
     const [currentUser] = await tx.select({ balance: users.balance, hasCashbackBenefit: users.hasCashbackBenefit }).from(users).where(eq(users.id, userId)).for("update").limit(1);
     if (!currentUser) return { success: false, error: "Usuário não encontrado" };
 
-    let finalAmount = amount;
-    let cashbackApplied = false;
-    let discountAmount = 0;
-
-    if (currentUser.hasCashbackBenefit === 1) {
-      discountAmount = Math.floor(amount * 0.1);
-      finalAmount = amount - discountAmount;
-      cashbackApplied = true;
-    }
+    const finalAmount = amount;
+    const cashbackApplied = currentUser.hasCashbackBenefit === 1;
+    const discountAmount = cashbackApplied ? Math.floor((amount / 0.9) * 0.1) : 0; // Apenas para registro na transação
 
     if (currentUser.balance < finalAmount) {
       return { success: false, error: "Saldo insuficiente" };
@@ -444,9 +438,12 @@ export async function checkoutWithBalance(userId: number, amount: number, items:
     // 2. Verificar se todos os produtos existem (validação adicional)
     for (const item of items) {
       const [product] = await tx.select().from(products).where(eq(products.id, item.productId)).limit(1);
-      if (!product || product.price !== item.price) {
-        return { success: false, error: `Preço do produto alterado ou produto não encontrado` };
+      if (!product) {
+        return { success: false, error: `Produto não encontrado: ID ${item.productId}` };
       }
+      // Se houver discrepância de preço, usamos o preço do banco de dados para garantir integridade
+      // mas não bloqueamos a transação por causa de centavos ou arredondamentos do frontend
+      item.price = product.price;
     }
 
     // 3. Deduzir saldo

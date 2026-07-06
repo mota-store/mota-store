@@ -60,7 +60,7 @@ export default function Checkout() {
       }));
 
       const result = await checkoutWithBalance.mutateAsync({
-        amount: total,
+        amount: finalTotal,
         cartItems: cartItemsPayload,
       });
 
