@@ -26,28 +26,26 @@ export default function Cart() {
   // Sincronizar estado local quando os dados do servidor mudarem
   useEffect(() => {
     if (cartItems) {
-      const quantities: Record<number, number> = {};
-      cartItems.forEach(item => {
-        // Se não houver atualizações pendentes, usamos a quantidade do servidor
-        if (!pendingUpdates.current[item.productId]) {
-          // Importante: se o servidor retornar múltiplos registros para o mesmo produto, 
-          // nós os somamos, mas garantimos que não estamos somando com valores locais antigos.
-          quantities[item.productId] = (quantities[item.productId] || 0) + item.quantity;
-        } else {
-          // Se houver pendências, mantemos o que está no estado local (otimista)
-          quantities[item.productId] = localQuantities[item.productId];
-        }
+      setLocalQuantities(prev => {
+        const quantities: Record<number, number> = {};
+        cartItems.forEach(item => {
+          if (pendingUpdates.current[item.productId]) {
+            // Se houver pendências, mantemos o que está no estado local (otimista)
+            quantities[item.productId] = prev[item.productId] ?? (quantities[item.productId] || 0) + item.quantity;
+          } else {
+            // Se não houver atualizações pendentes, substituímos com a soma dos registros do servidor
+            quantities[item.productId] = (quantities[item.productId] || 0) + item.quantity;
+          }
+        });
+        // Também mantém itens que podem ter sido adicionados localmente mas ainda não voltaram do servidor
+        Object.keys(prev).forEach(id => {
+          const productId = Number(id);
+          if (pendingUpdates.current[productId] && !quantities[productId]) {
+            quantities[productId] = prev[productId];
+          }
+        });
+        return quantities;
       });
-      
-      // Também mantém itens que podem ter sido adicionados localmente mas ainda não voltaram do servidor
-      Object.keys(localQuantities).forEach(id => {
-        const productId = Number(id);
-        if (pendingUpdates.current[productId] && !quantities[productId]) {
-          quantities[productId] = localQuantities[productId];
-        }
-      });
-
-      setLocalQuantities(quantities);
     }
   }, [cartItems]);
 
@@ -98,7 +96,7 @@ export default function Cart() {
     if (!product) return;
 
     const itemsForProduct = cartItems?.filter(item => item.productId === productId) || [];
-    const quantity = localQuantities[productId] ?? itemsForProduct.reduce((sum, item) => sum + item.quantity, 0);
+    const quantity = localQuantities[productId] || itemsForProduct.reduce((sum, item) => sum + item.quantity, 0);
 
     if (quantity > 0) {
       groupedItemsMap.set(productId, {
