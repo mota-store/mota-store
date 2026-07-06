@@ -192,7 +192,7 @@ export default function Home() {
         </div>
       </section>
       )}
-					
+						
       {/* Trust Badges */}
       {!isAuthenticated && (
         <div className="container px-4 relative z-30 -mt-[362px] sm:-mt-[138px]">
@@ -276,8 +276,8 @@ export default function Home() {
                       
                       <div className="mb-8 mt-auto">
                         <div className="flex items-baseline gap-3 mb-1">
-                          <span className="text-4xl font-black text-accent tracking-tighter">R$ 5,00</span>
-                          <span className="text-muted-foreground text-sm line-through opacity-50 font-bold">R$ 10,00</span>
+                          <span className="text-4xl font-black text-accent tracking-tighter">R$ {(Math.floor(product.price * 0.5) / 100).toFixed(2).replace(".", ",")}</span>
+                          <span className="text-muted-foreground text-sm line-through opacity-50 font-bold">R$ {(product.price / 100).toFixed(2).replace(".", ",")}</span>
                         </div>
                         <div className="inline-block px-2 py-1 rounded bg-green-500/10 text-green-500 text-[10px] font-black uppercase tracking-widest">
                           ECONOMIZE 50%
@@ -331,12 +331,12 @@ export default function Home() {
                 icon: <ShieldCheck className="h-10 w-10 text-accent" />
               }
             ].map((f, i) => (
-              <div key={i} className="flex flex-col items-center text-center space-y-6 p-10 rounded-[2.5rem] bg-card/20 border border-border/30 hover:border-accent/30 transition-colors">
-                <div className="p-5 rounded-2xl bg-accent/10">
+              <div key={i} className="flex flex-col items-center text-center space-y-6 p-10 rounded-[2.5rem] bg-card/20 border border-border/30 hover:border-accent/30 transition-all group">
+                <div className="p-5 rounded-[2rem] bg-accent/10 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
                   {f.icon}
                 </div>
                 <h3 className="text-2xl font-black uppercase tracking-tight">{f.title}</h3>
-                <p className="text-muted-foreground text-base font-medium leading-relaxed">{f.desc}</p>
+                <p className="text-muted-foreground font-medium leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -346,25 +346,21 @@ export default function Home() {
       {/* Footer */}
       <footer className="py-12 border-t border-border/50">
         <div className="container px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-8">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center font-black text-accent-foreground text-xl">M</div>
-              <span className="text-2xl font-black tracking-tighter uppercase">MOTA STORE</span>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="flex flex-col items-center md:items-start gap-2">
+              <span className="text-2xl font-black text-accent tracking-tighter">MOTA STORE</span>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">© 2024 TODOS OS DIREITOS RESERVADOS</p>
             </div>
-            
-            <p className="text-muted-foreground text-sm font-medium">
-              © 2024 MOTA STORE. Todos os direitos reservados.
-            </p>
-
-            <div className="flex gap-6">
-              <a href="#" className="text-muted-foreground hover:text-accent transition-colors text-sm font-bold uppercase tracking-wider">Termos</a>
-              <a href="#" className="text-muted-foreground hover:text-accent transition-colors text-sm font-bold uppercase tracking-wider">Privacidade</a>
+            <div className="flex gap-8">
+              <a href="#" className="text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-accent transition-colors">Termos</a>
+              <a href="#" className="text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-accent transition-colors">Privacidade</a>
+              <a href="#" className="text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-accent transition-colors">Contato</a>
             </div>
           </div>
         </div>
       </footer>
 
-      <FlyAnimationsContainer animations={flyAnimations} onRemove={removeFlyAnimation} />
+      <FlyAnimationsContainer animations={flyAnimations} onAnimationComplete={removeFlyAnimation} />
     </div>
   );
 }

@@ -33,7 +33,8 @@ export default function Checkout() {
     product: products?.find(p => p.id === item.productId)
   })) || [];
 
-  const total = enrichedItems.reduce((acc, item) => acc + (item.product?.price || 0) * (item.quantity || 1), 0);
+  // Lógica de Preço: 50% de desconto promocional sobre o preço do banco
+  const total = enrichedItems.reduce((acc, item) => acc + Math.floor((item.product?.price || 0) * 0.5) * (item.quantity || 1), 0);
   const hasCashback = user?.hasCashbackBenefit === 1;
   const discountAmount = hasCashback ? Math.floor(total * 0.1) : 0;
   const finalTotal = total - discountAmount;
@@ -66,7 +67,7 @@ export default function Checkout() {
       const cartItemsPayload = enrichedItems.map(item => ({
         productId: item.productId,
         quantity: Math.max(1, parseInt(String(item.quantity ?? 1), 10) || 1),
-        price: item.product!.price,
+        price: Math.floor(item.product!.price * 0.5),
       }));
 
       const result = await checkoutWithBalance.mutateAsync({
@@ -80,8 +81,8 @@ export default function Checkout() {
         // Salvar informações para a tela de confirmação antes de navegar
         const orderInfo = {
           id: result.orderId,
-          total: total,
-          items: enrichedItems.map(i => ({ name: i.product?.name, price: i.product?.price }))
+          total: finalTotal,
+          items: enrichedItems.map(i => ({ name: i.product?.name, price: Math.floor((i.product?.price || 0) * 0.5) }))
         };
         sessionStorage.setItem("lastOrder", JSON.stringify(orderInfo));
         
@@ -118,7 +119,7 @@ export default function Checkout() {
       const cartItemsPayload = enrichedItems.map(item => ({
         productId: item.productId,
         quantity: Math.max(1, parseInt(String(item.quantity ?? 1), 10) || 1),
-        price: item.product!.price,
+        price: Math.floor(item.product!.price * 0.5),
       }));
 
       const balanceToUse = balance || 0;
@@ -324,7 +325,7 @@ export default function Checkout() {
               </div>
               <div className="bg-card/30 rounded-2xl p-6 border border-border/30 space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Total do pedido</span>
+                  <span className="text-muted-foreground">Total da compra</span>
                   <span className="font-black text-accent">R$ {(finalTotal / 100).toFixed(2).replace(".", ",")}</span>
                 </div>
                 <div className="flex justify-between text-sm">
@@ -374,8 +375,8 @@ export default function Checkout() {
                   sessionStorage.removeItem("pix_expiry_time");
                   const orderInfo = {
                     id: orderId,
-                    total: total,
-                    items: enrichedItems.map(i => ({ name: i.product?.name, price: i.product?.price }))
+                    total: finalTotal,
+                    items: enrichedItems.map(i => ({ name: i.product?.name, price: Math.floor((i.product?.price || 0) * 0.5) }))
                   };
                   sessionStorage.setItem("lastOrder", JSON.stringify(orderInfo));
                   navigate(`/order-confirmation?id=${orderId}`);
