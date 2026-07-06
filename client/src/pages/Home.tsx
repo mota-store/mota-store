@@ -76,11 +76,11 @@ export default function Home() {
 
     // Obter a quantidade atual do produto no carrinho
     const cartItems = utils.cart.getItems.getData();
-    const currentQty = cartItems?.filter(item => item.productId === productId).reduce((sum, item) => sum + item.quantity, 0) || 0;
+    const isAlreadyInCart = cartItems?.some(item => item.productId === productId);
 
-    // Bloquear se já atingiu o limite de 5
-    if (currentQty >= 5) {
-      toast.error("Limite máximo de 5 unidades por produto atingido.");
+    // Bloquear se o item já está no carrinho
+    if (isAlreadyInCart) {
+      toast.info("Este item já está no seu carrinho.");
       return;
     }
 

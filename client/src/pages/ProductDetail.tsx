@@ -71,10 +71,10 @@ export default function ProductDetail() {
     if (addingProducts.current.has(product.id)) return;
 
     const cartItems = utils.cart.getItems.getData();
-    const currentQty = cartItems?.filter(item => item.productId === product.id).reduce((sum, item) => sum + item.quantity, 0) || 0;
+    const isAlreadyInCart = cartItems?.some(item => item.productId === product.id);
     
-    if (currentQty >= 5) {
-      toast.error("Limite máximo de 5 unidades por produto atingido.");
+    if (isAlreadyInCart) {
+      toast.info("Este item já está no seu carrinho.");
       return;
     }
 
