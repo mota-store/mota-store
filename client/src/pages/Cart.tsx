@@ -28,11 +28,13 @@ export default function Cart() {
     if (cartItems) {
       const quantities: Record<number, number> = {};
       cartItems.forEach(item => {
-        // Só sobrescreve se não houver atualizações pendentes para este produto
+        // Se não houver atualizações pendentes, usamos a quantidade do servidor
         if (!pendingUpdates.current[item.productId]) {
+          // Importante: se o servidor retornar múltiplos registros para o mesmo produto, 
+          // nós os somamos, mas garantimos que não estamos somando com valores locais antigos.
           quantities[item.productId] = (quantities[item.productId] || 0) + item.quantity;
         } else {
-          // Mantém o valor local atual se houver pendências
+          // Se houver pendências, mantemos o que está no estado local (otimista)
           quantities[item.productId] = localQuantities[item.productId];
         }
       });
