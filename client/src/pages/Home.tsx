@@ -60,7 +60,7 @@ export default function Home() {
 
     if (addItem.isLoading) return;
     triggerFlyAnimation(startPos);
-    addItem.mutate({ productId });
+    addItem.mutate({ productId, quantity: 1 });
   };
 
   // Lógica de Scroll Snap removida para melhorar performance (reduzir lag)
@@ -226,6 +226,7 @@ export default function Home() {
                       </div>
 
                       <Button
+                        type="button"
                         className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-black py-7 rounded-2xl shadow-xl shadow-accent/20 transition-all text-base active:scale-95"
                         onClick={(e) => handleAddToCart(e, product.id)}
                         disabled={addItem.isLoading}

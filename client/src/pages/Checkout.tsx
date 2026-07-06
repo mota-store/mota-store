@@ -470,7 +470,7 @@ export default function Checkout() {
                       <p className="text-[10px] font-medium text-muted-foreground mt-1 uppercase tracking-wider">Aprovação imediata</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs font-black text-accent uppercase tracking-tighter">R$ {(total / 100).toFixed(2).replace(".", ",")}</p>
+                      <p className="text-xs font-black text-accent uppercase tracking-tighter">R$ {(finalTotal / 100).toFixed(2).replace(".", ",")}</p>
                       <p className="text-[8px] font-black text-accent/60 uppercase tracking-widest mt-1">Total</p>
                     </div>
                   </div>

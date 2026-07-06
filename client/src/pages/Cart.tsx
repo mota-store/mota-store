@@ -27,6 +27,8 @@ export default function Cart() {
   useEffect(() => {
     if (cartItems) {
       setLocalQuantities(prev => {
+        const isFirstLoad = Object.keys(prev).length === 0;
+        
         // Primeiro, calcular a quantidade total do servidor agrupada por productId
         const serverTotals: Record<number, number> = {};
         cartItems.forEach(item => {
@@ -38,7 +40,7 @@ export default function Cart() {
         // Para cada productId vindo do servidor
         Object.entries(serverTotals).forEach(([id, serverQty]) => {
           const productId = Number(id);
-          if (pendingUpdates.current[productId]) {
+          if (!isFirstLoad && (pendingUpdates.current[productId] ?? 0) > 0) {
             // Há atualizações pendentes: manter o valor otimista local
             quantities[productId] = prev[productId] ?? serverQty;
           } else {
@@ -48,12 +50,14 @@ export default function Cart() {
         });
 
         // Manter itens que existem localmente mas ainda não voltaram do servidor (ex: recém-adicionados)
-        Object.keys(prev).forEach(id => {
-          const productId = Number(id);
-          if (pendingUpdates.current[productId] && quantities[productId] === undefined) {
-            quantities[productId] = prev[productId];
-          }
-        });
+        if (!isFirstLoad) {
+          Object.keys(prev).forEach(id => {
+            const productId = Number(id);
+            if ((pendingUpdates.current[productId] ?? 0) > 0 && quantities[productId] === undefined) {
+              quantities[productId] = prev[productId];
+            }
+          });
+        }
 
         return quantities;
       });
@@ -121,8 +125,8 @@ export default function Cart() {
 
   const groupedItems = Array.from(groupedItemsMap.values());
   // Subtotal agora aplica o desconto de 50% promocional (R$ 5,00 por item)
-  const subtotal = groupedItems.reduce((sum, item) => sum + 500 * (item.quantity || 1), 0);
-  const originalTotal = groupedItems.reduce((sum, item) => sum + 1000 * (item.quantity || 1), 0);
+  const subtotal = groupedItems.reduce((sum, item) => sum + 500 * item.quantity, 0);
+  const originalTotal = groupedItems.reduce((sum, item) => sum + 1000 * item.quantity, 0);
   const total = subtotal;
 
   const handleUpdateQuantity = (productId: number, delta: number) => {
