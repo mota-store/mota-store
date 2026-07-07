@@ -6,11 +6,11 @@ export const ACCENT_COLORS = [
   { name: "Original", value: "260", hex: "#0F172A" }, // Azul original
   { name: "Roxo", value: "280", hex: "#7C3AED" },
   { name: "Verde", value: "142", hex: "#16A34A" },
-  { name: "Vermelho", value: "25", hex: "#DC2626" },
+  { name: "Vermelho", value: "25", hex: "#E11D48" }, // Vermelho mais vibrante
   { name: "Rosa", value: "330", hex: "#DB2777" },
-  { name: "Laranja", value: "45", hex: "#EA580C" },
+  { name: "Laranja", value: "45", hex: "#F97316" }, // Laranja puro
   { name: "Ciano", value: "190", hex: "#0891B2" },
-  { name: "Amarelo", value: "85", hex: "#CA8A04" },
+  { name: "Amarelo", value: "85", hex: "#EAB308" }, // Amarelo Dourado (vibrante)
 ];
 
 interface ThemeContextType {
