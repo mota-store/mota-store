@@ -329,10 +329,10 @@ export default function Cart() {
                   </Button>
                   <Button
                     variant="ghost"
-                    className="w-full font-black text-[10px] uppercase tracking-widest text-muted-foreground hover:bg-transparent hover:text-foreground transition-all"
+                    className="w-full font-black text-[10px] uppercase tracking-widest text-muted-foreground hover:bg-transparent hover:text-foreground"
                     onClick={() => navigate("/")}
                   >
-                    Escolher mais produtos
+                    ADICIONAR MAIS PRODUTOS
                   </Button>
                 </div>
               </Card>
