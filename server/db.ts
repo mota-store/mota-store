@@ -1,140 +1,48 @@
-import { eq, and, sql, gt, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, products, cartItems, orders, orderItems, balanceTransactions, coupons, couponRedemptions, InsertCoupon } from "../drizzle/schema";
-import { ENV } from './_core/env';
+import mysql from "mysql2/promise";
+import * as schema from "@shared/schema";
+import { eq, and, desc, sql } from "drizzle-orm";
+import { products, cartItems, users, orders, orderItems, coupons, couponRedemptions, balanceTransactions } from "@shared/schema";
+import type { InsertProduct, InsertCoupon } from "@shared/schema";
 
-let _db: ReturnType<typeof drizzle> | null = null;
+// Configuração do Banco de Dados
+let pool: mysql.Pool | null = null;
 
-// Lazily create the drizzle instance so local tooling can run without a DB.
-export async function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
-    try {
-      _db = drizzle(process.env.DATABASE_URL);
-    } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
-      _db = null;
+async function getDb() {
+  if (!pool) {
+    const dbUrl = process.env.DATABASE_URL;
+    if (!dbUrl) {
+      console.error("DATABASE_URL não configurada");
+      return null;
     }
+    pool = mysql.createPool(dbUrl);
   }
-  return _db;
+  return drizzle(pool, { schema, mode: "default" });
 }
 
-export async function upsertUser(user: InsertUser): Promise<void> {
-  if (!user.openId) {
-    throw new Error("User openId is required for upsert");
-  }
+// REGRA FIXA DE PREÇO: Todos os produtos custam R$ 5,00 (500 centavos)
+const FIXED_PRICE = 500;
 
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot upsert user: database not available");
-    return;
-  }
-
-  try {
-    const values: InsertUser = {
-      openId: user.openId,
-    };
-    const updateSet: Record<string, unknown> = {};
-
-    const textFields = ["name", "email", "loginMethod", "avatarUrl"] as const;
-    type TextField = (typeof textFields)[number];
-
-    const assignNullable = (field: TextField) => {
-      const value = user[field];
-      if (value === undefined) return;
-      const normalized = value ?? null;
-      values[field] = normalized;
-      updateSet[field] = normalized;
-    };
-
-    textFields.forEach(assignNullable);
-
-    if (user.lastSignedIn !== undefined) {
-      values.lastSignedIn = user.lastSignedIn;
-      updateSet.lastSignedIn = user.lastSignedIn;
-    }
-    if (user.role !== undefined) {
-      values.role = user.role;
-      updateSet.role = user.role;
-    } else if (user.openId === ENV.ownerOpenId) {
-      console.log(`[Auth] Promoting owner ${user.openId} to admin role`);
-      values.role = 'admin';
-      updateSet.role = 'admin';
-    }
-
-    // Set balance to 0 for new users
-    values.balance = 0;
-
-    if (!values.lastSignedIn) {
-      values.lastSignedIn = new Date();
-    }
-
-    if (Object.keys(updateSet).length === 0) {
-      updateSet.lastSignedIn = new Date();
-    }
-
-    await db.insert(users).values(values).onDuplicateKeyUpdate({
-      set: updateSet,
-    });
-  } catch (error) {
-    console.error("[Database] Failed to upsert user:", error);
-    throw error;
-  }
+// Helper para calcular o total real do carrinho no servidor
+async function calculateCartTotal(tx: any, userId: number) {
+  const items = await tx.select().from(cartItems).where(eq(cartItems.userId, userId));
+  return items.reduce((sum: number, item: any) => sum + (FIXED_PRICE * item.quantity), 0);
 }
 
-export async function getUserByOpenId(openId: string) {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot get user: database not available");
-    return undefined;
-  }
-
-  const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
-
-  return result.length > 0 ? result[0] : undefined;
-}
-
-export async function getUserByEmail(email: string) {
-  const db = await getDb();
-  if (!db) return undefined;
-  const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
-  return result.length > 0 ? result[0] : undefined;
-}
-
-export async function getUserByResetToken(token: string) {
-  const db = await getDb();
-  if (!db) return undefined;
-  const result = await db.select().from(users).where(eq(users.resetToken, token)).limit(1);
-  return result.length > 0 ? result[0] : undefined;
-}
-
-export async function updatePassword(userId: number, passwordHash: string) {
-  const db = await getDb();
-  if (!db) return;
-  await db.update(users)
-    .set({ passwordHash, resetToken: null, resetTokenExpires: null })
-    .where(eq(users.id, userId));
-}
-
-export async function setResetToken(userId: number, token: string, expires: Date) {
-  const db = await getDb();
-  if (!db) return;
-  await db.update(users)
-    .set({ resetToken: token, resetTokenExpires: expires })
-    .where(eq(users.id, userId));
-}
-
-export async function clearResetToken(userId: number) {
-  const db = await getDb();
-  if (!db) return;
-  await db.update(users)
-    .set({ resetToken: null, resetTokenExpires: null })
-    .where(eq(users.id, userId));
-}
+// ============================================
+// PRODUCT FUNCTIONS
+// ============================================
 
 export async function getProducts() {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(products).where(eq(products.isActive, 1));
+}
+
+export async function getAllProducts() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(products);
 }
 
 export async function getProductById(id: number) {
@@ -144,19 +52,36 @@ export async function getProductById(id: number) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+// ============================================
+// CART FUNCTIONS
+// ============================================
+
 export async function getCartItems(userId: number) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(cartItems).where(eq(cartItems.userId, userId));
 }
 
+// Variável para controle de concorrência simples no processo
+const lastAddRequest = new Map<string, number>();
+
 export async function addToCart(userId: number, productId: number, quantity: number = 1) {
   const db = await getDb();
   if (!db) return;
   
-  // Usar transação para garantir atomicidade e evitar race conditions
+  // Prevenção de duplicação por requisições rápidas (debounce no servidor)
+  const requestKey = `${userId}-${productId}`;
+  const now = Date.now();
+  const lastRequest = lastAddRequest.get(requestKey) || 0;
+  
+  if (now - lastRequest < 500) {
+    console.log(`[AddToCart] Ignorando requisição duplicada para usuário ${userId}, produto ${productId}`);
+    return;
+  }
+  lastAddRequest.set(requestKey, now);
+  
+  // Usar transação para garantir atomicidade
   await db.transaction(async (tx) => {
-    // 1. Buscar item existente para este usuário e produto
     const [existingItem] = await tx.select().from(cartItems).where(
       and(eq(cartItems.userId, userId), eq(cartItems.productId, productId))
     ).limit(1);
@@ -164,12 +89,10 @@ export async function addToCart(userId: number, productId: number, quantity: num
     const currentQty = existingItem?.quantity || 0;
     const newQty = currentQty + quantity;
     
-    // 2. Validar limite máximo de 5 unidades
     if (newQty > 5) {
       throw new Error("Limite máximo de 5 unidades por produto excedido");
     }
     
-    // 3. Upsert: Se existe, atualiza a quantidade; se não, insere novo
     if (existingItem) {
       await tx.update(cartItems)
         .set({ quantity: newQty })
@@ -186,65 +109,50 @@ export async function removeFromCart(cartItemId: number) {
   await db.delete(cartItems).where(eq(cartItems.id, cartItemId));
 }
 
+// ============================================
+// ORDER FUNCTIONS
+// ============================================
+
 export async function getUserOrders(userId: number) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(orders).where(eq(orders.userId, userId));
 }
 
-export async function updateUser(userId: number, data: { name?: string; avatarUrl?: string; passwordHash?: string; balance?: number; hasCashbackBenefit?: number }) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  await db.update(users).set(data).where(eq(users.id, userId));
-}
-
-export async function depositBalance(userId: number, amount: number): Promise<{
-  success: boolean;
-  newBalance: number;
-  cashbackActivated: boolean;
-}> {
+export async function createOrder(userId: number, _totalAmountFromClient: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
   return await db.transaction(async (tx) => {
-    // 1. Obter saldo atual com FOR UPDATE
-    const [user] = await tx.select().from(users).where(eq(users.id, userId)).for("update").limit(1);
-    if (!user) throw new Error("Usuário não encontrado");
+    // RECALCULAR TOTAL NO SERVIDOR - Sempre ignorar o valor enviado pelo cliente
+    const totalAmount = await calculateCartTotal(tx, userId);
+    
+    if (totalAmount <= 0) {
+      throw new Error("Carrinho vazio ou inválido");
+    }
 
-    const newBalance = user.balance + amount;
-    const cashbackActivated = amount >= 500 && user.hasCashbackBenefit === 0;
-    const hasCashbackBenefit = user.hasCashbackBenefit === 1 || amount >= 500 ? 1 : 0;
-
-    // 2. Atualizar usuário
-    await tx.update(users)
-      .set({ balance: newBalance, hasCashbackBenefit })
-      .where(eq(users.id, userId));
-
-    // 3. Registrar transação
-    await tx.insert(balanceTransactions).values({
+    const [result] = await tx.insert(orders).values({
       userId,
-      amount,
-      type: "deposit",
-      description: `Recarga de carteira via PIX - R$ ${(amount / 100).toFixed(2).replace(".", ",")}`,
-      newBalance,
+      totalAmount,
+      status: "pending",
+      paymentMethod: "pix",
     });
 
-    return { success: true, newBalance, cashbackActivated };
+    const orderId = result.insertId;
+
+    // Registrar itens da ordem com o preço fixo atual
+    const items = await tx.select().from(cartItems).where(eq(cartItems.userId, userId));
+    for (const item of items) {
+      await tx.insert(orderItems).values({
+        orderId,
+        productId: item.productId,
+        quantity: item.quantity,
+        priceAtPurchase: FIXED_PRICE,
+      });
+    }
+
+    return { id: orderId };
   });
-}
-
-export async function createOrder(userId: number, totalAmount: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  const [result] = await db.insert(orders).values({
-    userId,
-    totalAmount,
-    status: "pending",
-    paymentMethod: "pix",
-  });
-
-  return { id: result.insertId };
 }
 
 export async function updateOrderStatus(orderId: number, status: string) {
@@ -252,7 +160,6 @@ export async function updateOrderStatus(orderId: number, status: string) {
   if (!db) throw new Error("Database not available");
   await db.update(orders).set({ status: status as any }).where(eq(orders.id, orderId));
 
-  // Clear cart only after successful payment
   if (status === "completed") {
     const [order] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
     if (order) {
@@ -262,27 +169,13 @@ export async function updateOrderStatus(orderId: number, status: string) {
 }
 
 // ============================================
-// ADMIN FUNCTIONS
+// USER & WALLET FUNCTIONS
 // ============================================
 
-export async function getAllUsers() {
+export async function updateUser(userId: number, data: { name?: string; avatarUrl?: string; passwordHash?: string; balance?: number; hasCashbackBenefit?: number }) {
   const db = await getDb();
-  if (!db) return [];
-
-  const allUsers = await db.select().from(users).orderBy(desc(users.id));
-
-  const usersWithOrders = await Promise.all(allUsers.map(async (user) => {
-    const userOrders = await db.select({ count: sql<number>`count(*)` })
-      .from(orders)
-      .where(eq(orders.userId, user.id));
-
-    return {
-      ...user,
-      orderCount: Number(userOrders[0]?.count) || 0
-    };
-  }));
-
-  return usersWithOrders;
+  if (!db) throw new Error("Database not available");
+  await db.update(users).set(data).where(eq(users.id, userId));
 }
 
 export async function getUserBalance(userId: number) {
@@ -292,23 +185,173 @@ export async function getUserBalance(userId: number) {
   return user?.balance ?? 0;
 }
 
-export async function addUserBalance(userId: number, amount: number): Promise<{ success: boolean; newBalance: number }> {
+export async function depositBalance(userId: number, amount: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // Usar transação para segurança
-  const result = await db.transaction(async (tx) => {
-    // 1. Obter saldo atual
+  return await db.transaction(async (tx) => {
+    const [user] = await tx.select().from(users).where(eq(users.id, userId)).for("update").limit(1);
+    if (!user) throw new Error("Usuário não encontrado");
+
+    const newBalance = user.balance + amount;
+    const hasCashbackBenefit = user.hasCashbackBenefit === 1 || amount >= 500 ? 1 : 0;
+
+    await tx.update(users).set({ balance: newBalance, hasCashbackBenefit }).where(eq(users.id, userId));
+
+    await tx.insert(balanceTransactions).values({
+      userId,
+      amount,
+      type: "deposit",
+      description: `Recarga de carteira via PIX - R$ ${(amount / 100).toFixed(2).replace(".", ",")}`,
+      newBalance,
+    });
+
+    return { success: true, newBalance, cashbackActivated: amount >= 500 && user.hasCashbackBenefit === 0 };
+  });
+}
+
+export async function checkoutWithBalance(userId: number, _amountFromClient: number, _itemsFromClient: any[]) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db.transaction(async (tx) => {
+    // 1. Recalcular total real no servidor
+    const cartTotal = await calculateCartTotal(tx, userId);
+    const [user] = await tx.select().from(users).where(eq(users.id, userId)).for("update").limit(1);
+    
+    if (!user) return { success: false, error: "Usuário não encontrado" };
+    
+    const hasCashback = user.hasCashbackBenefit === 1;
+    const discount = hasCashback ? Math.floor(cartTotal * 0.1) : 0;
+    const finalAmount = cartTotal - discount;
+
+    if (user.balance < finalAmount) {
+      return { success: false, error: "Saldo insuficiente" };
+    }
+
+    // 2. Deduzir saldo
+    const newBalance = user.balance - finalAmount;
+    await tx.update(users).set({ balance: newBalance }).where(eq(users.id, userId));
+
+    // 3. Registrar transação
+    await tx.insert(balanceTransactions).values({
+      userId,
+      amount: -finalAmount,
+      type: "purchase",
+      description: hasCashback ? "Compra com 10% de cashback" : "Compra via saldo",
+      newBalance,
+    });
+
+    // 4. Criar ordem
+    const [orderResult] = await tx.insert(orders).values({
+      userId,
+      totalAmount: finalAmount,
+      status: "completed",
+      paymentMethod: "balance",
+    });
+
+    const orderId = orderResult.insertId;
+
+    // 5. Registrar itens da ordem
+    const items = await tx.select().from(cartItems).where(eq(cartItems.userId, userId));
+    for (const item of items) {
+      await tx.insert(orderItems).values({
+        orderId,
+        productId: item.productId,
+        quantity: item.quantity,
+        priceAtPurchase: FIXED_PRICE,
+      });
+    }
+
+    // 6. Limpar carrinho
+    await tx.delete(cartItems).where(eq(cartItems.userId, userId));
+
+    return { success: true, orderId, newBalance, cashbackApplied: hasCashback, discountAmount: discount };
+  });
+}
+
+export async function checkoutWithBalanceAndPix(userId: number, _totalFromClient: number, balanceToUse: number, _itemsFromClient: any[]) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db.transaction(async (tx) => {
+    // 1. Recalcular total real no servidor
+    const cartTotal = await calculateCartTotal(tx, userId);
+    const [user] = await tx.select().from(users).where(eq(users.id, userId)).for("update").limit(1);
+
+    if (!user) return { success: false, error: "Usuário não encontrado" };
+    if (user.balance < balanceToUse) return { success: false, error: "Saldo insuficiente" };
+
+    const remainingAmount = cartTotal - balanceToUse;
+    if (remainingAmount <= 0) return { success: false, error: "Use saldo total" };
+
+    // 2. Deduzir saldo parcial
+    const newBalance = user.balance - balanceToUse;
+    await tx.update(users).set({ balance: newBalance }).where(eq(users.id, userId));
+
+    // 3. Registrar transação
+    await tx.insert(balanceTransactions).values({
+      userId,
+      amount: -balanceToUse,
+      type: "purchase",
+      description: `Pagamento parcial via saldo - restante via PIX`,
+      newBalance,
+    });
+
+    // 4. Criar ordem pendente
+    const [orderResult] = await tx.insert(orders).values({
+      userId,
+      totalAmount: cartTotal,
+      status: "pending",
+      paymentMethod: "balance_pix",
+    });
+
+    const orderId = orderResult.insertId;
+
+    // 5. Registrar itens da ordem
+    const items = await tx.select().from(cartItems).where(eq(cartItems.userId, userId));
+    for (const item of items) {
+      await tx.insert(orderItems).values({
+        orderId,
+        productId: item.productId,
+        quantity: item.quantity,
+        priceAtPurchase: FIXED_PRICE,
+      });
+    }
+
+    return { success: true, orderId, remainingAmount, newBalance };
+  });
+}
+
+// ============================================
+// ADMIN FUNCTIONS
+// ============================================
+
+export async function getAllOrders() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select({
+    order: orders,
+    userName: users.name,
+    userEmail: users.email,
+  })
+  .from(orders)
+  .leftJoin(users, eq(orders.userId, users.id))
+  .orderBy(desc(orders.createdAt));
+}
+
+export async function addUserBalance(userId: number, amount: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db.transaction(async (tx) => {
     const [currentUser] = await tx.select({ balance: users.balance }).from(users).where(eq(users.id, userId)).for("update").limit(1);
     if (!currentUser) throw new Error("Usuário não encontrado");
 
     const newBalance = currentUser.balance + amount;
-    if (newBalance < 0) throw new Error("Saldo não pode ser negativo");
-
-    // 2. Atualizar saldo
     await tx.update(users).set({ balance: newBalance }).where(eq(users.id, userId));
 
-    // 3. Registrar transação
     await tx.insert(balanceTransactions).values({
       userId,
       amount,
@@ -319,8 +362,6 @@ export async function addUserBalance(userId: number, amount: number): Promise<{ 
 
     return { success: true, newBalance };
   });
-
-  return result;
 }
 
 export async function getUserTransactions(userId: number) {
@@ -333,7 +374,7 @@ export async function getUserTransactions(userId: number) {
 // COUPON FUNCTIONS
 // ============================================
 
-export async function createCoupon(input: InsertCoupon): Promise<any> {
+export async function createCoupon(input: InsertCoupon) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
@@ -369,47 +410,29 @@ export async function deleteCoupon(couponId: number) {
   await db.delete(coupons).where(eq(coupons.id, couponId));
 }
 
-export async function redeemCoupon(code: string, userId: number): Promise<{ success: boolean; value?: number; error?: string; newBalance?: number }> {
+export async function redeemCoupon(code: string, userId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const result = await db.transaction(async (tx) => {
-    // 1. Buscar cupom
+  return await db.transaction(async (tx) => {
     const [coupon] = await tx.select().from(coupons).where(and(eq(coupons.code, code), eq(coupons.isActive, 1))).limit(1);
     if (!coupon) return { success: false, error: "Cupom inválido ou inativo" };
 
-    // 2. Verificar expiração
-    if (coupon.expiresAt && coupon.expiresAt < new Date()) {
-      return { success: false, error: "Cupom expirado" };
-    }
+    if (coupon.expiresAt && coupon.expiresAt < new Date()) return { success: false, error: "Cupom expirado" };
+    if (coupon.currentRedemptions >= coupon.maxRedemptions) return { success: false, error: "Limite de resgates atingido" };
 
-    // 3. Verificar limite de resgates
-    if (coupon.currentRedemptions >= coupon.maxRedemptions) {
-      return { success: false, error: "Cupom já atingiu o limite de resgates" };
-    }
+    const existing = await tx.select().from(couponRedemptions).where(and(eq(couponRedemptions.couponId, coupon.id), eq(couponRedemptions.userId, userId))).limit(1);
+    if (existing.length > 0) return { success: false, error: "Cupom já resgatado" };
 
-    // 4. Verificar se o usuário já resgatou este cupom
-    const existingRedemption = await tx.select().from(couponRedemptions)
-      .where(and(eq(couponRedemptions.couponId, coupon.id), eq(couponRedemptions.userId, userId)))
-      .limit(1);
-    if (existingRedemption.length > 0) {
-      return { success: false, error: "Você já resgatou este cupom" };
-    }
-
-    // 5. Registrar resgate
     await tx.insert(couponRedemptions).values({ couponId: coupon.id, userId });
-
-    // 6. Incrementar contador de resgates
     await tx.update(coupons).set({ currentRedemptions: coupon.currentRedemptions + 1 }).where(eq(coupons.id, coupon.id));
 
-    // 7. Creditar saldo
-    const [currentUser] = await tx.select({ balance: users.balance }).from(users).where(eq(users.id, userId)).for("update").limit(1);
-    if (!currentUser) throw new Error("Usuário não encontrado");
+    const [user] = await tx.select({ balance: users.balance }).from(users).where(eq(users.id, userId)).for("update").limit(1);
+    if (!user) throw new Error("Usuário não encontrado");
 
-    const newBalance = currentUser.balance + coupon.value;
+    const newBalance = user.balance + coupon.value;
     await tx.update(users).set({ balance: newBalance }).where(eq(users.id, userId));
 
-    // 8. Registrar transação
     await tx.insert(balanceTransactions).values({
       userId,
       amount: coupon.value,
@@ -421,117 +444,14 @@ export async function redeemCoupon(code: string, userId: number): Promise<{ succ
 
     return { success: true, value: coupon.value, newBalance };
   });
-
-  return result;
 }
 
-// ============================================
-// WALLET / CHECKOUT FUNCTIONS
-// ============================================
-
-export async function checkoutWithBalance(userId: number, amount: number, items: Array<{ productId: number; quantity: number; price: number }>): Promise<{ success: boolean; orderId?: number; error?: string; newBalance?: number; cashbackApplied?: boolean; discountAmount?: number }> {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  const result = await db.transaction(async (tx) => {
-    // 1. Verificar saldo e benefício de cashback
-    const [currentUser] = await tx.select({ balance: users.balance, hasCashbackBenefit: users.hasCashbackBenefit }).from(users).where(eq(users.id, userId)).for("update").limit(1);
-    if (!currentUser) {
-      console.error(`[CheckoutWithBalance] Usuário ${userId} não encontrado`);
-      return { success: false, error: "Usuário não encontrado" };
-    }
-
-    const finalAmount = amount;
-    const cashbackApplied = currentUser.hasCashbackBenefit === 1;
-    const discountAmount = cashbackApplied ? Math.floor((amount / 0.9) * 0.1) : 0; // Apenas para registro na transação
-
-    if (currentUser.balance < finalAmount) {
-      console.error(`[CheckoutWithBalance] Saldo insuficiente para usuário ${userId}: tem ${currentUser.balance}, precisa de ${finalAmount}`);
-      return { success: false, error: "Saldo insuficiente" };
-    }
-
-    // 2. Verificar se todos os produtos existem (validação adicional)
-    for (const item of items) {
-      const [product] = await tx.select().from(products).where(eq(products.id, item.productId)).limit(1);
-      if (!product) {
-        console.error(`[CheckoutWithBalance] Produto ${item.productId} não encontrado`);
-        return { success: false, error: `Produto não encontrado: ID ${item.productId}` };
-      }
-      // Se houver discrepância de preço, usamos o preço do banco de dados para garantir integridade
-      // mas não bloqueamos a transação por causa de centavos ou arredondamentos do frontend
-      item.price = product.price;
-    }
-
-    // 3. Deduzir saldo
-    const newBalance = currentUser.balance - finalAmount;
-    await tx.update(users).set({ balance: newBalance }).where(eq(users.id, userId));
-
-    // 4. Registrar transação
-    await tx.insert(balanceTransactions).values({
-      userId,
-      amount: -finalAmount, // negativo = débito
-      type: "purchase",
-      description: cashbackApplied 
-        ? `Compra via saldo com 10% de cashback aplicado - ${items.length} item(ns)` 
-        : `Compra via saldo - ${items.length} item(ns)`,
-      newBalance,
-    });
-
-    // 5. Criar ordem
-    const [orderResult] = await tx.insert(orders).values({
-      userId,
-      totalAmount: finalAmount,
-      status: "completed", // já pago com saldo
-      paymentMethod: "balance",
-    });
-
-    const orderId = orderResult.insertId;
-
-    // 6. Criar itens da ordem
-    for (const item of items) {
-      await tx.insert(orderItems).values({
-        orderId,
-        productId: item.productId,
-        quantity: item.quantity,
-        priceAtPurchase: item.price,
-      });
-    }
-
-    // 7. Limpar carrinho
-    await tx.delete(cartItems).where(eq(cartItems.userId, userId));
-
-    return { success: true, orderId, newBalance, cashbackApplied, discountAmount };
-  });
-
-  return result;
-}
-
-// ============================================
-// PRODUCT CRUD (ADMIN)
-// ============================================
-
-export async function createProduct(input: {
-  name: string;
-  description?: string;
-  price: number;
-  trialDays: number;
-  benefits?: string;
-  imageUrl?: string;
-  affiliateLink: string;
-  category: string;
-}) {
+export async function createProduct(input: InsertProduct) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
   const [result] = await db.insert(products).values({
-    name: input.name,
-    description: input.description || null,
-    price: input.price,
-    trialDays: input.trialDays,
-    benefits: input.benefits || null,
-    imageUrl: input.imageUrl || null,
-    affiliateLink: input.affiliateLink,
-    category: input.category,
+    ...input,
     isActive: 1,
   });
 
@@ -539,33 +459,10 @@ export async function createProduct(input: {
   return product;
 }
 
-export async function updateProduct(id: number, input: {
-  name?: string;
-  description?: string;
-  price?: number;
-  trialDays?: number;
-  benefits?: string;
-  imageUrl?: string;
-  affiliateLink?: string;
-  category?: string;
-  isActive?: boolean;
-}) {
+export async function updateProduct(id: number, input: Partial<InsertProduct> & { isActive?: boolean }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-
-  const updateData: Record<string, any> = {};
-  if (input.name !== undefined) updateData.name = input.name;
-  if (input.description !== undefined) updateData.description = input.description;
-  if (input.price !== undefined) updateData.price = input.price;
-  if (input.trialDays !== undefined) updateData.trialDays = input.trialDays;
-  if (input.benefits !== undefined) updateData.benefits = input.benefits;
-  if (input.imageUrl !== undefined) updateData.imageUrl = input.imageUrl;
-  if (input.affiliateLink !== undefined) updateData.affiliateLink = input.affiliateLink;
-  if (input.category !== undefined) updateData.category = input.category;
-  if (input.isActive !== undefined) updateData.isActive = input.isActive ? 1 : 0;
-
-  await db.update(products).set(updateData).where(eq(products.id, id));
-
+  await db.update(products).set(input).where(eq(products.id, id));
   const [product] = await db.select().from(products).where(eq(products.id, id)).limit(1);
   return product;
 }
@@ -573,102 +470,5 @@ export async function updateProduct(id: number, input: {
 export async function deleteProduct(productId: number) {
   const db = await getDb();
   if (!db) return;
-  // Soft delete - desativar produto
-  await db.update(products).set({ isActive: 0 }).where(eq(products.id, productId));
-}
-
-export async function getAllProducts() {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select().from(products).orderBy(desc(products.createdAt));
-}
-
-// ============================================
-// ADMIN: LIST ALL ORDERS
-// ============================================
-
-export async function getAllOrders() {
-  const db = await getDb();
-  if (!db) return [];
-  // Retorna orders com info do usuário
-  const result = await db.select({
-    order: orders,
-    userName: users.name,
-    userEmail: users.email,
-  })
-  .from(orders)
-  .leftJoin(users, eq(orders.userId, users.id))
-  .orderBy(desc(orders.createdAt));
-
-  return result.map(r => ({
-    ...r.order,
-    userName: r.userName,
-    userEmail: r.userEmail,
-  }));
-}
-
-export async function checkoutWithBalanceAndPix(
-  userId: number,
-  totalAmount: number,
-  balanceToUse: number,
-  items: Array<{ productId: number; quantity: number; price: number }>
-): Promise<{ success: boolean; orderId?: number; remainingAmount?: number; error?: string; newBalance?: number }> {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  const result = await db.transaction(async (tx) => {
-    // 1. Obter saldo atual com FOR UPDATE para evitar race condition
-    const [currentUser] = await tx
-      .select({ balance: users.balance })
-      .from(users)
-      .where(eq(users.id, userId))
-      .for("update")
-      .limit(1);
-
-    if (!currentUser) return { success: false, error: "Usuário não encontrado" };
-    if (currentUser.balance < balanceToUse) return { success: false, error: "Saldo insuficiente para o valor parcial" };
-
-    const remainingAmount = totalAmount - balanceToUse;
-    if (remainingAmount <= 0) return { success: false, error: "Use a opção de pagamento por saldo completo" };
-
-    // 2. Deduzir saldo do usuário
-    const newBalance = currentUser.balance - balanceToUse;
-    await tx.update(users).set({ balance: newBalance }).where(eq(users.id, userId));
-
-    // 3. Registrar transação de débito parcial
-    await tx.insert(balanceTransactions).values({
-      userId,
-      amount: -balanceToUse,
-      type: "purchase",
-      description: `Pagamento parcial via saldo (R$ ${(balanceToUse / 100).toFixed(2).replace(".", ",")}) - restante via PIX`,
-      newBalance,
-    });
-
-    // 4. Criar pedido com status "pending" (aguardando PIX para o restante)
-    const [orderResult] = await tx.insert(orders).values({
-      userId,
-      totalAmount,
-      status: "pending",
-      paymentMethod: "balance_pix",
-    });
-
-    const orderId = orderResult.insertId;
-
-    // 5. Criar itens da ordem
-    for (const item of items) {
-      const [product] = await tx.select().from(products).where(eq(products.id, item.productId)).limit(1);
-      if (product) {
-        await tx.insert(orderItems).values({
-          orderId,
-          productId: item.productId,
-          quantity: item.quantity,
-          priceAtPurchase: product.price,
-        });
-      }
-    }
-
-    return { success: true, orderId, remainingAmount, newBalance };
-  });
-
-  return result;
+  await db.delete(products).where(eq(products.id, productId));
 }

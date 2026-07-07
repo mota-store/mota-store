@@ -16,26 +16,22 @@ export default function Home() {
   const [, navigate] = useLocation();
 
   const { data: products, isLoading } = trpc.products.list.useQuery();
-  const { triggerFlyAnimation, invalidateCart, flyAnimations, removeFlyAnimation } = useCart();
+  const { triggerFlyAnimation, invalidateCart } = useCart();
   const utils = trpc.useUtils();
   
   const containerRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   const productsRef = useRef<HTMLElement>(null);
-  const addingProducts = useRef<Set<number>>(new Set());
+  const [isAdding, setIsAdding] = useState<number | null>(null);
   const lastClickTime = useRef<number>(0);
 
-
   const addItem = trpc.cart.addItem.useMutation({
-    onSuccess: (_data, variables) => {
-      addingProducts.current.delete(variables.productId);
+    onSuccess: () => {
+      setIsAdding(null);
       invalidateCart();
     },
-    onError: (_error, variables, context) => {
-      addingProducts.current.delete(variables.productId);
-      if (context?.previousItems) {
-        utils.cart.getItems.setData(undefined, context.previousItems);
-      }
+    onError: () => {
+      setIsAdding(null);
       toast.error("Erro ao adicionar ao carrinho");
       utils.cart.getItems.invalidate();
     }
@@ -45,9 +41,9 @@ export default function Home() {
     e.preventDefault();
     e.stopPropagation();
 
-    // Throttle de 1 segundo para evitar duplo clique rápido
+    // 1. Throttle rigoroso de 2 segundos no frontend
     const now = Date.now();
-    if (now - lastClickTime.current < 1000) return;
+    if (now - lastClickTime.current < 2000) return;
     lastClickTime.current = now;
 
     if (!isAuthenticated) {
@@ -55,7 +51,8 @@ export default function Home() {
       return;
     }
 
-    if (addingProducts.current.has(productId)) return;
+    // 2. Bloqueio por estado de loading
+    if (isAdding !== null) return;
 
     const cartItems = utils.cart.getItems.getData();
     const isAlreadyInCart = cartItems?.some(item => item.productId === productId);
@@ -71,16 +68,12 @@ export default function Home() {
       y: rect.top + rect.height / 2,
     };
 
-    addingProducts.current.add(productId);
+    setIsAdding(productId);
     triggerFlyAnimation(startPos);
+    
+    // Envia a mutação
     addItem.mutate({ productId, quantity: 1 });
   };
-
-  // Lógica de Scroll Snap removida para melhorar performance (reduzir lag)
-  // O site agora utiliza o comportamento de scroll nativo do navegador.
-  useEffect(() => {
-    // Scroll snap nativo pode ser configurado via CSS se necessário
-  }, []);
 
   return (
     <div 
@@ -121,24 +114,24 @@ export default function Home() {
               <p className="text-xl md:text-2xl text-white/80 max-w-2xl mx-auto mb-8 font-bold leading-relaxed drop-shadow-md">
                 Compre Spotify, YouTube, Prime Video e muito mais por um preço que você nunca viu. Entrega instantânea via WhatsApp.
               </p>
-	              <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-		                <Button
-		                  size="lg"
-		                  className="w-full sm:w-auto bg-transparent hover:bg-white/10 border-2 border-accent text-white px-12 py-8 text-xl font-black rounded-[2rem] shadow-2xl shadow-accent/20 transition-all hover:scale-105 active:scale-95 -translate-y-[27px]"
-		                  onClick={() => {
-		                    navigate("/login?tab=register");
-		                  }}
-		                >
-		                  GARANTIR MEU ACESSO
-		                  <ArrowRight className="ml-2 h-6 w-6" />
-		                </Button>
-	              </div>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto bg-transparent hover:bg-white/10 border-2 border-accent text-white px-12 py-8 text-xl font-black rounded-[2rem] shadow-2xl shadow-accent/20 transition-all hover:scale-105 active:scale-95 -translate-y-[27px]"
+                  onClick={() => {
+                    navigate("/login?tab=register");
+                  }}
+                >
+                  GARANTIR MEU ACESSO
+                  <ArrowRight className="ml-2 h-6 w-6" />
+                </Button>
+              </div>
             </motion.div>
           </div>
         </div>
       </section>
       )}
-								
+									
       {/* Trust Badges */}
       {!isAuthenticated && (
         <div className="container px-4 relative z-30 -mt-[362px] sm:-mt-[138px]">
@@ -174,13 +167,6 @@ export default function Home() {
               <p className={`text-muted-foreground text-lg max-w-xl font-medium ${isAuthenticated ? "mt-[10px]" : ""}`}>
                 Escolha o plano que mais combina com você e comece a maratonar hoje mesmo.
               </p>
-            </div>
-            <div className="hidden md:block">
-              <div className="flex gap-2">
-                <div className="h-2 w-12 rounded-full bg-accent" />
-                <div className="h-2 w-2 rounded-full bg-accent/20" />
-                <div className="h-2 w-2 rounded-full bg-accent/20" />
-              </div>
             </div>
           </div>
 
@@ -240,25 +226,20 @@ export default function Home() {
                         <div className="inline-block px-2 py-1 rounded bg-green-500/10 text-green-500 text-[10px] font-black uppercase tracking-widest">
                           ECONOMIZE 50%
                         </div>
-                        {!isAuthenticated && (
-                          <p className="text-[10px] text-muted-foreground font-semibold mt-1">
-                            Conta nova • E-mail novo • Garantia 30 dias
-                          </p>
-                        )}
                       </div>
 
                       <Button
                         type="button"
                         className="w-full bg-accent hover:bg-accent/90 text-white dark:text-accent-foreground font-black py-7 rounded-2xl shadow-xl shadow-accent/20 transition-all text-base active:scale-95"
                         onClick={(e) => handleAddToCart(e, product.id)}
-                        disabled={addItem.isLoading}
+                        disabled={isAdding === product.id}
                       >
-                        {addItem.isLoading ? (
+                        {isAdding === product.id ? (
                           <div className="h-5 w-5 border-2 border-white dark:border-accent-foreground/30 border-t-white dark:border-t-accent-foreground rounded-full animate-spin mr-2" />
                         ) : (
                           <ShoppingCart className="h-5 w-5 mr-2 text-white dark:text-accent-foreground" />
                         )}
-                        {addItem.isLoading ? "ADICIONANDO..." : "ADICIONAR AO CARRINHO"}
+                        {isAdding === product.id ? "ADICIONANDO..." : "ADICIONAR AO CARRINHO"}
                       </Button>
                     </div>
                   </Card>
@@ -277,9 +258,6 @@ export default function Home() {
             <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-6 uppercase">
               POR QUE A <span className="text-accent">MOTA STORE?</span>
             </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto text-lg font-medium">
-              Não somos apenas uma loja, somos a ponte entre você e o melhor conteúdo do mundo.
-            </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -312,20 +290,7 @@ export default function Home() {
         </div>
       </section>
 
-      <FlyAnimationsContainer animations={flyAnimations} onComplete={removeFlyAnimation} />
-      
-      <footer className="py-12 border-t border-border/50">
-        <div className="container px-4 text-center">
-          <div className="flex items-center justify-center gap-2 mb-6">
-            <Zap className="h-6 w-6 text-accent fill-accent" />
-            <span className="text-2xl font-black tracking-tighter">MOTA STORE</span>
-          </div>
-          <p className="text-muted-foreground text-sm font-medium">
-            © 2024 MOTA STORE. Todos os direitos reservados. <br />
-            As marcas citadas são de propriedade de seus respectivos donos.
-          </p>
-        </div>
-      </footer>
+      <FlyAnimationsContainer animations={[]} onAnimationComplete={() => {}} />
     </div>
   );
 }

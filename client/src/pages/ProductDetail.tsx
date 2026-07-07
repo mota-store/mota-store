@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -14,22 +14,19 @@ export default function ProductDetail() {
   const { isAuthenticated } = useAuth();
   const { invalidateCart, triggerFlyAnimation } = useCart();
   const utils = trpc.useUtils();
-  const addingProducts = useRef<Set<number>>(new Set());
+  const [isAdding, setIsAdding] = useState(false);
   const lastClickTime = useRef<number>(0);
 
   const { data: products, isLoading } = trpc.products.list.useQuery();
   const product = products?.find(p => p.id === Number(id));
 
   const addItem = trpc.cart.addItem.useMutation({
-    onSuccess: (_data, variables) => {
-      addingProducts.current.delete(variables.productId);
+    onSuccess: () => {
+      setIsAdding(false);
       invalidateCart();
     },
-    onError: (_error, variables, context) => {
-      addingProducts.current.delete(variables.productId);
-      if (context?.previousItems) {
-        utils.cart.getItems.setData(undefined, context.previousItems);
-      }
+    onError: () => {
+      setIsAdding(false);
       toast.error("Erro ao adicionar ao carrinho");
       utils.cart.getItems.invalidate();
     }
@@ -39,9 +36,9 @@ export default function ProductDetail() {
     e.preventDefault();
     e.stopPropagation();
 
-    // Throttle de 1 segundo para evitar duplo clique rápido
+    // 1. Throttle de 2 segundos
     const now = Date.now();
-    if (now - lastClickTime.current < 1000) return;
+    if (now - lastClickTime.current < 2000) return;
     lastClickTime.current = now;
 
     if (!isAuthenticated) {
@@ -49,9 +46,7 @@ export default function ProductDetail() {
       return;
     }
 
-    if (!product) return;
-
-    if (addingProducts.current.has(product.id)) return;
+    if (!product || isAdding) return;
 
     const cartItems = utils.cart.getItems.getData();
     const isAlreadyInCart = cartItems?.some(item => item.productId === product.id);
@@ -67,7 +62,7 @@ export default function ProductDetail() {
       y: rect.top + rect.height / 2,
     };
 
-    addingProducts.current.add(product.id);
+    setIsAdding(true);
     triggerFlyAnimation(startPos);
     addItem.mutate({ productId: product.id, quantity: 1 });
   };
@@ -108,7 +103,6 @@ export default function ProductDetail() {
             <div className="space-y-4">
               <div className="h-12 bg-muted rounded-lg animate-pulse" />
               <div className="h-8 bg-muted rounded-lg animate-pulse w-1/3" />
-              <div className="h-24 bg-muted rounded-lg animate-pulse" />
             </div>
           </div>
         ) : product ? (
@@ -135,12 +129,10 @@ export default function ProductDetail() {
 
             {/* Informações do Produto */}
             <div className="flex flex-col gap-6">
-              {/* Nome */}
               <div>
                 <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tighter">{product.name}</h1>
               </div>
 
-              {/* Preço */}
               <div className="space-y-2">
                 <div className="flex items-baseline gap-3">
                   <span className="text-5xl font-black text-accent tracking-tighter">R$ 5,00</span>
@@ -151,50 +143,41 @@ export default function ProductDetail() {
                 </div>
               </div>
 
-              {/* Descrição */}
               <div className="space-y-2">
                 <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Descrição</h2>
                 <p className="text-base text-foreground leading-relaxed whitespace-pre-wrap">{product.description}</p>
               </div>
 
-              {/* Benefícios */}
               <div className="space-y-4">
                 <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Benefícios Inclusos</h2>
                 <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm font-medium">Conta nova com e-mail novo</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Shield className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm font-medium">Garantia de 30 dias</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Zap className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm font-medium">Entrega imediata via WhatsApp</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Headphones className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm font-medium">Suporte 24/7</span>
-                  </div>
+                  {[
+                    { icon: <CheckCircle2 className="h-5 w-5 text-green-500" />, text: "Conta nova com e-mail novo" },
+                    { icon: <Shield className="h-5 w-5 text-green-500" />, text: "Garantia de 30 dias" },
+                    { icon: <Zap className="h-5 w-5 text-green-500" />, text: "Entrega imediata via WhatsApp" },
+                    { icon: <Headphones className="h-5 w-5 text-green-500" />, text: "Suporte 24/7" },
+                  ].map((b, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      {b.icon}
+                      <span className="text-sm font-medium">{b.text}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Botão Adicionar ao Carrinho */}
               <Button
                 className="w-full bg-accent hover:bg-accent/90 text-white dark:text-accent-foreground font-black py-8 rounded-2xl shadow-xl shadow-accent/20 transition-all text-base active:scale-95 mt-4"
                 onClick={handleAddToCart}
-                disabled={addItem.isLoading}
+                disabled={isAdding}
               >
-                {addItem.isLoading ? (
+                {isAdding ? (
                   <div className="h-5 w-5 border-2 border-white dark:border-accent-foreground/30 border-t-white dark:border-t-accent-foreground rounded-full animate-spin mr-2" />
                 ) : (
                   <ShoppingCart className="h-5 w-5 mr-2 text-white dark:text-accent-foreground" />
                 )}
-                {addItem.isLoading ? "ADICIONANDO..." : "ADICIONAR AO CARRINHO"}
+                {isAdding ? "ADICIONANDO..." : "ADICIONAR AO CARRINHO"}
               </Button>
 
-              {/* Link Voltar */}
               <Button
                 variant="ghost"
                 className="w-full font-black text-[10px] uppercase tracking-widest text-muted-foreground hover:bg-transparent hover:text-foreground"
