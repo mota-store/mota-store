@@ -21,28 +21,6 @@ export default function ProductDetail() {
   const product = products?.find(p => p.id === Number(id));
 
   const addItem = trpc.cart.addItem.useMutation({
-    onMutate: async (variables) => {
-      await utils.cart.getItems.cancel();
-      const previousItems = utils.cart.getItems.getData();
-      utils.cart.getItems.setData(undefined, (old) => {
-        if (!old) return old;
-        const existing = old.find((item) => item.productId === variables.productId);
-        
-        // Se já existe e a nova quantidade ultrapassaria 5, não atualiza otimisticamente além do limite
-        if (existing) {
-          const newQty = existing.quantity + (variables.quantity ?? 1);
-          if (newQty > 5) return old;
-          
-          return old.map((item) =>
-            item.productId === variables.productId
-              ? { ...item, quantity: newQty }
-              : item
-          );
-        }
-        return old;
-      });
-      return { previousItems };
-    },
     onSuccess: (_data, variables) => {
       addingProducts.current.delete(variables.productId);
       invalidateCart();

@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, unique } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -60,7 +60,9 @@ export const cartItems = mysqlTable("cart_items", {
   productId: int("product_id").notNull().references(() => products.id),
   quantity: int("quantity").default(1).notNull(),
   addedAt: timestamp("added_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  unq: unique().on(table.userId, table.productId),
+}));
 
 export type CartItem = typeof cartItems.$inferSelect;
 export type InsertCartItem = typeof cartItems.$inferInsert;
