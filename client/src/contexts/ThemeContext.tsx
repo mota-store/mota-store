@@ -6,11 +6,11 @@ export const ACCENT_COLORS = [
   { name: "Original", value: "260", hex: "#0F172A" }, // Azul original
   { name: "Roxo", value: "280", hex: "#7C3AED" },
   { name: "Verde", value: "142", hex: "#16A34A" },
-  { name: "Vermelho", value: "25", hex: "#E11D48" }, // Vermelho mais vibrante
+  { name: "Vermelho", value: "25", hex: "#E11D48" }, 
   { name: "Rosa", value: "330", hex: "#DB2777" },
-  { name: "Laranja", value: "45", hex: "#F97316" }, // Laranja puro
+  { name: "Branco", value: "white", hex: "#FFFFFF" }, 
   { name: "Ciano", value: "190", hex: "#0891B2" },
-  { name: "Amarelo", value: "85", hex: "#EAB308" }, // Amarelo Dourado (vibrante)
+  { name: "Amarelo", value: "85", hex: "#EAB308" }, 
 ];
 
 interface ThemeContextType {
@@ -43,7 +43,7 @@ export function ThemeProvider({
   });
 
   const [accentHue, setAccentHue] = useState<string>(() => {
-    return localStorage.getItem("accent-hue") || "260"; // Mantém azul original por padrão
+    return localStorage.getItem("accent-hue") || "260";
   });
 
   useEffect(() => {
@@ -61,7 +61,16 @@ export function ThemeProvider({
 
   useEffect(() => {
     const root = document.documentElement;
-    root.style.setProperty("--accent-hue", accentHue);
+    if (accentHue === "white") {
+      // Se for branco, usamos valores específicos para garantir contraste
+      root.style.setProperty("--accent-hue", "0"); // Não importa o hue
+      root.style.setProperty("--dynamic-accent-light", "#000000"); // Preto no modo claro para contraste
+      root.style.setProperty("--dynamic-accent-dark", "#FFFFFF"); // Branco no modo escuro
+    } else {
+      root.style.setProperty("--accent-hue", accentHue);
+      root.style.removeProperty("--dynamic-accent-light");
+      root.style.removeProperty("--dynamic-accent-dark");
+    }
     localStorage.setItem("accent-hue", accentHue);
   }, [accentHue]);
 

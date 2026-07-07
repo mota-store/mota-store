@@ -395,10 +395,15 @@ export default function Profile() {
                                 ? "border-white shadow-lg scale-105" 
                                 : "border-transparent hover:scale-105"
                             }`}
-                            style={{ backgroundColor: `oklch(0.55 0.25 ${color.value})` }}
+                            style={{ 
+                              backgroundColor: color.value === "white" ? "#FFFFFF" : `oklch(0.55 0.25 ${color.value})`,
+                              border: color.value === "white" ? "1px solid rgba(0,0,0,0.1)" : "none"
+                            }}
                             title={color.name}
                           >
-                            {accentHue === color.value && <Check className="h-5 w-5 text-white drop-shadow-md" />}
+                            {accentHue === color.value && (
+                              <Check className={`h-5 w-5 drop-shadow-md ${color.value === "white" ? "text-black" : "text-white"}`} />
+                            )}
                           </button>
                         ))}
                       </div>

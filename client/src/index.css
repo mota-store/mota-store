@@ -44,12 +44,12 @@
 
 :root {
   /* MOTA STORE - Modo Claro - Paleta Azul Naval/Remo */
-  --primary: oklch(0.45 0.25 var(--accent-hue, 260));
+  --primary: var(--dynamic-accent-light, oklch(0.45 0.25 var(--accent-hue, 260)));
   --primary-foreground: oklch(0.98 0 0);
   --sidebar-primary: oklch(0.42 0.25 var(--accent-hue, 260));
   --sidebar-primary-foreground: oklch(0.98 0 0);
   --chart-1: oklch(0.5 0.22 var(--accent-hue, 260));
-  --chart-2: oklch(0.45 0.25 var(--accent-hue, 260));
+  --chart-2: var(--dynamic-accent-light, oklch(0.45 0.25 var(--accent-hue, 260)));
   --chart-3: oklch(0.4 0.25 var(--accent-hue, 260));
   --chart-4: oklch(0.35 0.25 var(--accent-hue, 260));
   --chart-5: oklch(0.3 0.25 var(--accent-hue, 260));
@@ -60,30 +60,30 @@
   --card-foreground: oklch(0.15 0.02 260);
   --popover: oklch(0.99 0 0);
   --popover-foreground: oklch(0.15 0.02 260);
-  --secondary: oklch(0.45 0.25 var(--accent-hue, 260));
+  --secondary: var(--dynamic-accent-light, oklch(0.45 0.25 var(--accent-hue, 260)));
   --secondary-foreground: oklch(0.98 0 0);
   --muted: oklch(0.85 0.02 260);
   --muted-foreground: oklch(0.45 0.05 260);
-  --accent: oklch(0.45 0.25 var(--accent-hue, 260));
+  --accent: var(--dynamic-accent-light, oklch(0.45 0.25 var(--accent-hue, 260)));
   --accent-foreground: oklch(0.98 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.88 0.01 260);
   --input: oklch(0.9 0.01 260);
-  --ring: oklch(0.45 0.25 var(--accent-hue, 260));
+  --ring: var(--dynamic-accent-light, oklch(0.45 0.25 var(--accent-hue, 260)));
   --sidebar: oklch(0.99 0 0);
   --sidebar-foreground: oklch(0.15 0.02 260);
-  --sidebar-accent: oklch(0.45 0.25 var(--accent-hue, 260));
+  --sidebar-accent: var(--dynamic-accent-light, oklch(0.45 0.25 var(--accent-hue, 260)));
   --sidebar-accent-foreground: oklch(0.15 0.02 260);
   --sidebar-border: oklch(0.88 0.01 260);
-  --sidebar-ring: oklch(0.45 0.25 var(--accent-hue, 260));
+  --sidebar-ring: var(--dynamic-accent-light, oklch(0.45 0.25 var(--accent-hue, 260)));
 }
 
 .dark {
   /* MOTA STORE - Modo Escuro - Paleta Azul Naval/Remo */
-  --primary: oklch(0.55 0.25 var(--accent-hue, 260));
+  --primary: var(--dynamic-accent-dark, oklch(0.55 0.25 var(--accent-hue, 260)));
   --primary-foreground: oklch(0.98 0 0);
-  --sidebar-primary: oklch(0.55 0.25 var(--accent-hue, 260));
+  --sidebar-primary: var(--dynamic-accent-dark, oklch(0.55 0.25 var(--accent-hue, 260)));
   --sidebar-primary-foreground: oklch(0.98 0 0);
   --background: oklch(0.1 0.02 260);
   --foreground: oklch(0.93 0.01 260);
@@ -91,28 +91,28 @@
   --card-foreground: oklch(0.93 0.01 260);
   --popover: oklch(0.16 0.02 260);
   --popover-foreground: oklch(0.93 0.01 260);
-  --secondary: oklch(0.55 0.25 var(--accent-hue, 260));
+  --secondary: var(--dynamic-accent-dark, oklch(0.55 0.25 var(--accent-hue, 260)));
   --secondary-foreground: oklch(0.98 0 0);
   --muted: oklch(0.22 0.02 260);
   --muted-foreground: oklch(0.68 0.05 260);
-  --accent: oklch(0.55 0.25 var(--accent-hue, 260));
+  --accent: var(--dynamic-accent-dark, oklch(0.55 0.25 var(--accent-hue, 260)));
   --accent-foreground: oklch(0.98 0 0);
   --destructive: oklch(0.704 0.191 22.216);
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.22 0.02 260);
   --input: oklch(0.18 0.02 260);
-  --ring: oklch(0.55 0.25 var(--accent-hue, 260));
+  --ring: var(--dynamic-accent-dark, oklch(0.55 0.25 var(--accent-hue, 260)));
   --chart-1: oklch(0.65 0.22 260);
   --chart-2: oklch(0.6 0.25 260);
-  --chart-3: oklch(0.55 0.25 var(--accent-hue, 260));
+  --chart-3: var(--dynamic-accent-dark, oklch(0.55 0.25 var(--accent-hue, 260)));
   --chart-4: oklch(0.5 0.25 260);
-  --chart-5: oklch(0.45 0.25 var(--accent-hue, 260));
+  --chart-5: var(--dynamic-accent-light, oklch(0.45 0.25 var(--accent-hue, 260)));
   --sidebar: oklch(0.12 0.02 260);
   --sidebar-foreground: oklch(0.93 0.01 260);
-  --sidebar-accent: oklch(0.55 0.25 var(--accent-hue, 260));
+  --sidebar-accent: var(--dynamic-accent-dark, oklch(0.55 0.25 var(--accent-hue, 260)));
   --sidebar-accent-foreground: oklch(0.98 0 0);
   --sidebar-border: oklch(0.22 0.02 260);
-  --sidebar-ring: oklch(0.55 0.25 var(--accent-hue, 260));
+  --sidebar-ring: var(--dynamic-accent-dark, oklch(0.55 0.25 var(--accent-hue, 260)));
 }
 
 @layer base {
