@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useLayoutEffect } from "react";
 
 type Theme = "light" | "dark";
 
@@ -46,7 +46,8 @@ export function ThemeProvider({
     return localStorage.getItem("accent-hue") || "260";
   });
 
-  useEffect(() => {
+  // Usar useLayoutEffect para aplicar as classes de tema antes da renderização
+  useLayoutEffect(() => {
     const root = document.documentElement;
     if (theme === "dark") {
       root.classList.add("dark");
@@ -59,13 +60,13 @@ export function ThemeProvider({
     }
   }, [theme, switchable]);
 
-  useEffect(() => {
+  // Aplicar cores de destaque instantaneamente
+  useLayoutEffect(() => {
     const root = document.documentElement;
     if (accentHue === "white") {
-      // Se for branco, usamos valores específicos para garantir contraste
-      root.style.setProperty("--accent-hue", "0"); // Não importa o hue
-      root.style.setProperty("--dynamic-accent-light", "#000000"); // Preto no modo claro para contraste
-      root.style.setProperty("--dynamic-accent-dark", "#FFFFFF"); // Branco no modo escuro
+      root.style.setProperty("--accent-hue", "0");
+      root.style.setProperty("--dynamic-accent-light", "#000000");
+      root.style.setProperty("--dynamic-accent-dark", "#FFFFFF");
     } else {
       root.style.setProperty("--accent-hue", accentHue);
       root.style.removeProperty("--dynamic-accent-light");
@@ -82,6 +83,16 @@ export function ThemeProvider({
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme, switchable, accentHue, setAccentHue }}>
+      {/* 
+        Injetamos um estilo inline dinâmico para garantir que a mudança seja sentida 
+        imediatamente por todos os componentes que dependem de variáveis CSS.
+      */}
+      <style>{`
+        :root {
+          --accent-hue: ${accentHue === "white" ? "0" : accentHue};
+          ${accentHue === "white" ? "--dynamic-accent-light: #000000; --dynamic-accent-dark: #FFFFFF;" : ""}
+        }
+      `}</style>
       {children}
     </ThemeContext.Provider>
   );
