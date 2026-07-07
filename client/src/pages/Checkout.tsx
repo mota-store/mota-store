@@ -34,12 +34,11 @@ export default function Checkout() {
   })) || [];
 
   // Lógica de Preço: 50% de desconto promocional
-  // Se o preço base do produto for 1000 (R$ 10,00), o preço com desconto é 500 (R$ 5,00)
-  const getDiscountedPrice = (originalPrice: number) => Math.floor(originalPrice * 0.5);
+  // REGRA FIXA: Todos os produtos custam R$ 5,00 (500 centavos) independente do preço no banco
+  const getDiscountedPrice = (_originalPrice: number) => 500;
   
   const total = enrichedItems.reduce((acc, item) => {
-    const price = item.product?.price || 1000;
-    return acc + getDiscountedPrice(price) * (item.quantity || 1);
+    return acc + 500 * (item.quantity || 1);
   }, 0);
 
   const hasCashback = user?.hasCashbackBenefit === 1;
@@ -190,14 +189,21 @@ export default function Checkout() {
   };
 
   const handleBack = () => {
-    // Ao voltar da tela de PIX, NÃO removemos o pix_payment do sessionStorage
-    // Isso permite que o Header exiba o ícone de "Pagamento Pendente"
-    
-    // Limpar carrinho ao voltar
+    // Se estivermos em um passo de confirmação, voltamos para a seleção de pagamento
+    if (step === "balance_confirm" || step === "balance_pix_confirm") {
+      setStep("payment");
+      return;
+    }
+
+    // Se estivermos na seleção de pagamento, voltamos para o carrinho
+    if (step === "payment") {
+      navigate("/cart");
+      return;
+    }
+
+    // Para o passo de PIX ou outros, voltamos para a home limpando o estado necessário
     sessionStorage.removeItem("lastOrder");
     navigate("/");
-    // Forçar reload para atualizar estado
-    setTimeout(() => window.location.href = "/", 100);
   };
 
   if (!isAuthenticated) {

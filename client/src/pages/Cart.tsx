@@ -136,8 +136,9 @@ export default function Cart() {
   });
 
   const groupedItems = Array.from(groupedItemsMap.values());
-  // Subtotal agora aplica o desconto de 50% promocional (R$ 5,00 por item)
+  // REGRA FIXA: Todos os produtos custam R$ 5,00 (500 centavos) promocionalmente
   const subtotal = groupedItems.reduce((sum, item) => sum + 500 * item.quantity, 0);
+  // O preço original para exibição é sempre o dobro (R$ 10,00)
   const originalTotal = groupedItems.reduce((sum, item) => sum + 1000 * item.quantity, 0);
   const total = subtotal;
 
