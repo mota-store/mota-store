@@ -33,12 +33,20 @@ export default function Checkout() {
     product: products?.find(p => p.id === item.productId)
   })) || [];
 
-  // Lógica de Preço: 50% de desconto promocional (R$ 5,00 por item)
-  const total = enrichedItems.reduce((acc, item) => acc + 500 * (item.quantity || 1), 0);
+  // Lógica de Preço: 50% de desconto promocional
+  // Se o preço base do produto for 1000 (R$ 10,00), o preço com desconto é 500 (R$ 5,00)
+  const getDiscountedPrice = (originalPrice: number) => Math.floor(originalPrice * 0.5);
+  
+  const total = enrichedItems.reduce((acc, item) => {
+    const price = item.product?.price || 1000;
+    return acc + getDiscountedPrice(price) * (item.quantity || 1);
+  }, 0);
+
   const hasCashback = user?.hasCashbackBenefit === 1;
   const discountAmount = hasCashback ? Math.floor(total * 0.1) : 0;
   const finalTotal = total - discountAmount;
-  // No PIX não tem desconto de 10%
+  
+  // No PIX não tem desconto adicional de 10% de cashback, apenas o desconto de 50% da loja
   const finalTotalPix = total;
   const canPayWithBalance = balance !== undefined && balance > 0 && balance >= finalTotal;
   const canPayWithBalanceAndPix = balance !== undefined && balance > 0 && balance < finalTotal;
@@ -69,7 +77,7 @@ export default function Checkout() {
       const cartItemsPayload = enrichedItems.map(item => ({
         productId: item.productId,
         quantity: Math.max(1, parseInt(String(item.quantity ?? 1), 10) || 1),
-        price: 500,
+        price: getDiscountedPrice(item.product?.price || 1000),
       }));
 
       const result = await checkoutWithBalance.mutateAsync({
@@ -84,7 +92,7 @@ export default function Checkout() {
         const orderInfo = {
           id: result.orderId,
           total: finalTotal,
-          items: enrichedItems.map(i => ({ name: i.product?.name, price: 500 }))
+          items: enrichedItems.map(i => ({ name: i.product?.name, price: getDiscountedPrice(i.product?.price || 1000) }))
         };
         sessionStorage.setItem("lastOrder", JSON.stringify(orderInfo));
         
@@ -121,7 +129,7 @@ export default function Checkout() {
       const cartItemsPayload = enrichedItems.map(item => ({
         productId: item.productId,
         quantity: Math.max(1, parseInt(String(item.quantity ?? 1), 10) || 1),
-        price: 500,
+        price: getDiscountedPrice(item.product?.price || 1000),
       }));
 
       const balanceToUse = balance || 0;
@@ -380,7 +388,7 @@ export default function Checkout() {
                   const orderInfo = {
                     id: orderId,
                     total: finalTotalPix,
-                    items: enrichedItems.map(i => ({ name: i.product?.name, price: 500 }))
+                    items: enrichedItems.map(i => ({ name: i.product?.name, price: getDiscountedPrice(i.product?.price || 1000) }))
                   };
                   sessionStorage.setItem("lastOrder", JSON.stringify(orderInfo));
                   navigate(`/order-confirmation?id=${orderId}`);

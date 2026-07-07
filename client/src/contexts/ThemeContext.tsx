@@ -67,10 +67,13 @@ export function ThemeProvider({
       root.style.setProperty("--accent-hue", "0");
       root.style.setProperty("--dynamic-accent-light", "#000000");
       root.style.setProperty("--dynamic-accent-dark", "#FFFFFF");
+      // Ajustar o foreground para preto quando o fundo for branco para manter contraste
+      root.style.setProperty("--accent-foreground-dynamic", "#000000");
     } else {
       root.style.setProperty("--accent-hue", accentHue);
       root.style.removeProperty("--dynamic-accent-light");
       root.style.removeProperty("--dynamic-accent-dark");
+      root.style.removeProperty("--accent-foreground-dynamic");
     }
     localStorage.setItem("accent-hue", accentHue);
   }, [accentHue]);
@@ -90,7 +93,7 @@ export function ThemeProvider({
       <style>{`
         :root {
           --accent-hue: ${accentHue === "white" ? "0" : accentHue};
-          ${accentHue === "white" ? "--dynamic-accent-light: #000000; --dynamic-accent-dark: #FFFFFF;" : ""}
+          ${accentHue === "white" ? "--dynamic-accent-light: #000000; --dynamic-accent-dark: #FFFFFF; --accent-foreground-dynamic: #000000;" : ""}
         }
       `}</style>
       {children}

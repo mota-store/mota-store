@@ -45,8 +45,9 @@ export const appRouter = router({
           
           console.log(`[Register Auto-Login] Sucesso para: ${input.email}`);
           
+          // O envio de e-mail de boas-vindas foi centralizado aqui
           try {
-            await emailService.sendWelcomeEmail(input.email, input.name);
+            await emailService.sendWelcomeEmail(input.email, result.user.name || input.name);
           } catch (e) {
             console.error("[Register] Failed to send welcome email:", e);
           }

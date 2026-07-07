@@ -83,67 +83,38 @@ async function sendMailViaAPI(options: { to: string; subject: string; html: stri
 }
 
 export async function sendWelcomeEmail(email: string, firstName: string) {
-  const subject = `Sua conta na Mota Store foi criada`;
+  const subject = `Bem-vindo à MOTA STORE`;
 
-  const plainText = `Ola, ${firstName}!
+  const plainText = `Olá, ${firstName}!
 
-Sua conta na Mota Store foi criada com sucesso.
+Sua conta na MOTA STORE foi criada com sucesso.
 
-Agora voce pode acessar a loja, adicionar produtos ao carrinho e aproveitar os melhores servicos digitais.
+Agora você pode acessar a loja e aproveitar nossos serviços.
 
 Acesse sua conta em: ${APP_URL}
 
-Se precisar de ajuda, entre em contato pelo WhatsApp: +55 91 8488-6473
-
 Atenciosamente,
-Equipe Mota Store
-${APP_URL}`;
+Equipe MOTA STORE`;
 
   const html = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bem-vindo a Mota Store</title>
+  <title>Bem-vindo à MOTA STORE</title>
 </head>
-<body style="margin:0;padding:0;background-color:#f4f4f5;font-family:Arial,Helvetica,sans-serif;color:#1e293b;">
-  <!--[if mso]>
-  <style type="text/css">
-    body, table, td {font-family: Arial, Helvetica, sans-serif !important;}
-  </style>
-  <![endif]-->
-  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color:#f4f4f5;padding:40px 0;">
-    <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" role="presentation" style="background-color:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0;max-width:600px;width:100%;" bgcolor="#ffffff">
-          <tr>
-            <td style="background-color:#1e40af;padding:32px 40px;text-align:center;">
-              <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;letter-spacing:1px;">MOTA STORE</h1>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:40px;">
-              <h2 style="margin:0 0 16px 0;color:#1e293b;font-size:20px;font-weight:600;">Ola, ${firstName}!</h2>
-              <p style="margin:0 0 16px 0;color:#475569;font-size:15px;line-height:1.7;">Sua conta foi criada com sucesso. Estamos felizes em ter voce por aqui.</p>
-              <p style="margin:0 0 32px 0;color:#475569;font-size:15px;line-height:1.7;">Acesse a loja para explorar nossos produtos e servicos digitais.</p>
-              <table cellpadding="0" cellspacing="0">
-                <tr>
-                  <td style="background-color:#1e40af;border-radius:6px;">
-                    <a href="${APP_URL}" style="display:inline-block;padding:14px 32px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;letter-spacing:0.5px;">Acessar a Loja</a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:24px 40px;border-top:1px solid #e2e8f0;background-color:#f8fafc;">
-              <p style="margin:0;color:#94a3b8;font-size:12px;line-height:1.6;">Suporte via WhatsApp: +55 91 8488-6473<br>Este e-mail foi enviado para ${email} porque voce criou uma conta na Mota Store.</p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+<body style="margin:0;padding:0;background-color:#ffffff;font-family:sans-serif;color:#333333;">
+  <div style="max-width:600px;margin:20px auto;padding:20px;border:1px solid #eeeeee;border-radius:8px;">
+    <h1 style="color:#1e40af;font-size:24px;text-align:center;">MOTA STORE</h1>
+    <p style="font-size:16px;line-height:1.5;">Olá, <strong>${firstName}</strong>!</p>
+    <p style="font-size:16px;line-height:1.5;">Sua conta foi criada com sucesso. Estamos felizes em ter você conosco.</p>
+    <div style="text-align:center;margin:30px 0;">
+      <a href="${APP_URL}" style="background-color:#1e40af;color:#ffffff;padding:12px 24px;text-decoration:none;border-radius:4px;font-weight:bold;display:inline-block;">Acessar minha conta</a>
+    </div>
+    <p style="font-size:14px;color:#666666;border-top:1px solid #eeeeee;padding-top:20px;margin-top:30px;">
+      Atenciosamente,<br>Equipe MOTA STORE
+    </p>
+  </div>
 </body>
 </html>`;
 

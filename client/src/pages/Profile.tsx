@@ -42,7 +42,7 @@ export default function Profile() {
   const uploadAvatarMutation = trpc.auth.uploadAvatar.useMutation();
   const requestCodeMutation = trpc.auth.requestVerificationCode.useMutation();
 
-  const [isDark, setIsDark] = useState(false);
+
   const [name, setName] = useState(user?.name || "");
   const [showPasswordFields, setShowPasswordFields] = useState(false);
   const [newPassword, setNewPassword] = useState("");
@@ -203,10 +203,7 @@ export default function Profile() {
     }
   };
 
-  useEffect(() => {
-    const isDarkMode = document.documentElement.classList.contains("dark");
-    setIsDark(isDarkMode);
-  }, []);
+
 
   useEffect(() => {
     if (user) {
@@ -214,18 +211,7 @@ export default function Profile() {
     }
   }, [user]);
 
-  const toggleDarkMode = () => {
-    const html = document.documentElement;
-    if (html.classList.contains("dark")) {
-      html.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-      setIsDark(false);
-    } else {
-      html.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-      setIsDark(true);
-    }
-  };
+
 
   useEffect(() => {
     if (!user) {
@@ -260,10 +246,10 @@ export default function Profile() {
             <span className="text-xl font-black text-accent">MOTA STORE</span>
           </div>
           <button
-            onClick={toggleDarkMode}
+            onClick={toggleTheme}
             className="p-2 hover:bg-muted rounded-lg transition-colors"
           >
-            {isDark ? <Sun className="h-5 w-5 text-yellow-500" /> : <Moon className="h-5 w-5 text-accent" />}
+            {theme === "dark" ? <Sun className="h-5 w-5 text-yellow-500" /> : <Moon className="h-5 w-5 text-accent" />}
           </button>
         </div>
       </header>

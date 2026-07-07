@@ -99,17 +99,25 @@ export function registerGoogleOAuthRoutes(app: Express) {
       const name = payload.name || email;
       const picture = payload.picture || null;
 
-      // Verificar se o usuário já existe para saber se é um novo cadastro
-      const existingUser = await db.getUserByOpenId(googleId);
+      // Verificar se o usuário já existe pelo Google ID ou pelo E-mail
+      let existingUser = await db.getUserByOpenId(googleId);
+      
+      if (!existingUser && email) {
+        existingUser = await db.getUserByEmail(email);
+        if (existingUser) {
+          console.log(`[Google OAuth] Vinculando conta existente (${email}) ao Google ID: ${googleId}`);
+        }
+      }
+      
       const isNewUser = !existingUser;
 
       // Salvar ou atualizar usuário no banco
       await db.upsertUser({
         openId: googleId,
-        name: name || null,
-        email: email || null,
+        name: name || (existingUser?.name) || null,
+        email: email || (existingUser?.email) || null,
         loginMethod: "google",
-        avatarUrl: picture,
+        avatarUrl: picture || (existingUser?.avatarUrl) || null,
         lastSignedIn: new Date(),
       });
 
