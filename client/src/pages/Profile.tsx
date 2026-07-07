@@ -396,13 +396,15 @@ export default function Profile() {
                                 : "border-transparent hover:scale-105"
                             }`}
                             style={{ 
-                              backgroundColor: color.value === "white" ? "#FFFFFF" : `oklch(0.55 0.25 ${color.value})`,
-                              border: color.value === "white" ? "1px solid rgba(0,0,0,0.1)" : "none"
+                              backgroundColor: color.value === "white" 
+                                ? (theme === "dark" ? "#FFFFFF" : "#000000") 
+                                : `oklch(0.55 0.25 ${color.value})`,
+                              border: color.value === "white" && theme === "dark" ? "1px solid rgba(255,255,255,0.1)" : "none"
                             }}
                             title={color.name}
                           >
                             {accentHue === color.value && (
-                              <Check className={`h-5 w-5 drop-shadow-md ${color.value === "white" ? "text-black" : "text-white"}`} />
+                              <Check className={`h-5 w-5 drop-shadow-md ${color.value === "white" ? (theme === "dark" ? "text-black" : "text-white") : "text-white"}`} />
                             )}
                           </button>
                         ))}
