@@ -122,16 +122,16 @@ export default function Home() {
                 Compre Spotify, YouTube, Prime Video e muito mais por um preço que você nunca viu. Entrega instantânea via WhatsApp.
               </p>
 	              <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-	                <Button
-	                  size="lg"
-	                  className="w-full sm:w-auto bg-transparent hover:bg-white/10 border-2 border-accent text-white dark:text-black px-12 py-8 text-xl font-black rounded-[2rem] shadow-2xl shadow-accent/20 transition-all hover:scale-105 active:scale-95 -translate-y-[27px]"
-	                  onClick={() => {
-	                    navigate("/login?tab=register");
-	                  }}
-	                >
-	                  GARANTIR MEU ACESSO
-	                  <ArrowRight className="ml-2 h-6 w-6" />
-	                </Button>
+		                <Button
+		                  size="lg"
+		                  className="w-full sm:w-auto bg-transparent hover:bg-white/10 border-2 border-accent text-white dark:!text-black px-12 py-8 text-xl font-black rounded-[2rem] shadow-2xl shadow-accent/20 transition-all hover:scale-105 active:scale-95 -translate-y-[27px]"
+		                  onClick={() => {
+		                    navigate("/login?tab=register");
+		                  }}
+		                >
+		                  GARANTIR MEU ACESSO
+		                  <ArrowRight className="ml-2 h-6 w-6" />
+		                </Button>
 	              </div>
             </motion.div>
           </div>

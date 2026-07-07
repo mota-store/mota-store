@@ -151,13 +151,13 @@ export function Header() {
                 </Button>
               </div>
             ) : (
-	              <Button
-	                size="sm"
-	                className="bg-accent hover:bg-accent/90 text-accent-foreground dark:text-black font-black uppercase tracking-widest px-6 rounded-xl"
-	                onClick={() => navigate("/login?tab=register")}
-	              >
-	                Cadastrar
-	              </Button>
+		              <Button
+		                size="sm"
+		                className="bg-accent hover:bg-accent/90 text-accent-foreground dark:!text-black font-black uppercase tracking-widest px-6 rounded-xl"
+		                onClick={() => navigate("/login?tab=register")}
+		              >
+		                Cadastrar
+		              </Button>
             )}
           </div>
 
@@ -232,16 +232,16 @@ export function Header() {
                     </Button>
                   </>
                 ) : (
-	                    <Button
-	                    size="lg"
-	                    className="w-full bg-accent hover:bg-accent/90 text-accent-foreground dark:text-black font-black uppercase tracking-widest"
-	                    onClick={() => {
-	                      navigate("/login?tab=register");
-	                      setMobileMenuOpen(false);
-	                    }}
-	                  >
-	                    Cadastrar
-	                  </Button>
+		                    <Button
+		                    size="lg"
+		                    className="w-full bg-accent hover:bg-accent/90 text-accent-foreground dark:!text-black font-black uppercase tracking-widest"
+		                    onClick={() => {
+		                      navigate("/login?tab=register");
+		                      setMobileMenuOpen(false);
+		                    }}
+		                  >
+		                    Cadastrar
+		                  </Button>
                 )}
               </div>
             </div>
