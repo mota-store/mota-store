@@ -76,7 +76,7 @@ export default function Checkout() {
       const cartItemsPayload = enrichedItems.map(item => ({
         productId: item.productId,
         quantity: Math.max(1, parseInt(String(item.quantity ?? 1), 10) || 1),
-        price: getDiscountedPrice(item.product?.price || 1000),
+        price: 500,
       }));
 
       const result = await checkoutWithBalance.mutateAsync({
@@ -91,7 +91,7 @@ export default function Checkout() {
         const orderInfo = {
           id: result.orderId,
           total: finalTotal,
-          items: enrichedItems.map(i => ({ name: i.product?.name, price: getDiscountedPrice(i.product?.price || 1000) }))
+          items: enrichedItems.map(i => ({ name: i.product?.name, price: 500 }))
         };
         sessionStorage.setItem("lastOrder", JSON.stringify(orderInfo));
         
@@ -128,7 +128,7 @@ export default function Checkout() {
       const cartItemsPayload = enrichedItems.map(item => ({
         productId: item.productId,
         quantity: Math.max(1, parseInt(String(item.quantity ?? 1), 10) || 1),
-        price: getDiscountedPrice(item.product?.price || 1000),
+        price: 500,
       }));
 
       const balanceToUse = balance || 0;
@@ -189,19 +189,16 @@ export default function Checkout() {
   };
 
   const handleBack = () => {
-    // Se estivermos em um passo de confirmação, voltamos para a seleção de pagamento
     if (step === "balance_confirm" || step === "balance_pix_confirm") {
       setStep("payment");
       return;
     }
 
-    // Se estivermos na seleção de pagamento, voltamos para o carrinho
     if (step === "payment") {
       navigate("/cart");
       return;
     }
 
-    // Para o passo de PIX ou outros, voltamos para a home limpando o estado necessário
     sessionStorage.removeItem("lastOrder");
     navigate("/");
   };
@@ -332,28 +329,34 @@ export default function Checkout() {
             </div>
           )}
 
+          {/* Balance + PIX Confirmation */}
           {step === "balance_pix_confirm" && (
             <div className="text-center space-y-6 animate-in fade-in zoom-in duration-500">
-              <div className="inline-flex items-center justify-center h-20 w-20 rounded-[2rem] bg-blue-500/10 border border-blue-500/20">
-                <Wallet className="h-10 w-10 text-blue-500" />
+              <div className="flex gap-4 justify-center">
+                <div className="inline-flex items-center justify-center h-16 w-16 rounded-[1.5rem] bg-green-500/10 border border-green-500/20">
+                  <Wallet className="h-8 w-8 text-green-500" />
+                </div>
+                <div className="inline-flex items-center justify-center h-16 w-16 rounded-[1.5rem] bg-accent/10 border border-accent/20">
+                  <QrCode className="h-8 w-8 text-accent" />
+                </div>
               </div>
               <div>
-                <h2 className="text-2xl font-black tracking-tighter uppercase">Saldo + <span className="text-blue-500">PIX</span></h2>
-                <p className="text-xs text-muted-foreground mt-2">Seu saldo será usado e o restante será cobrado via PIX</p>
+                <h2 className="text-2xl font-black tracking-tighter uppercase">Pagamento <span className="text-accent">Misto</span></h2>
+                <p className="text-xs text-muted-foreground mt-2">Saldo + PIX para completar o valor</p>
               </div>
-              <div className="bg-card/30 rounded-2xl p-6 border border-border/30 space-y-3">
+              <div className="bg-card/30 rounded-2xl p-6 border border-border/30 space-y-3 w-full max-w-sm">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Total da compra</span>
-                  <span className="font-black text-accent">R$ {(finalTotalPix / 100).toFixed(2).replace(".", ",")}</span>
+                  <span className="text-muted-foreground">Valor Total</span>
+                  <span className="font-black">R$ {(finalTotalPix / 100).toFixed(2).replace(".", ",")}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Saldo a usar</span>
-                  <span className="font-black text-green-500">- R$ {((balance || 0) / 100).toFixed(2).replace(".", ",")}</span>
+                <div className="flex justify-between text-sm text-green-500">
+                  <span className="font-bold">Usar do Saldo</span>
+                  <span className="font-black">- R$ {((balance || 0) / 100).toFixed(2).replace(".", ",")}</span>
                 </div>
                 <div className="h-px bg-border/50" />
                 <div className="flex justify-between text-sm font-black">
-                  <span>Valor do PIX</span>
-                  <span className="text-blue-500">R$ {((finalTotalPix - (balance || 0)) / 100).toFixed(2).replace(".", ",")}</span>
+                  <span>Pagar via PIX</span>
+                  <span className="text-accent text-lg">R$ {((finalTotalPix - (balance || 0)) / 100).toFixed(2).replace(".", ",")}</span>
                 </div>
               </div>
               <div className="flex gap-3">
@@ -367,140 +370,112 @@ export default function Checkout() {
                 <Button
                   onClick={handleBalanceAndPix}
                   disabled={isSubmitting}
-                  className="bg-blue-600 hover:bg-blue-700 font-black rounded-2xl px-8 py-6 shadow-xl shadow-blue-600/20 uppercase tracking-widest"
+                  className="bg-accent hover:bg-accent/90 font-black rounded-2xl px-8 py-6 shadow-xl shadow-accent/20 uppercase tracking-widest"
                 >
-                  {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : (
-                    <>
-                      <QrCode className="h-5 w-5 mr-2" />
-                      Confirmar e Gerar PIX
-                    </>
-                  )}
+                  {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : "Gerar QR Code"}
                 </Button>
               </div>
             </div>
           )}
 
-          {/* PIX Payment */}
-          {step === "pix" && pixData && orderId && (
-            <div className="w-full animate-in fade-in zoom-in duration-500">
-              <PixPayment 
-                pixCode={pixData.pixCode}
-                qrCodeBase64={pixData.qrCodeBase64}
-                expiresIn={600}
-                amount={pixData.amount}
-                  onPaymentConfirmed={() => {
-                  sessionStorage.removeItem("pix_payment");
-                  sessionStorage.removeItem("pix_expiry_time");
-                  const orderInfo = {
-                    id: orderId,
-                    total: finalTotalPix,
-                    items: enrichedItems.map(i => ({ name: i.product?.name, price: getDiscountedPrice(i.product?.price || 1000) }))
-                  };
-                  sessionStorage.setItem("lastOrder", JSON.stringify(orderInfo));
-                  navigate(`/order-confirmation?id=${orderId}`);
-                }}
-              />
-            </div>
-          )}
-          
-          {/* Payment Method Selection */}
+          {/* Payment Selection */}
           {step === "payment" && (
-            <div className="w-full max-w-md mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="text-center space-y-1">
-                <h2 className="text-2xl font-black tracking-tighter uppercase">Escolha o <span className="text-accent">Método</span></h2>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Selecione sua forma de pagamento</p>
+            <div className="w-full space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="text-center mb-8">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-2">Escolha como pagar</p>
+                <h2 className="text-2xl font-black tracking-tighter uppercase">MÉTODO DE <span className="text-accent">PAGAMENTO</span></h2>
               </div>
 
-              <div className="space-y-3">
-                {canPayWithBalance && (
-                  <button
-                    onClick={() => setStep("balance_confirm")}
-                    disabled={isSubmitting}
-                    className="w-full group relative overflow-hidden rounded-[2rem] border border-green-500/20 bg-green-500/5 p-6 text-left transition-all hover:bg-green-500/10 hover:border-green-500/40 active:scale-[0.98] disabled:opacity-50"
-                  >
-                    <div className="flex items-center gap-5">
-                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-green-500/10 text-green-500 transition-transform group-hover:scale-110 group-hover:rotate-3">
-                        <Wallet className="h-8 w-8" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-sm font-black uppercase tracking-widest text-green-500">Pagar com Saldo</h3>
-                        <p className="text-[10px] font-medium text-muted-foreground mt-1 uppercase tracking-wider">Descontar da carteira</p>
-                      </div>
-                      <div className="text-right">
-                        <div className="flex flex-col items-end">
-                          {hasCashback && (
-                            <span className="px-1.5 py-0.5 rounded-md bg-green-500 text-[7px] font-black text-white uppercase mb-1">10% OFF</span>
-                          )}
-                          <p className="text-xs font-black text-green-500 uppercase tracking-tighter">
-                            {hasCashback ? (
-                              <>
-                                <span className="line-through opacity-50 mr-1 text-[10px]">R$ {(total / 100).toFixed(2).replace(".", ",")}</span>
-                                R$ {(finalTotal / 100).toFixed(2).replace(".", ",")}
-                              </>
-                            ) : (
-                              `R$ ${(total / 100).toFixed(2).replace(".", ",")}`
-                            )}
-                          </p>
-                        </div>
-                        <p className="text-[8px] font-black text-green-500/60 uppercase tracking-widest mt-1">Pagar com Saldo</p>
-                      </div>
-                    </div>
-                  </button>
-                )}
-
-                {canPayWithBalanceAndPix && (
-                  <button
-                    onClick={() => setStep("balance_pix_confirm")}
-                    disabled={isSubmitting}
-                    className="w-full group relative overflow-hidden rounded-[2rem] border border-blue-500/20 bg-blue-500/5 p-6 text-left transition-all hover:bg-blue-500/10 hover:border-blue-500/40 active:scale-[0.98] disabled:opacity-50"
-                  >
-                    <div className="flex items-center gap-5">
-                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-500 transition-transform group-hover:scale-110 group-hover:rotate-3">
-                        <Wallet className="h-8 w-8" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-sm font-black uppercase tracking-widest text-blue-500">Saldo + PIX</h3>
-                        <p className="text-[10px] font-medium text-muted-foreground mt-1 uppercase tracking-wider">
-                          Usar R$ {((balance || 0) / 100).toFixed(2).replace(".", ",")} do saldo + PIX para o restante
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs font-black text-blue-500 uppercase tracking-tighter">
-                          PIX: R$ {((finalTotalPix - (balance || 0)) / 100).toFixed(2).replace(".", ",")}
-                        </p>
-                        <p className="text-[8px] font-black text-blue-500/60 uppercase tracking-widest mt-1">Restante</p>
-                      </div>
-                    </div>
-                  </button>
-                )}
-
+              <div className="grid gap-3">
+                {/* Option: Balance */}
                 <button
-                  onClick={handleConfirmOrder}
-                  disabled={isSubmitting}
-                  className="w-full group relative overflow-hidden rounded-[2rem] border border-accent/20 bg-accent/5 p-6 text-left transition-all hover:bg-accent/10 hover:border-accent/40 active:scale-[0.98] disabled:opacity-50"
+                  onClick={() => setStep("balance_confirm")}
+                  disabled={!canPayWithBalance}
+                  className={`group relative flex items-center gap-4 p-6 rounded-[2rem] border-2 transition-all text-left ${
+                    canPayWithBalance 
+                      ? "bg-card/40 border-border/50 hover:border-green-500/50 hover:bg-green-500/5 shadow-lg hover:shadow-green-500/10" 
+                      : "opacity-40 cursor-not-allowed border-transparent bg-muted/20"
+                  }`}
                 >
-                  <div className="flex items-center gap-5">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/10 text-accent transition-transform group-hover:scale-110 group-hover:-rotate-3">
-                      {isSubmitting ? <Loader2 className="h-8 w-8 animate-spin" /> : <QrCode className="h-8 w-8" />}
+                  <div className={`h-14 w-14 rounded-2xl flex items-center justify-center transition-colors ${canPayWithBalance ? "bg-green-500/10 text-green-500 group-hover:bg-green-500 group-hover:text-white" : "bg-muted text-muted-foreground"}`}>
+                    <Wallet className="h-7 w-7" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-black uppercase tracking-tight">Saldo da Carteira</span>
+                      {canPayWithBalance && <span className="text-[10px] font-black bg-green-500/20 text-green-600 px-2 py-0.5 rounded-full uppercase">Disponível</span>}
                     </div>
-                    <div className="flex-1">
-                      <h3 className="text-sm font-black uppercase tracking-widest text-accent">Pagar com PIX</h3>
-                      <p className="text-[10px] font-medium text-muted-foreground mt-1 uppercase tracking-wider">Aprovação imediata</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs font-black text-accent uppercase tracking-tighter">R$ {(finalTotalPix / 100).toFixed(2).replace(".", ",")}</p>
-                      <p className="text-[8px] font-black text-accent/60 uppercase tracking-widest mt-1">Total</p>
-                    </div>
+                    <p className="text-xs text-muted-foreground font-medium">
+                      {balance !== undefined ? `Seu saldo: R$ ${(balance / 100).toFixed(2).replace(".", ",")}` : "Carregando saldo..."}
+                    </p>
                   </div>
                 </button>
 
-                {!canPayWithBalance && balance !== undefined && (
-                  <div className="px-6 py-3 text-center">
-                    <p className="text-[9px] font-black uppercase tracking-[0.15em] text-muted-foreground/60">
-                      Saldo insuficiente (R$ {((balance || 0) / 100).toFixed(2).replace(".", ",")}) para pagar {hasCashback ? "R$ " + (finalTotal / 100).toFixed(2).replace(".", ",") : "com carteira"}
-                    </p>
-                  </div>
+                {/* Option: Balance + PIX */}
+                {canPayWithBalanceAndPix && (
+                  <button
+                    onClick={() => setStep("balance_pix_confirm")}
+                    className="group relative flex items-center gap-4 p-6 rounded-[2rem] border-2 bg-card/40 border-border/50 hover:border-accent/50 hover:bg-accent/5 transition-all text-left shadow-lg hover:shadow-accent/10"
+                  >
+                    <div className="h-14 w-14 rounded-2xl bg-accent/10 text-accent flex items-center justify-center group-hover:bg-accent group-hover:text-white transition-colors">
+                      <div className="relative">
+                        <Wallet className="h-6 w-6" />
+                        <Plus className="h-3 w-3 absolute -top-1 -right-1" />
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-black uppercase tracking-tight text-sm">Saldo + PIX</span>
+                        <span className="text-[10px] font-black bg-accent/20 text-accent px-2 py-0.5 rounded-full uppercase">Recomendado</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground font-medium">Use seu saldo e pague o restante via PIX</p>
+                    </div>
+                  </button>
                 )}
+
+                {/* Option: PIX */}
+                <button
+                  onClick={handleConfirmOrder}
+                  disabled={isSubmitting}
+                  className="group relative flex items-center gap-4 p-6 rounded-[2rem] border-2 bg-card/40 border-border/50 hover:border-accent/50 hover:bg-accent/5 transition-all text-left shadow-lg hover:shadow-accent/10"
+                >
+                  <div className="h-14 w-14 rounded-2xl bg-accent/10 text-accent flex items-center justify-center group-hover:bg-accent group-hover:text-white transition-colors">
+                    <QrCode className="h-7 w-7" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-black uppercase tracking-tight">Pagar com PIX</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground font-medium">Aprovação instantânea e segura</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* PIX Payment Component */}
+          {step === "pix" && pixData && (
+            <div className="w-full max-w-md animate-in fade-in zoom-in duration-500">
+              <PixPayment
+                pixCode={pixData.pixCode}
+                qrCodeBase64={pixData.qrCodeBase64}
+                amount={pixData.amount || finalTotalPix}
+                expiresIn={pixData.expiresIn}
+                orderId={orderId!}
+                onSuccess={(orderId) => navigate(`/order-confirmation?id=${orderId}`)}
+              />
+              
+              <div className="mt-6 text-center">
+                <button 
+                  onClick={() => {
+                    sessionStorage.removeItem("pix_payment");
+                    sessionStorage.removeItem("pix_expiry_time");
+                    setStep("payment");
+                  }}
+                  className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-accent transition-colors"
+                >
+                  Cancelar e escolher outro método
+                </button>
               </div>
 
               {isSubmitting && (
