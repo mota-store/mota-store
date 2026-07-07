@@ -2,10 +2,23 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 
 type Theme = "light" | "dark";
 
+export const ACCENT_COLORS = [
+  { name: "Original", value: "260", hex: "#0F172A" }, // Azul original
+  { name: "Roxo", value: "280", hex: "#7C3AED" },
+  { name: "Verde", value: "142", hex: "#16A34A" },
+  { name: "Vermelho", value: "25", hex: "#DC2626" },
+  { name: "Rosa", value: "330", hex: "#DB2777" },
+  { name: "Laranja", value: "45", hex: "#EA580C" },
+  { name: "Ciano", value: "190", hex: "#0891B2" },
+  { name: "Amarelo", value: "85", hex: "#CA8A04" },
+];
+
 interface ThemeContextType {
   theme: Theme;
   toggleTheme?: () => void;
   switchable: boolean;
+  accentHue: string;
+  setAccentHue: (hue: string) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -29,6 +42,10 @@ export function ThemeProvider({
     return defaultTheme;
   });
 
+  const [accentHue, setAccentHue] = useState<string>(() => {
+    return localStorage.getItem("accent-hue") || "260"; // Mantém azul original por padrão
+  });
+
   useEffect(() => {
     const root = document.documentElement;
     if (theme === "dark") {
@@ -42,6 +59,12 @@ export function ThemeProvider({
     }
   }, [theme, switchable]);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty("--accent-hue", accentHue);
+    localStorage.setItem("accent-hue", accentHue);
+  }, [accentHue]);
+
   const toggleTheme = switchable
     ? () => {
         setTheme(prev => (prev === "light" ? "dark" : "light"));
@@ -49,7 +72,7 @@ export function ThemeProvider({
     : undefined;
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, switchable }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, switchable, accentHue, setAccentHue }}>
       {children}
     </ThemeContext.Provider>
   );

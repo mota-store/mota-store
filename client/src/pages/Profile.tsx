@@ -1,16 +1,18 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useTheme, ACCENT_COLORS } from "@/contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
-import { ArrowLeft, LogOut, ShoppingBag, Moon, Sun, Check, Loader2, Lock, Eye, EyeOff, Mail, ShoppingCart, Gift, Wallet, Send, Camera } from "lucide-react";
+import { ArrowLeft, LogOut, ShoppingBag, Moon, Sun, Check, Loader2, Lock, Eye, EyeOff, Mail, ShoppingCart, Gift, Wallet, Send, Camera, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 
 export default function Profile() {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme, accentHue, setAccentHue } = useTheme();
   const [, navigate] = useLocation();
   const utils = trpc.useUtils();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -376,6 +378,31 @@ export default function Profile() {
                   </div>
 
                   <div className="w-full space-y-4 pt-4 text-left">
+                    {/* Seletor de Cores Dinâmico */}
+                    <div className="p-4 rounded-2xl bg-card/50 border border-border/40 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="h-4 w-4 text-accent" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Cor de Destaque</span>
+                      </div>
+                      <div className="grid grid-cols-4 gap-2">
+                        {ACCENT_COLORS.map((color) => (
+                          <button
+                            key={color.value}
+                            type="button"
+                            onClick={() => setAccentHue(color.value)}
+                            className={`h-10 rounded-xl border-2 transition-all active:scale-90 flex items-center justify-center ${
+                              accentHue === color.value 
+                                ? "border-white shadow-lg scale-105" 
+                                : "border-transparent hover:scale-105"
+                            }`}
+                            style={{ backgroundColor: color.hex }}
+                            title={color.name}
+                          >
+                            {accentHue === color.value && <Check className="h-5 w-5 text-white drop-shadow-md" />}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                     <div className="p-4 rounded-2xl bg-muted/30 border border-border/50">
                       <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">E-mail da Conta</span>
                       <p className="font-bold text-sm truncate">{user.email}</p>

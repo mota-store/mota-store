@@ -38,6 +38,8 @@ export default function Checkout() {
   const hasCashback = user?.hasCashbackBenefit === 1;
   const discountAmount = hasCashback ? Math.floor(total * 0.1) : 0;
   const finalTotal = total - discountAmount;
+  // No PIX não tem desconto de 10%
+  const finalTotalPix = total;
   const canPayWithBalance = balance !== undefined && balance > 0 && balance >= finalTotal;
   const canPayWithBalanceAndPix = balance !== undefined && balance > 0 && balance < finalTotal;
 
@@ -123,8 +125,9 @@ export default function Checkout() {
       }));
 
       const balanceToUse = balance || 0;
+      // No pagamento misto (Saldo + PIX), o desconto de 10% também não se aplica ao valor total
       const result = await checkoutWithBalanceAndPix.mutateAsync({
-        totalAmount: finalTotal,
+        totalAmount: finalTotalPix,
         balanceToUse,
         cartItems: cartItemsPayload,
       });
@@ -158,11 +161,12 @@ export default function Checkout() {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      const order = await createOrder.mutateAsync({ totalAmount: finalTotal });
+      // No PIX não tem desconto de 10%
+      const order = await createOrder.mutateAsync({ totalAmount: finalTotalPix });
       setOrderId(order.id);
       
-      const pix = await createPix.mutateAsync({ orderId: order.id, amount: finalTotal / 100 });
-      const pixWithExpiry = { ...pix, expiresIn: 600, orderId: order.id, amount: finalTotal };
+      const pix = await createPix.mutateAsync({ orderId: order.id, amount: finalTotalPix / 100 });
+      const pixWithExpiry = { ...pix, expiresIn: 600, orderId: order.id, amount: finalTotalPix };
       
       sessionStorage.removeItem("pix_expiry_time");
       
@@ -326,7 +330,7 @@ export default function Checkout() {
               <div className="bg-card/30 rounded-2xl p-6 border border-border/30 space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Total da compra</span>
-                  <span className="font-black text-accent">R$ {(finalTotal / 100).toFixed(2).replace(".", ",")}</span>
+                  <span className="font-black text-accent">R$ {(finalTotalPix / 100).toFixed(2).replace(".", ",")}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Saldo a usar</span>
@@ -335,7 +339,7 @@ export default function Checkout() {
                 <div className="h-px bg-border/50" />
                 <div className="flex justify-between text-sm font-black">
                   <span>Valor do PIX</span>
-                  <span className="text-blue-500">R$ {((finalTotal - (balance || 0)) / 100).toFixed(2).replace(".", ",")}</span>
+                  <span className="text-blue-500">R$ {((finalTotalPix - (balance || 0)) / 100).toFixed(2).replace(".", ",")}</span>
                 </div>
               </div>
               <div className="flex gap-3">
@@ -370,12 +374,12 @@ export default function Checkout() {
                 qrCodeBase64={pixData.qrCodeBase64}
                 expiresIn={600}
                 amount={pixData.amount}
-                onPaymentConfirmed={() => {
+                  onPaymentConfirmed={() => {
                   sessionStorage.removeItem("pix_payment");
                   sessionStorage.removeItem("pix_expiry_time");
                   const orderInfo = {
                     id: orderId,
-                    total: finalTotal,
+                    total: finalTotalPix,
                     items: enrichedItems.map(i => ({ name: i.product?.name, price: 500 }))
                   };
                   sessionStorage.setItem("lastOrder", JSON.stringify(orderInfo));
@@ -448,7 +452,7 @@ export default function Checkout() {
                       </div>
                       <div className="text-right">
                         <p className="text-xs font-black text-blue-500 uppercase tracking-tighter">
-                          PIX: R$ {((finalTotal - (balance || 0)) / 100).toFixed(2).replace(".", ",")}
+                          PIX: R$ {((finalTotalPix - (balance || 0)) / 100).toFixed(2).replace(".", ",")}
                         </p>
                         <p className="text-[8px] font-black text-blue-500/60 uppercase tracking-widest mt-1">Restante</p>
                       </div>
@@ -470,7 +474,7 @@ export default function Checkout() {
                       <p className="text-[10px] font-medium text-muted-foreground mt-1 uppercase tracking-wider">Aprovação imediata</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs font-black text-accent uppercase tracking-tighter">R$ {(finalTotal / 100).toFixed(2).replace(".", ",")}</p>
+                      <p className="text-xs font-black text-accent uppercase tracking-tighter">R$ {(finalTotalPix / 100).toFixed(2).replace(".", ",")}</p>
                       <p className="text-[8px] font-black text-accent/60 uppercase tracking-widest mt-1">Total</p>
                     </div>
                   </div>
