@@ -29,8 +29,6 @@ export const appRouter = router({
         
         if (result.success && result.user) {
           const { sdk } = await import("./_core/sdk");
-          const { getSessionCookieOptions } = await import("./_core/cookies");
-          const { COOKIE_NAME, ONE_YEAR_MS } = await import("@shared/const");
           
           const token = await sdk.createSessionToken(result.user.openId, {
             name: result.user.name || input.name || result.user.email?.split("@")[0] || "Usuário",
@@ -45,12 +43,10 @@ export const appRouter = router({
           
           console.log(`[Register Auto-Login] Sucesso para: ${input.email}`);
           
-          // O envio de e-mail de boas-vindas foi centralizado aqui
-          try {
-            await emailService.sendWelcomeEmail(input.email, result.user.name || input.name);
-          } catch (e) {
+          // Envio de e-mail simplificado
+          emailService.sendWelcomeEmail(input.email, result.user.name || input.name).catch(e => {
             console.error("[Register] Failed to send welcome email:", e);
-          }
+          });
 
           return { success: true, user: result.user };
         }
@@ -125,7 +121,6 @@ export const appRouter = router({
       .input(z.object({ email: z.string().email() }))
       .mutation(async ({ input }) => {
         const { getUserByEmail, setResetToken } = await import("./db");
-        const { sendPasswordResetEmail } = await import("./email");
         const crypto = await import("crypto");
         
         const user = await getUserByEmail(input.email);
@@ -136,11 +131,9 @@ export const appRouter = router({
 
         await setResetToken(user.id, token, expires);
         
-        try {
-          await emailService.sendPasswordResetEmail(user.email!, user.name || "Cliente", token);
-        } catch (e) {
+        emailService.sendPasswordResetEmail(user.email!, user.name || "Cliente", token).catch(e => {
           console.error("[ForgotPassword] Failed to send reset email:", e);
-        }
+        });
         
         return { success: true };
       }),
@@ -163,18 +156,15 @@ export const appRouter = router({
     requestVerificationCode: protectedProcedure
       .mutation(async ({ ctx }) => {
         const { setResetToken } = await import("./db");
-        const { sendVerificationCodeEmail } = await import("./email");
         
         const code = Math.floor(1000 + Math.random() * 9000).toString();
         const expires = new Date(Date.now() + 600000);
 
         await setResetToken(ctx.user.id, code, expires);
         
-        try {
-          await emailService.sendVerificationCodeEmail(ctx.user.email!, ctx.user.name || "Cliente", code);
-        } catch (e) {
+        emailService.sendVerificationCodeEmail(ctx.user.email!, ctx.user.name || "Cliente", code).catch(e => {
           console.error("[VerificationCode] Failed to send code email:", e);
-        }
+        });
         
         return { success: true };
       }),
