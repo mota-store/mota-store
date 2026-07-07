@@ -202,12 +202,12 @@ export function PixPayment({
           >
             {copied ? (
               <>
-                <CheckCircle2 className="h-5 w-5" />
+                <CheckCircle2 className="h-5 w-5 text-white dark:text-accent-foreground" />
                 Código Copiado!
               </>
             ) : (
               <>
-                <Copy className="h-5 w-5" />
+                <Copy className="h-5 w-5 text-white dark:text-accent-foreground" />
                 Pix Copia e Cola
               </>
             )}

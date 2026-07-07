@@ -187,9 +187,9 @@ export default function ProductDetail() {
                 disabled={addItem.isLoading}
               >
                 {addItem.isLoading ? (
-                  <div className="h-5 w-5 border-2 border-accent-foreground/30 border-t-accent-foreground rounded-full animate-spin mr-2" />
+                  <div className="h-5 w-5 border-2 border-white dark:border-accent-foreground/30 border-t-white dark:border-t-accent-foreground rounded-full animate-spin mr-2" />
                 ) : (
-                  <ShoppingCart className="h-5 w-5 mr-2" />
+                  <ShoppingCart className="h-5 w-5 mr-2 text-white dark:text-accent-foreground" />
                 )}
                 {addItem.isLoading ? "ADICIONANDO..." : "ADICIONAR AO CARRINHO"}
               </Button>
