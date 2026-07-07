@@ -395,7 +395,7 @@ export default function Profile() {
                                 ? "border-white shadow-lg scale-105" 
                                 : "border-transparent hover:scale-105"
                             }`}
-                            style={{ backgroundColor: color.hex }}
+                            style={{ backgroundColor: `oklch(0.55 0.25 ${color.value})` }}
                             title={color.name}
                           >
                             {accentHue === color.value && <Check className="h-5 w-5 text-white drop-shadow-md" />}
