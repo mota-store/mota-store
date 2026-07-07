@@ -153,7 +153,7 @@ export function Header() {
             ) : (
 		              <Button
 		                size="sm"
-		                className="bg-accent hover:bg-accent/90 text-accent-foreground dark:!text-black font-black uppercase tracking-widest px-6 rounded-xl"
+		                className="bg-accent hover:bg-accent/90 text-white font-black uppercase tracking-widest px-6 rounded-xl"
 		                onClick={() => navigate("/login?tab=register")}
 		              >
 		                Cadastrar
@@ -234,7 +234,7 @@ export function Header() {
                 ) : (
 		                    <Button
 		                    size="lg"
-		                    className="w-full bg-accent hover:bg-accent/90 text-accent-foreground dark:!text-black font-black uppercase tracking-widest"
+		                    className="w-full bg-accent hover:bg-accent/90 text-white font-black uppercase tracking-widest"
 		                    onClick={() => {
 		                      navigate("/login?tab=register");
 		                      setMobileMenuOpen(false);
