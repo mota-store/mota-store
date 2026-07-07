@@ -257,12 +257,12 @@ export default function Checkout() {
           <h1 className="text-3xl font-black tracking-tighter uppercase">PAGA<span className="text-accent">MENTO</span></h1>
         </div>
 
-        {/* Resumo do valor - Oculto nas etapas de pagamento e PIX conforme solicitado */}
-        {step === "balance_confirm" && (
-          <div className="flex-shrink-0 p-4 rounded-2xl bg-card/30 border border-border/30 mb-4">
+        {/* Resumo do valor - Exibido na seleção de pagamento também */}
+        {(step === "payment" || step === "balance_confirm") && (
+          <div className="flex-shrink-0 p-4 rounded-2xl bg-card/30 border border-border/30 mb-4 animate-in fade-in slide-in-from-top-4 duration-500">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Valor Total</span>
-              <span className="text-xl font-black text-accent">R$ {(total / 100).toFixed(2).replace(".", ",")}</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total do Pedido</span>
+              <span className="text-xl font-black text-accent tracking-tighter">R$ {(finalTotalPix / 100).toFixed(2).replace(".", ",")}</span>
             </div>
           </div>
         )}
@@ -448,6 +448,17 @@ export default function Checkout() {
                     </div>
                     <p className="text-xs text-muted-foreground font-medium">Aprovação instantânea e segura</p>
                   </div>
+                </button>
+              </div>
+
+              <div className="mt-8 text-center">
+                <button
+                  onClick={() => navigate("/cart")}
+                  className="group inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  <span className="h-px w-4 bg-muted-foreground/30 group-hover:bg-destructive/30 transition-colors" />
+                  Cancelar Pagamento e Voltar
+                  <span className="h-px w-4 bg-muted-foreground/30 group-hover:bg-destructive/30 transition-colors" />
                 </button>
               </div>
             </div>
