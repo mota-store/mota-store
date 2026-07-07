@@ -276,14 +276,14 @@ export default function Profile() {
                   </div>
                   
                   {/* Botão de Upload */}
-                  <button
-                    type="button"
-                    disabled={isUploading}
-                    onClick={() => fileInputRef.current?.click()}
-                    className="absolute -bottom-2 -right-2 h-10 w-10 bg-accent text-accent-foreground rounded-xl flex items-center justify-center shadow-lg hover:scale-110 transition-transform active:scale-95 border-4 border-card"
-                  >
-                    <Camera className="h-5 w-5" />
-                  </button>
+	                  <button
+	                    type="button"
+	                    disabled={isUploading}
+	                    onClick={() => fileInputRef.current?.click()}
+	                    className="absolute -bottom-2 -right-2 h-10 w-10 bg-accent text-white dark:text-accent-foreground rounded-xl flex items-center justify-center shadow-lg hover:scale-110 transition-transform active:scale-95 border-4 border-card"
+	                  >
+	                    <Camera className="h-5 w-5 text-white dark:text-accent-foreground" />
+	                  </button>
                   <input
                     type="file"
                     ref={fileInputRef}
