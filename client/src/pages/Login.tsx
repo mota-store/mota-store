@@ -290,16 +290,16 @@ export default function Login() {
           </div>
 
           <div className="mt-6 text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setIsRegister(!isRegister);
-                setError("");
-              }}
-              className="text-xs font-black text-accent hover:underline uppercase tracking-widest"
-            >
-              <span className={`${isRegister ? "-mt-[200px]" : "-mt-[135px]"} inline-block`}>{isRegister ? "Já tenho uma conta" : "Criar nova conta"}</span>
-            </button>
+<button
+	              type="button"
+	              onClick={() => {
+	                setIsRegister(!isRegister);
+	                setError("");
+	              }}
+	              className="text-xs font-black text-white hover:underline uppercase tracking-widest"
+	            >
+	              <span className={`${isRegister ? "-mt-[200px]" : "-mt-[135px]"} inline-block`}>{isRegister ? "Já tenho uma conta" : "Criar nova conta"}</span>
+	            </button>
           </div>
         </div>
       </motion.div>
