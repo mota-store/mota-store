@@ -121,7 +121,7 @@ export default function ProductDetail() {
                     {product.category === 'music' ? <Music className="w-32 h-32" /> : <Play className="w-32 h-32" />}
                   </div>
                 )}
-                <div className="absolute top-4 right-4 bg-accent text-white dark:text-accent-foreground px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
+                <div className="absolute top-4 right-4 bg-accent text-accent-foreground px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
                   PREMIUM
                 </div>
               </div>
@@ -166,14 +166,14 @@ export default function ProductDetail() {
               </div>
 
               <Button
-                className="w-full bg-accent hover:bg-accent/90 text-white dark:text-accent-foreground font-black py-8 rounded-2xl shadow-xl shadow-accent/20 transition-all text-base active:scale-95 mt-4"
+                className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-black py-8 rounded-2xl shadow-xl shadow-accent/20 transition-all text-base active:scale-95 mt-4"
                 onClick={handleAddToCart}
                 disabled={isAdding}
               >
                 {isAdding ? (
-                  <div className="h-5 w-5 border-2 border-white dark:border-accent-foreground/30 border-t-white dark:border-t-accent-foreground rounded-full animate-spin mr-2" />
+                  <div className="h-5 w-5 border-2 border-accent-foreground/30 border-t-accent-foreground rounded-full animate-spin mr-2" />
                 ) : (
-                  <ShoppingCart className="h-5 w-5 mr-2 text-white dark:text-accent-foreground" />
+                  <ShoppingCart className="h-5 w-5 mr-2 text-accent-foreground" />
                 )}
                 {isAdding ? "ADICIONANDO..." : "ADICIONAR AO CARRINHO"}
               </Button>

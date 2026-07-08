@@ -54,7 +54,7 @@ export default function RedeemCoupon() {
           <Gift className="h-12 w-12 text-accent mx-auto mb-4" />
           <h2 className="text-xl font-black tracking-tighter uppercase mb-2">Acesso Restrito</h2>
           <p className="text-xs text-muted-foreground mb-6">Você precisa estar logado para resgatar cupons</p>
-          <Button onClick={() => navigate("/login")} className="bg-accent dark:text-black font-black rounded-2xl px-8 py-6 w-full uppercase tracking-widest">
+          <Button onClick={() => navigate("/login")} className="bg-accent text-accent-foreground font-black rounded-2xl px-8 py-6 w-full uppercase tracking-widest">
             Fazer Login
           </Button>
         </Card>

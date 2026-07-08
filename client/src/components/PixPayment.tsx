@@ -190,17 +190,17 @@ export function PixPayment({
         {/* Copia e Cola */}
         <div className="w-full space-y-3 -mt-1">
           <Button
-            className="w-full bg-accent hover:bg-accent/90 text-white dark:text-accent-foreground font-black py-8 rounded-[1.5rem] shadow-xl shadow-accent/20 transition-all active:scale-95 text-sm uppercase tracking-widest flex items-center justify-center gap-3"
+            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-black py-8 rounded-[1.5rem] shadow-xl shadow-accent/20 transition-all active:scale-95 text-sm uppercase tracking-widest flex items-center justify-center gap-3"
             onClick={() => copyPixCode()}
           >
             {copied ? (
               <>
-                <CheckCircle2 className="h-5 w-5 text-white dark:text-accent-foreground" />
+                <CheckCircle2 className="h-5 w-5 text-accent-foreground" />
                 Código Copiado!
               </>
             ) : (
               <>
-                <Copy className="h-5 w-5 text-white dark:text-accent-foreground" />
+                <Copy className="h-5 w-5 text-accent-foreground" />
                 Pix Copia e Cola
               </>
             )}
