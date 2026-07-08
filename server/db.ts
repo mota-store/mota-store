@@ -1,9 +1,9 @@
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import * as schema from "@shared/schema";
+import * as schema from "../drizzle/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
-import { products, cartItems, users, orders, orderItems, coupons, couponRedemptions, balanceTransactions } from "@shared/schema";
-import type { InsertProduct, InsertCoupon } from "@shared/schema";
+import { products, cartItems, users, orders, orderItems, coupons, couponRedemptions, balanceTransactions } from "../drizzle/schema";
+import type { InsertProduct, InsertCoupon } from "../drizzle/schema";
 
 // Configuração do Banco de Dados
 let pool: mysql.Pool | null = null;

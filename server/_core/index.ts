@@ -54,7 +54,7 @@ async function startServer() {
         const { users } = await import("../../drizzle/schema");
         const { eq } = await import("drizzle-orm");
         const { getSessionCookieOptions } = await import("./cookies");
-        const { COOKIE_NAME, ONE_YEAR_MS } = await import("@shared/const");
+        const { COOKIE_NAME, ONE_YEAR_MS } = await import("../../shared/const");
 
         const db = await getDb();
         if (!db) throw new Error("Database not available");
