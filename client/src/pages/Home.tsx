@@ -200,7 +200,7 @@ export default function Home() {
                           {product.category === 'music' ? <Music className="w-full h-full" /> : <Play className="w-full h-full" />}
                         </div>
                       )}
-                      <div className="absolute top-4 right-4 bg-accent text-accent-foreground px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
+                      <div className="absolute top-4 right-4 bg-accent text-white dark:text-accent-foreground px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
                         PREMIUM
                       </div>
                     </div>
@@ -230,14 +230,14 @@ export default function Home() {
 
                       <Button
                         type="button"
-                        className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-black py-7 rounded-2xl shadow-xl shadow-accent/20 transition-all text-base active:scale-95"
+                        className="w-full bg-accent hover:bg-accent/90 text-white dark:text-accent-foreground font-black py-7 rounded-2xl shadow-xl shadow-accent/20 transition-all text-base active:scale-95"
                         onClick={(e) => handleAddToCart(e, product.id)}
                         disabled={isAdding === product.id}
                       >
                         {isAdding === product.id ? (
-                          <div className="h-5 w-5 border-2 border-accent-foreground/30 border-t-accent-foreground rounded-full animate-spin mr-2" />
+                          <div className="h-5 w-5 border-2 border-white dark:border-accent-foreground/30 border-t-white dark:border-t-accent-foreground rounded-full animate-spin mr-2" />
                         ) : (
-                          <ShoppingCart className="h-5 w-5 mr-2 text-accent-foreground" />
+                          <ShoppingCart className="h-5 w-5 mr-2 text-white dark:text-accent-foreground" />
                         )}
                         {isAdding === product.id ? "ADICIONANDO..." : "ADICIONAR AO CARRINHO"}
                       </Button>

@@ -76,7 +76,7 @@ function AdminLogin() {
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
-          <Button type="submit" disabled={isLoading} className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-black py-7 rounded-[1.5rem] shadow-xl shadow-accent/20 uppercase tracking-widest">
+          <Button type="submit" disabled={isLoading} className="w-full bg-accent hover:bg-accent/90 font-black py-7 rounded-[1.5rem] shadow-xl shadow-accent/20 uppercase tracking-widest">
             {isLoading ? "Entrando..." : "Entrar"}
           </Button>
         </form>
@@ -335,7 +335,7 @@ function AdminDashboard() {
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-black uppercase tracking-tighter">Produtos ({allProducts?.length || 0})</h2>
-              <Button onClick={() => setShowAddProduct(true)} className="bg-accent text-accent-foreground font-black text-xs uppercase tracking-widest">
+              <Button onClick={() => setShowAddProduct(true)} className="bg-accent font-black text-xs uppercase tracking-widest">
                 <Plus className="h-4 w-4 mr-1" /> Novo Produto
               </Button>
             </div>
@@ -428,7 +428,7 @@ function AdminDashboard() {
                       affiliateLink: newProduct.affiliateLink,
                       category: newProduct.category,
                     });
-                  }} className="bg-accent text-accent-foreground font-black text-xs uppercase tracking-widest">
+                  }} className="bg-accent font-black text-xs uppercase tracking-widest">
                     Criar Produto
                   </Button>
                   <Button variant="ghost" onClick={() => setShowAddProduct(false)} className="font-black text-xs uppercase tracking-widest">
@@ -445,7 +445,7 @@ function AdminDashboard() {
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-black uppercase tracking-tighter">Cupons ({allCoupons?.length || 0})</h2>
-              <Button onClick={() => setShowAddCoupon(true)} className="bg-accent text-accent-foreground font-black text-xs uppercase tracking-widest">
+              <Button onClick={() => setShowAddCoupon(true)} className="bg-accent font-black text-xs uppercase tracking-widest">
                 <Plus className="h-4 w-4 mr-1" /> Novo Cupom
               </Button>
             </div>
@@ -546,7 +546,7 @@ function AdminDashboard() {
                       description: newCoupon.description || undefined,
                       expiresAt: newCoupon.expiresAt ? new Date(newCoupon.expiresAt).toISOString() : undefined,
                     });
-                  }} className="bg-accent text-accent-foreground font-black text-xs uppercase tracking-widest">
+                  }} className="bg-accent font-black text-xs uppercase tracking-widest">
                     Criar Cupom
                   </Button>
                   <Button variant="ghost" onClick={() => setShowAddCoupon(false)} className="font-black text-xs uppercase tracking-widest">

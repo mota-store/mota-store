@@ -280,9 +280,9 @@ export default function Profile() {
 		                    type="button"
 		                    disabled={isUploading}
 		                    onClick={() => fileInputRef.current?.click()}
-		                    className="absolute -bottom-2 -right-2 h-10 w-10 bg-accent text-accent-foreground rounded-xl flex items-center justify-center shadow-lg hover:scale-110 transition-transform active:scale-95 border-4 border-card"
+		                    className="absolute -bottom-2 -right-2 h-10 w-10 bg-accent text-white dark:text-accent-foreground rounded-xl flex items-center justify-center shadow-lg hover:scale-110 transition-transform active:scale-95 border-4 border-card"
 		                  >
-		                    <Camera className="h-5 w-5 text-accent-foreground" />
+		                    <Camera className="h-5 w-5 text-white dark:text-accent-foreground" />
 		                  </button>
 	                  <input
 	                    type="file"
@@ -472,7 +472,7 @@ export default function Profile() {
                           type="button"
                           onClick={handleUpdateProfile}
                           disabled={!canSubmitPassword || updateProfile.isPending}
-                          className="w-full bg-accent text-accent-foreground font-black h-12 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-full bg-accent text-white dark:text-accent-foreground font-black h-12 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {updateProfile.isPending ? (
                             <>
@@ -569,7 +569,7 @@ export default function Profile() {
                 </p>
                 <Button
                   onClick={() => navigate("/")}
-                  className="bg-accent hover:bg-accent/90 text-accent-foreground font-black px-10 py-7 rounded-2xl shadow-xl shadow-accent/20 transition-all active:scale-95"
+                  className="bg-accent hover:bg-accent/90 text-white dark:text-black font-black px-10 py-7 rounded-2xl shadow-xl shadow-accent/20 transition-all active:scale-95"
                 >
                   VER PLATAFORMAS DISPONÍVEIS
                 </Button>

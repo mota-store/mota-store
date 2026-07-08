@@ -114,7 +114,7 @@ export function Header() {
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     exit={{ scale: 0 }}
-                    className="absolute top-1 right-1 h-5 w-5 rounded-full bg-accent text-accent-foreground text-[10px] flex items-center justify-center font-black"
+                    className="absolute top-1 right-1 h-5 w-5 rounded-full bg-accent text-white dark:text-accent-foreground text-[10px] flex items-center justify-center font-black"
                   >
                     {cartCount > 99 ? "99+" : cartCount}
                   </motion.span>
@@ -153,7 +153,7 @@ export function Header() {
             ) : (
 <Button
 			                size="sm"
-			                className="bg-accent hover:bg-accent/90 text-accent-foreground font-black uppercase tracking-widest px-6 rounded-xl"
+			                className="bg-accent hover:bg-accent/90 text-white dark:text-[#000000] font-black uppercase tracking-widest px-6 rounded-xl"
 			                onClick={() => navigate("/login?tab=register")}
 			              >
 			                Cadastrar
@@ -234,7 +234,7 @@ export function Header() {
                 ) : (
 <Button
 			                    size="lg"
-			                    className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-black uppercase tracking-widest"
+			                    className="w-full bg-accent hover:bg-accent/90 text-white dark:text-[#000000] font-black uppercase tracking-widest"
 			                    onClick={() => {
 			                      navigate("/login?tab=register");
 			                      setMobileMenuOpen(false);

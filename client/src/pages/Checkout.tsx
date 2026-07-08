@@ -203,7 +203,7 @@ export default function Checkout() {
   if (!isAuthenticated) {
     return (
       <div className="h-screen flex items-center justify-center bg-background p-6">
-        <Button onClick={() => navigate("/login")} className="bg-accent text-accent-foreground font-black rounded-2xl px-8 py-6">FAZER LOGIN</Button>
+        <Button onClick={() => navigate("/login")} className="bg-accent dark:text-black font-black rounded-2xl px-8 py-6">FAZER LOGIN</Button>
       </div>
     );
   }
@@ -220,7 +220,7 @@ export default function Checkout() {
     return (
       <div className="h-screen flex flex-col items-center justify-center p-8 bg-background text-center">
         <h2 className="text-3xl font-black mb-4">Seu carrinho está vazio</h2>
-        <Button onClick={() => navigate("/")} className="bg-accent text-accent-foreground font-black rounded-2xl px-12 py-7">VOLTAR PARA A LOJA</Button>
+        <Button onClick={() => navigate("/")} className="bg-accent font-black rounded-2xl px-12 py-7">VOLTAR PARA A LOJA</Button>
       </div>
     );
   }
@@ -284,7 +284,7 @@ export default function Checkout() {
               </div>
               <div className="flex gap-3">
                 <Button onClick={() => setStep("payment")} variant="ghost" className="font-black text-xs uppercase">Voltar</Button>
-                <Button onClick={handleBalanceAndPix} disabled={isSubmitting} className="bg-accent text-accent-foreground font-black rounded-2xl px-8 py-6">
+                <Button onClick={handleBalanceAndPix} disabled={isSubmitting} className="bg-accent font-black rounded-2xl px-8 py-6">
                   {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : "Gerar PIX do Restante"}
                 </Button>
               </div>
