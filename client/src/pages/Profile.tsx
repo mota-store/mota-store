@@ -357,7 +357,11 @@ export default function Profile() {
                             ? "border-foreground scale-110 shadow-lg"
                             : "border-transparent"
                         }`}
-                        style={{ backgroundColor: color.hex }}
+                        style={{ 
+                          backgroundColor: color.value === "white" 
+                            ? (theme === "dark" ? "#FFFFFF" : "#000000") 
+                            : color.hex 
+                        }}
                       />
                     ))}
                   </div>
