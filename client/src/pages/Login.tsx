@@ -22,10 +22,29 @@ function getPasswordStrength(pwd: string): "fraca" | "média" | "forte" | null {
 export default function Login() {
   const [, navigate] = useLocation();
 
+  const audioRef = React.useRef<HTMLAudioElement | null>(null);
+
   useEffect(() => {
     document.body.style.overflow = "hidden";
+    
+    // Criar e configurar o áudio
+    const audio = new Audio("/assets/login-bg-new.mp4");
+    audio.loop = true;
+    audioRef.current = audio;
+
+    // Tentar tocar o áudio (navegadores podem bloquear sem interação)
+    const playAudio = () => {
+      audio.play().catch(e => console.log("Áudio aguardando interação:", e));
+    };
+
+    playAudio();
+    window.addEventListener('click', playAudio, { once: true });
+
     return () => {
       document.body.style.overflow = "auto";
+      audio.pause();
+      audio.src = "";
+      window.removeEventListener('click', playAudio);
     };
   }, []);
 
@@ -103,13 +122,17 @@ export default function Login() {
 
   return (
     <div className="h-screen relative flex items-center justify-center p-4 overflow-hidden touch-none">
-      {/* Background Image with Pixel Art */}
+      {/* Background Video with Pixel Art */}
       <div className="absolute inset-0 z-0">
-        <img 
-          src="/assets/login-bg-new.gif" 
-          alt="Login Background" 
+        <video 
+          autoPlay 
+          muted 
+          loop 
+          playsInline
           className="w-full h-full object-cover opacity-100"
-        />
+        >
+          <source src="/assets/login-bg-new.mp4" type="video/mp4" />
+        </video>
         <div className="absolute inset-0 bg-black/40 z-10" />
       </div>
 
