@@ -60,13 +60,14 @@ export default function Cart() {
   }, [cartItems]);
 
   const removeItem = trpc.cart.removeItem.useMutation({
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
       // Encontrar qual productId pertencia a esse cartItemId para decrementar pendência
       const productId = cartItems?.find(i => i.id === variables)?.productId;
       if (productId) {
         pendingUpdates.current[productId] = Math.max(0, (pendingUpdates.current[productId] || 0) - 1);
       }
-      utils.cart.getItems.invalidate();
+      await utils.cart.getItems.invalidate();
+      await utils.cart.getItems.refetch();
     },
     onError: (_err, variables) => {
       const productId = cartItems?.find(i => i.id === variables)?.productId;
@@ -79,9 +80,10 @@ export default function Cart() {
   });
 
   const addItemMutation = trpc.cart.addItem.useMutation({
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
       pendingUpdates.current[variables.productId] = Math.max(0, (pendingUpdates.current[variables.productId] || 0) - 1);
-      utils.cart.getItems.invalidate();
+      await utils.cart.getItems.invalidate();
+      await utils.cart.getItems.refetch();
     },
     onError: (_error, variables) => {
       pendingUpdates.current[variables.productId] = Math.max(0, (pendingUpdates.current[variables.productId] || 0) - 1);

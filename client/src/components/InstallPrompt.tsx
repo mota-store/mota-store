@@ -56,7 +56,7 @@ export function InstallPrompt() {
             <img src="/assets/icon-192.png" alt="Mota Store" className="h-8 w-8 object-contain" />
           </div>
           <div>
-            <h3 className="text-sm font-black uppercase tracking-tight">Instalar Mota Store</h3>
+            <h3 className="text-sm font-black uppercase tracking-tight text-white">Instalar Mota Store</h3>
             <p className="text-[10px] text-muted-foreground leading-tight">Adicione à sua tela inicial para acesso rápido.</p>
           </div>
         </div>
@@ -65,9 +65,9 @@ export function InstallPrompt() {
           <Button 
             onClick={handleInstallClick}
             size="sm"
-            className="bg-accent hover:bg-accent/90 text-accent-foreground font-black text-[10px] uppercase tracking-widest px-4 py-5 rounded-2xl shadow-lg shadow-accent/20"
+            className="bg-accent hover:bg-accent/90 text-white font-black text-[10px] uppercase tracking-widest px-4 py-5 rounded-2xl shadow-lg shadow-accent/20"
           >
-            <Download className="h-3 w-3 mr-1.5" /> Instalar
+            <Download className="h-3 w-3 mr-1.5 text-white" /> Instalar
           </Button>
           <button 
             onClick={handleDismiss}
