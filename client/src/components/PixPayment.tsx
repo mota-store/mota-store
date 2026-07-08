@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
-import { Copy, CheckCircle2, Clock, QrCode, RefreshCw, ExternalLink } from "lucide-react";
+import { Copy, CheckCircle2, Clock, QrCode, RefreshCw, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
 interface PixPaymentProps {
@@ -10,14 +10,16 @@ interface PixPaymentProps {
   expiresIn?: number; // em segundos
   amount?: number; // valor total em centavos
   onPaymentConfirmed?: () => void;
+  onCancel?: () => void;
 }
 
 export function PixPayment({ 
   qrCodeBase64, 
-  pixCode = "00020126360014br.gov.bcb.pix0114+55919848864735204000053039865802BR5910MOTA STORE6009SAO PAULO62070503***6304E2B9", 
+  pixCode = "", 
   expiresIn = 600,
   amount,
-  onPaymentConfirmed 
+  onPaymentConfirmed,
+  onCancel
 }: PixPaymentProps) {
   // Inicializar timeLeft a partir do sessionStorage se existir, para persistir após refresh
   const [timeLeft, setTimeLeft] = useState(() => {
@@ -35,7 +37,7 @@ export function PixPayment({
   
   const [copied, setCopied] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
-  const [bankCopied, setBankCopied] = useState<string | null>(null); // qual banco já copiou
+  const [bankCopied, setBankCopied] = useState<string | null>(null);
 
   useEffect(() => {
     if (timeLeft <= 0) return;
@@ -78,7 +80,6 @@ export function PixPayment({
   };
 
   const openBankApp = (appName: string, intentLink: string, fallbackScheme: string) => {
-    // Copiar o código PIX apenas na primeira vez que clicar neste banco
     if (bankCopied !== appName) {
       copyPixCode(true);
       setBankCopied(appName);
@@ -88,18 +89,14 @@ export function PixPayment({
     const intentUrl = intentLink.replace("CODIGO_PIX", encodedCode);
     const fallbackUrl = fallbackScheme.replace("CODIGO_PIX", encodedCode);
 
-    // Tentar abrir com intent:// primeiro (Android)
     window.location.href = intentUrl;
-
-    // Fallback após 1500ms: tentar scheme simples (iOS / navegadores)
     setTimeout(() => {
       window.location.href = fallbackUrl;
     }, 1500);
-
-
   };
 
   const qrCodeSrc = getQrCodeSrc();
+  // amount já vem em centavos, então dividimos por 100 apenas para exibição
   const amountDisplay = amount ? `R$ ${(amount / 100).toFixed(2).replace(".", ",")}` : "";
 
   return (
@@ -153,28 +150,24 @@ export function PixPayment({
             {[
               {
                 name: "Nubank",
-                color: "#820AD1",
                 icon: "/assets/banks/nubank.png",
                 intentLink: "intent://nu/pix/copia-e-cola?code=CODIGO_PIX#Intent;scheme=nubank;package=com.nu.production;end",
                 fallbackScheme: "nubank://nu/pix/copia-e-cola?code=CODIGO_PIX"
               },
               {
                 name: "Inter",
-                color: "#FF6B00",
                 icon: "/assets/banks/inter.png",
                 intentLink: "intent://pix?code=CODIGO_PIX#Intent;scheme=inter;package=br.com.intermedium;end",
                 fallbackScheme: "inter://pix?code=CODIGO_PIX"
               },
               {
                 name: "Itaú",
-                color: "#EC7000",
                 icon: "/assets/banks/itau.png",
                 intentLink: "intent://pix/copia-e-cola?code=CODIGO_PIX#Intent;scheme=itau-empresas;package=com.itau;end",
                 fallbackScheme: "itau-empresas://pix/copia-e-cola?code=CODIGO_PIX"
               },
               {
                 name: "Bradesco",
-                color: "#cc092f",
                 icon: "/assets/banks/bradesco.png",
                 intentLink: "intent://pix?code=CODIGO_PIX#Intent;scheme=bradesco;package=com.bradesco;end",
                 fallbackScheme: "bradesco://pix?code=CODIGO_PIX"
@@ -213,9 +206,24 @@ export function PixPayment({
             )}
           </Button>
           
-          <div className="flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground/50">
-            <RefreshCw className={`w-3 h-3 ${isChecking ? 'animate-spin' : ''}`} />
-            {isChecking ? 'Verificando Pagamento...' : 'Aguardando confirmação...'}
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground/50">
+              <RefreshCw className={`w-3 h-3 ${isChecking ? 'animate-spin' : ''}`} />
+              {isChecking ? 'Verificando Pagamento...' : 'Aguardando confirmação...'}
+            </div>
+            
+            <button 
+              onClick={() => {
+                sessionStorage.removeItem("pix_payment");
+                sessionStorage.removeItem("pix_expiry_time");
+                if (onCancel) onCancel();
+                else window.location.reload();
+              }}
+              className="flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-destructive/60 hover:text-destructive transition-colors"
+            >
+              <XCircle className="w-3 h-3" />
+              Cancelar e escolher outro método
+            </button>
           </div>
         </div>
       </div>

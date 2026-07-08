@@ -33,7 +33,7 @@ export default function Checkout() {
     product: products?.find(p => p.id === item.productId)
   })) || [];
 
-  // Lógica de Preço: REGRA FIXA de R$ 5,00
+  // Lógica de Preço: REGRA FIXA de R$ 5,00 (500 centavos)
   const total = enrichedItems.reduce((acc, item) => {
     return acc + 500 * (item.quantity || 1);
   }, 0);
@@ -61,7 +61,6 @@ export default function Checkout() {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      // O servidor irá recalcular tudo, mas enviamos os dados atuais do estado
       const result = await checkoutWithBalance.mutateAsync({
         amount: finalTotal,
         cartItems: enrichedItems.map(item => ({
@@ -110,8 +109,18 @@ export default function Checkout() {
       }
 
       setOrderId(result.orderId!);
-      const pix = await createPix.mutateAsync({ orderId: result.orderId!, amount: result.remainingAmount! / 100 });
-      const pixWithExpiry = { ...pix, expiresIn: 600, orderId: result.orderId!, amount: result.remainingAmount };
+      // amount deve ser em REAIS (ex: 10.00)
+      const pix = await createPix.mutateAsync({ 
+        orderId: result.orderId!, 
+        amount: result.remainingAmount! / 100 
+      });
+      
+      const pixWithExpiry = { 
+        ...pix, 
+        expiresIn: 600, 
+        orderId: result.orderId!, 
+        amount: result.remainingAmount // Mantemos em centavos para o componente de exibição
+      };
 
       setPixData(pixWithExpiry);
       sessionStorage.setItem("pix_payment", JSON.stringify(pixWithExpiry));
@@ -128,13 +137,21 @@ export default function Checkout() {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      // O servidor recalcula o totalAmount, o valor aqui é apenas referencial
       const order = await createOrder.mutateAsync({ totalAmount: finalTotalPix });
       setOrderId(order.id);
       
-      // Buscamos o total real do pedido criado para gerar o PIX correto
-      const pix = await createPix.mutateAsync({ orderId: order.id, amount: finalTotalPix / 100 });
-      const pixWithExpiry = { ...pix, expiresIn: 600, orderId: order.id, amount: finalTotalPix };
+      // amount deve ser em REAIS (ex: 10.00)
+      const pix = await createPix.mutateAsync({ 
+        orderId: order.id, 
+        amount: finalTotalPix / 100 
+      });
+      
+      const pixWithExpiry = { 
+        ...pix, 
+        expiresIn: 600, 
+        orderId: order.id, 
+        amount: finalTotalPix // Mantemos em centavos para o componente de exibição
+      };
       
       setPixData(pixWithExpiry);
       sessionStorage.setItem("pix_payment", JSON.stringify(pixWithExpiry));
@@ -153,6 +170,11 @@ export default function Checkout() {
     }
     if (step === "payment") {
       navigate("/cart");
+      return;
+    }
+    if (step === "pix") {
+      sessionStorage.removeItem("pix_payment");
+      setStep("payment");
       return;
     }
     navigate("/");
@@ -292,16 +314,12 @@ export default function Checkout() {
               <PixPayment
                 pixCode={pixData.pixCode}
                 qrCodeBase64={pixData.qrCodeBase64}
-                amount={pixData.amount ? pixData.amount / 100 : finalTotalPix / 100}
+                amount={pixData.amount} // Agora passamos em centavos para o componente
                 expiresIn={pixData.expiresIn}
-                onSuccess={() => {
+                onPaymentConfirmed={() => {
                   sessionStorage.removeItem("pix_payment");
                   queryClient.invalidateQueries({ queryKey: [["cart", "getItems"]] });
                   navigate(`/order-confirmation?id=${orderId}`);
-                }}
-                onCancel={() => {
-                  sessionStorage.removeItem("pix_payment");
-                  setStep("payment");
                 }}
               />
             </div>

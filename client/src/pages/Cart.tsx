@@ -27,8 +27,6 @@ export default function Cart() {
   useEffect(() => {
     if (cartItems) {
       setLocalQuantities(prev => {
-        const isFirstLoad = Object.keys(prev).length === 0;
-        
         // Primeiro, calcular a quantidade total do servidor agrupada por productId
         const serverTotals: Record<number, number> = {};
         cartItems.forEach(item => {
@@ -40,24 +38,21 @@ export default function Cart() {
         // Para cada productId vindo do servidor
         Object.entries(serverTotals).forEach(([id, serverQty]) => {
           const productId = Number(id);
-          if (!isFirstLoad && (pendingUpdates.current[productId] ?? 0) > 0) {
-            // Há atualizações pendentes: manter o valor otimista local
-            quantities[productId] = prev[productId] ?? serverQty;
+          // Se houver atualizações pendentes, mantém o valor local (otimista)
+          if ((pendingUpdates.current[productId] ?? 0) > 0) {
+            quantities[productId] = prev[productId] !== undefined ? prev[productId] : serverQty;
           } else {
-            // Sem pendências: usar o valor do servidor
             quantities[productId] = serverQty;
           }
         });
 
         // Manter itens que existem localmente mas ainda não voltaram do servidor (ex: recém-adicionados)
-        if (!isFirstLoad) {
-          Object.keys(prev).forEach(id => {
-            const productId = Number(id);
-            if ((pendingUpdates.current[productId] ?? 0) > 0 && quantities[productId] === undefined) {
-              quantities[productId] = prev[productId];
-            }
-          });
-        }
+        Object.entries(prev).forEach(([id, localQty]) => {
+          const productId = Number(id);
+          if ((pendingUpdates.current[productId] ?? 0) > 0 && quantities[productId] === undefined) {
+            quantities[productId] = localQty;
+          }
+        });
 
         return quantities;
       });
@@ -65,21 +60,18 @@ export default function Cart() {
   }, [cartItems]);
 
   const removeItem = trpc.cart.removeItem.useMutation({
-    onMutate: async (cartItemId) => {
-      await utils.cart.getItems.cancel();
-      const previousItems = utils.cart.getItems.getData();
-      utils.cart.getItems.setData(undefined, (old) => {
-        if (!old) return old;
-        return old.filter((item) => item.id !== cartItemId);
-      });
-      return { previousItems };
-    },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      // Encontrar qual productId pertencia a esse cartItemId para decrementar pendência
+      const productId = cartItems?.find(i => i.id === variables)?.productId;
+      if (productId) {
+        pendingUpdates.current[productId] = Math.max(0, (pendingUpdates.current[productId] || 0) - 1);
+      }
       utils.cart.getItems.invalidate();
     },
-    onError: (_err, _cartItemId, context) => {
-      if (context?.previousItems) {
-        utils.cart.getItems.setData(undefined, context.previousItems);
+    onError: (_err, variables) => {
+      const productId = cartItems?.find(i => i.id === variables)?.productId;
+      if (productId) {
+        pendingUpdates.current[productId] = Math.max(0, (pendingUpdates.current[productId] || 0) - 1);
       }
       toast.error("Erro ao remover item");
       utils.cart.getItems.invalidate();
@@ -109,78 +101,72 @@ export default function Cart() {
     return null;
   }
 
-  // Agrupar itens por productId para exibição, usando as quantidades locais se disponíveis
-  const groupedItemsMap = new Map<number, any>();
+  // Agrupar itens por productId para exibição, usando EXCLUSIVAMENTE localQuantities para reatividade
+  const groupedItems: any[] = [];
   
-  // Usamos os produtos e os cartItems para construir a lista, mas a quantidade vem do localQuantities
-  const productIds = Array.from(new Set([
-    ...(cartItems?.map(item => item.productId) || []),
-    ...Object.keys(localQuantities).map(Number)
-  ]));
-  
-  productIds.forEach(productId => {
+  Object.entries(localQuantities).forEach(([id, quantity]) => {
+    const productId = Number(id);
+    if (quantity <= 0) return;
+
     const product = products?.find(p => p.id === productId);
     if (!product) return;
 
     const itemsForProduct = cartItems?.filter(item => item.productId === productId) || [];
-    const quantity = localQuantities[productId] ?? itemsForProduct.reduce((sum, item) => sum + item.quantity, 0);
-
-    if (quantity > 0) {
-      groupedItemsMap.set(productId, {
-        productId,
-        product,
-        quantity,
-        ids: itemsForProduct.map(item => item.id)
-      });
-    }
+    
+    groupedItems.push({
+      productId,
+      product,
+      quantity,
+      ids: itemsForProduct.map(item => item.id)
+    });
   });
 
-  const groupedItems = Array.from(groupedItemsMap.values());
   // REGRA FIXA: Todos os produtos custam R$ 5,00 (500 centavos) promocionalmente
   const subtotal = groupedItems.reduce((sum, item) => sum + 500 * item.quantity, 0);
-  // O preço original para exibição é sempre o dobro (R$ 10,00)
   const originalTotal = groupedItems.reduce((sum, item) => sum + 1000 * item.quantity, 0);
   const total = subtotal;
 
   const handleUpdateQuantity = (productId: number, delta: number) => {
     const currentQty = localQuantities[productId] ?? 0;
+    const newQty = currentQty + delta;
 
     if (delta > 0 && currentQty >= 5) {
       toast.error("Limite máximo de 5 unidades por produto atingido.");
       return;
     }
 
-    const newQty = currentQty + delta;
-
     if (newQty <= 0) {
       const item = groupedItems.find(i => i.productId === productId);
       if (item && item.ids.length > 0) {
-        pendingUpdates.current[productId] = (pendingUpdates.current[productId] || 0) + 1;
+        // Atualização otimista imediata
         setLocalQuantities(prev => {
           const next = { ...prev };
           delete next[productId];
           return next;
         });
+        pendingUpdates.current[productId] = (pendingUpdates.current[productId] || 0) + 1;
         removeItem.mutate(item.ids[0]);
-        pendingUpdates.current[productId] = 0;
       }
       return;
     }
 
-    pendingUpdates.current[productId] = (pendingUpdates.current[productId] || 0) + 1;
+    // Atualização otimista imediata
     setLocalQuantities(prev => ({
       ...prev,
       [productId]: newQty
     }));
+    
+    pendingUpdates.current[productId] = (pendingUpdates.current[productId] || 0) + 1;
     addItemMutation.mutate({ productId, quantity: delta });
   };
 
   const handleRemoveAll = (item: any) => {
     // Otimista: marca como 0 imediatamente para sumir da tela
-    setLocalQuantities(prev => ({
-      ...prev,
-      [item.productId]: 0
-    }));
+    setLocalQuantities(prev => {
+      const next = { ...prev };
+      delete next[item.productId];
+      return next;
+    });
 
     // Incrementar pendingUpdates para bloquear sobrescrita pelo servidor
     pendingUpdates.current[item.productId] = (pendingUpdates.current[item.productId] || 0) + item.ids.length;
