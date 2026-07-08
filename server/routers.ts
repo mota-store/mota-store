@@ -43,10 +43,8 @@ export const appRouter = router({
           
           console.log(`[Register Auto-Login] Sucesso para: ${input.email}`);
           
-          // Envio de e-mail simplificado
-          emailService.sendWelcomeEmail(input.email, result.user.name || input.name).catch(e => {
-            console.error("[Register] Failed to send welcome email:", e);
-          });
+          // O e-mail de boas-vindas já é enviado pelo sdk.authenticateRequest ou google-oauth.ts
+          // quando um novo usuário é detectado, evitando duplicação.
 
           return { success: true, user: result.user };
         }
