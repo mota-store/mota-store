@@ -343,6 +343,26 @@ export default function Profile() {
                   </div>
                 </div>
 
+                <div className="w-full space-y-3 mb-6">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Cor de Destaque</label>
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    {ACCENT_COLORS.map((color) => (
+                      <button
+                        key={color.value}
+                        type="button"
+                        onClick={() => setAccentHue(color.value)}
+                        title={color.name}
+                        className={`h-8 w-8 rounded-full border-2 transition-all hover:scale-110 active:scale-95 ${
+                          accentHue === color.value
+                            ? "border-foreground scale-110 shadow-lg"
+                            : "border-transparent"
+                        }`}
+                        style={{ backgroundColor: color.hex }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
                 <form onSubmit={handleUpdateProfile} className="w-full space-y-6">
                   <div className="space-y-2 text-left">
                     <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Seu Nome de Exibição</label>
