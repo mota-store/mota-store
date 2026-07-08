@@ -105,7 +105,7 @@ export default function Home() {
             >
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 border border-accent/30 text-accent text-sm font-black mt-[5px] mb-8 backdrop-blur-md">
                 <Sparkles className="h-4 w-4" />
-                <span>OFERTA DE LANÇAMENTO: 50% OFF EM TODO O SITE</span>
+                <span className="text-[#FFFFFF] dark:text-accent">OFERTA DE LANÇAMENTO: 50% OFF EM TODO O SITE</span>
               </div>
               <h1 className="text-6xl md:text-8xl font-black tracking-tighter mb-8 leading-[0.8] text-white drop-shadow-2xl">
                 O MELHOR DO <br />
