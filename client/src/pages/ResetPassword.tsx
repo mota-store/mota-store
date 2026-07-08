@@ -85,7 +85,7 @@ export default function ResetPassword() {
                 <h2 className="text-3xl font-black mb-4 uppercase tracking-tighter">E-MAIL ENVIADO!</h2>
                 <p className="text-muted-foreground mb-10 font-medium">Verifique sua caixa de entrada para redefinir sua senha.</p>
                 <Button 
-                  className="w-full h-14 bg-accent hover:bg-accent/90 text-accent-foreground font-black rounded-xl"
+                  className="w-full h-14 bg-accent dark:text-black hover:bg-accent/90 text-accent-foreground font-black rounded-xl"
                   onClick={() => navigate("/login")}
                 >
                   VOLTAR AO LOGIN
@@ -129,7 +129,7 @@ export default function ResetPassword() {
                     <button 
                       type="button" 
                       onClick={() => navigate("/login")}
-                      className="text-sm font-black text-muted-foreground hover:text-accent uppercase tracking-widest"
+                      className="text-sm font-black text-muted-foreground dark:text-black hover:text-accent uppercase tracking-widest"
                     >
                       Voltar ao Login
                     </button>
@@ -154,7 +154,7 @@ export default function ResetPassword() {
             <h2 className="text-3xl font-black mb-4 uppercase tracking-tighter">SENHA ALTERADA!</h2>
             <p className="text-muted-foreground mb-10 font-medium">Sua nova senha já está ativa. Você pode fazer login agora.</p>
             <Button 
-              className="w-full h-14 bg-accent hover:bg-accent/90 text-accent-foreground font-black rounded-xl"
+              className="w-full h-14 bg-accent dark:text-black hover:bg-accent/90 text-accent-foreground font-black rounded-xl"
               onClick={() => navigate("/login")}
             >
               IR PARA O LOGIN

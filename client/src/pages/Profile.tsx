@@ -641,7 +641,7 @@ export default function Profile() {
                 </p>
                 <Button
                   onClick={() => navigate("/")}
-                  className="bg-accent hover:bg-accent/90 text-accent-foreground font-black px-10 py-7 rounded-2xl shadow-xl shadow-accent/20 transition-all active:scale-95"
+                  className="bg-accent hover:bg-accent/90 text-white font-black px-10 py-7 rounded-2xl shadow-xl shadow-accent/20 transition-all active:scale-95"
                 >
                   VER PLATAFORMAS DISPONÍVEIS
                 </Button>

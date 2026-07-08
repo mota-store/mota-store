@@ -194,7 +194,7 @@ export default function Checkout() {
   if (!isAuthenticated) {
     return (
       <div className="h-screen flex items-center justify-center bg-background p-6">
-        <Button onClick={() => navigate("/login")} className="bg-accent font-black rounded-2xl px-8 py-6">FAZER LOGIN</Button>
+        <Button onClick={() => navigate("/login")} className="bg-accent dark:text-black font-black rounded-2xl px-8 py-6">FAZER LOGIN</Button>
       </div>
     );
   }

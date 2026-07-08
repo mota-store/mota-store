@@ -65,9 +65,9 @@ export function InstallPrompt() {
           <Button 
             onClick={handleInstallClick}
             size="sm"
-            className="bg-accent hover:bg-accent/90 text-white font-black text-[10px] uppercase tracking-widest px-4 py-5 rounded-2xl shadow-lg shadow-accent/20"
+            className="bg-accent hover:bg-accent/90 text-white dark:text-black font-black text-[10px] uppercase tracking-widest px-4 py-5 rounded-2xl shadow-lg shadow-accent/20"
           >
-            <Download className="h-3 w-3 mr-1.5 text-white" /> Instalar
+            <Download className="h-3 w-3 mr-1.5 text-white dark:text-black" /> Instalar
           </Button>
           <button 
             onClick={handleDismiss}
