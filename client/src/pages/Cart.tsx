@@ -216,7 +216,7 @@ export default function Cart() {
             <p className="text-muted-foreground mb-8 text-lg font-medium">Seu carrinho está vazio</p>
             <Button 
               onClick={() => navigate("/")} 
-              className="bg-accent hover:bg-accent/90 text-white font-black px-10 py-6 rounded-2xl shadow-xl shadow-accent/20"
+              className="bg-accent hover:bg-accent/90 text-white dark:text-black font-black px-10 py-6 rounded-2xl shadow-xl shadow-accent/20"
             >
               CONTINUAR COMPRANDO
             </Button>
