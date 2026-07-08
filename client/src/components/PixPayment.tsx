@@ -145,7 +145,7 @@ export function PixPayment({
 
         {/* Bancos */}
         <div className="w-full space-y-4 -mt-2">
-          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Pagar com meu banco</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-[5px]">Pagar com meu banco</p>
           <div className="grid grid-cols-4 gap-3">
             {[
               {

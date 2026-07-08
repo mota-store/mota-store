@@ -16,6 +16,7 @@ export default function Checkout() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pixData, setPixData] = useState<{ pixCode: string; qrCodeBase64: string; txid: string; expiresIn: number; amount?: number } | null>(null);
   const [orderId, setOrderId] = useState<number | null>(null);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   const { data: cartItems, isLoading: cartLoading } = trpc.cart.getItems.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -45,6 +46,14 @@ export default function Checkout() {
   const finalTotalPix = total;
   const canPayWithBalance = balance !== undefined && balance > 0 && balance >= finalTotal;
   const canPayWithBalanceAndPix = balance !== undefined && balance > 0 && balance < finalTotal;
+
+  // Timer de carregamento inicial de 3 segundos
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialLoading(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Restaurar pagamento pendente
   useEffect(() => {
@@ -199,7 +208,7 @@ export default function Checkout() {
     );
   }
 
-  if (cartLoading || productsLoading || balanceLoading) {
+  if (isInitialLoading || cartLoading || productsLoading || balanceLoading) {
     return (
       <div className="h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-accent" />
@@ -285,31 +294,49 @@ export default function Checkout() {
           {step === "payment" && (
             <div className="w-full max-w-sm space-y-4">
               {canPayWithBalance && (
-                <button onClick={() => setStep("balance_confirm")} className="w-full p-6 rounded-[2rem] bg-green-500/5 border border-green-500/20 flex items-center gap-5">
-                  <Wallet className="h-7 w-7 text-green-500" />
-                  <div className="text-left">
-                    <h3 className="font-black uppercase text-lg">Pagar com Saldo</h3>
-                    <p className="text-[10px] font-bold text-green-500/70 uppercase">Saldo: R$ {((balance || 0) / 100).toFixed(2).replace(".", ",")}</p>
+                <button 
+                  onClick={() => setStep("balance_confirm")} 
+                  disabled={isSubmitting}
+                  className="w-full p-6 rounded-[2rem] bg-green-500/5 border border-green-500/20 flex items-center justify-between group disabled:opacity-50"
+                >
+                  <div className="flex items-center gap-5">
+                    <Wallet className="h-7 w-7 text-green-500" />
+                    <div className="text-left">
+                      <h3 className="font-black uppercase text-lg">Pagar com Saldo</h3>
+                      <p className="text-[10px] font-bold text-green-500/70 uppercase">Saldo: R$ {((balance || 0) / 100).toFixed(2).replace(".", ",")}</p>
+                    </div>
                   </div>
+                  {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-green-500" /> : <ArrowLeft className="h-4 w-4 rotate-180 opacity-0 group-hover:opacity-100 transition-all" />}
                 </button>
               )}
 
               {canPayWithBalanceAndPix && (
-                <button onClick={() => setStep("balance_pix_confirm")} className="w-full p-6 rounded-[2rem] bg-card/40 border border-border/40 flex items-center gap-5">
-                  <div className="relative"><Wallet className="h-5 w-5 text-green-500" /><QrCode className="h-5 w-5 text-accent absolute -bottom-1 -right-1" /></div>
-                  <div className="text-left">
-                    <h3 className="font-black uppercase text-lg">Saldo + PIX</h3>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase">Use R$ {((balance || 0) / 100).toFixed(2).replace(".", ",")} do saldo</p>
+                <button 
+                  onClick={() => setStep("balance_pix_confirm")} 
+                  disabled={isSubmitting}
+                  className="w-full p-6 rounded-[2rem] bg-card/40 border border-border/40 flex items-center justify-between group disabled:opacity-50"
+                >
+                  <div className="flex items-center gap-5">
+                    <div className="relative"><Wallet className="h-5 w-5 text-green-500" /><QrCode className="h-5 w-5 text-accent absolute -bottom-1 -right-1" /></div>
+                    <div className="text-left">
+                      <h3 className="font-black uppercase text-lg">Saldo + PIX</h3>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase">Use R$ {((balance || 0) / 100).toFixed(2).replace(".", ",")} do saldo</p>
+                    </div>
                   </div>
+                  {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-accent" /> : <ArrowLeft className="h-4 w-4 rotate-180 opacity-0 group-hover:opacity-100 transition-all" />}
                 </button>
               )}
 
-              <button onClick={handleConfirmOrder} disabled={isSubmitting} className="w-full p-6 rounded-[2rem] bg-accent/10 border border-accent/30 flex items-center justify-between">
+              <button 
+                onClick={handleConfirmOrder} 
+                disabled={isSubmitting} 
+                className="w-full p-6 rounded-[2rem] bg-accent/10 border border-accent/30 flex items-center justify-between group disabled:opacity-50"
+              >
                 <div className="flex items-center gap-5">
                   <QrCode className="h-7 w-7 text-accent" />
                   <div className="text-left"><h3 className="font-black uppercase text-lg">Pagar com PIX</h3></div>
                 </div>
-                <ArrowLeft className="h-4 w-4 rotate-180" />
+                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-accent" /> : <ArrowLeft className="h-4 w-4 rotate-180 opacity-0 group-hover:opacity-100 transition-all" />}
               </button>
 
               <div className="mt-8 text-center">

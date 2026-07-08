@@ -276,21 +276,21 @@ export default function Profile() {
                   </div>
                   
                   {/* Botão de Upload */}
-	                  <button
-	                    type="button"
-	                    disabled={isUploading}
-	                    onClick={() => fileInputRef.current?.click()}
-	                    className="absolute -bottom-2 -right-2 h-10 w-10 bg-accent text-white dark:text-accent-foreground rounded-xl flex items-center justify-center shadow-lg hover:scale-110 transition-transform active:scale-95 border-4 border-card"
-	                  >
-	                    <Camera className="h-5 w-5 text-white dark:text-accent-foreground" />
-	                  </button>
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    accept="image/*"
-                    className="hidden"
-                  />
+		                  <button
+		                    type="button"
+		                    disabled={isUploading}
+		                    onClick={() => fileInputRef.current?.click()}
+		                    className="absolute -bottom-2 -right-2 h-10 w-10 bg-accent text-white dark:text-accent-foreground rounded-xl flex items-center justify-center shadow-lg hover:scale-110 transition-transform active:scale-95 border-4 border-card"
+		                  >
+		                    <Camera className="h-5 w-5 text-white dark:text-accent-foreground" />
+		                  </button>
+	                  <input
+	                    type="file"
+	                    ref={fileInputRef}
+	                    onChange={handleFileChange}
+	                    accept="image/*"
+	                    className="hidden"
+	                  />
                 </div>
 
                 {/* Carteira / Saldo */}
@@ -350,154 +350,82 @@ export default function Profile() {
                       <Input 
                         value={name} 
                         onChange={(e) => setName(e.target.value)} 
-                        className="h-14 rounded-2xl bg-background/50 border-border/50 pl-4 pr-12 font-bold text-lg focus:ring-accent"
+                        className="h-14 rounded-2xl bg-background/50 border-2 border-border/50 focus:border-accent font-bold pl-12"
                         placeholder="Como quer ser chamado?"
                       />
-                      <button 
-                        type="submit"
-                        disabled={updateProfile.isPending || name === user.name}
-                        className="absolute right-2 top-2 h-10 w-10 flex items-center justify-center bg-accent/10 text-accent rounded-xl hover:bg-accent hover:text-accent-foreground transition-all disabled:opacity-0"
-                      >
-                        {updateProfile.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-5 w-5" />}
-                      </button>
+                      <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-accent" />
                     </div>
                   </div>
 
-                  <div className="w-full space-y-4 pt-4 text-left">
-                    {/* Seletor de Cores Dinâmico */}
-                    <div className="p-4 rounded-2xl bg-card/50 border border-border/40 space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="h-4 w-4 text-accent" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Cor de Destaque</span>
-                      </div>
-                      <div className="grid grid-cols-4 gap-2">
-                        {ACCENT_COLORS.map((color) => (
-                          <button
-                            key={color.value}
-                            type="button"
-                            onClick={() => setAccentHue(color.value)}
-                            className={`h-10 rounded-xl border-2 transition-all active:scale-90 flex items-center justify-center ${
-                              accentHue === color.value 
-                                ? "border-white shadow-lg scale-105" 
-                                : "border-transparent hover:scale-105"
-                            }`}
-                            style={{ 
-                              backgroundColor: color.value === "white" 
-                                ? (theme === "dark" ? "#FFFFFF" : "#000000") 
-                                : `oklch(0.55 0.25 ${color.value})`,
-                              border: color.value === "white" && theme === "dark" ? "1px solid rgba(255,255,255,0.1)" : "none"
-                            }}
-                            title={color.name}
-                          >
-                            {accentHue === color.value && (
-                              <Check className={`h-5 w-5 drop-shadow-md ${color.value === "white" ? (theme === "dark" ? "text-black" : "text-white") : "text-white"}`} />
-                            )}
-                          </button>
-                        ))}
-                      </div>
+                  <div className="space-y-2 text-left">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Seu E-mail</label>
+                    <div className="relative">
+                      <Input 
+                        value={user.email} 
+                        disabled 
+                        className="h-14 rounded-2xl bg-muted/30 border-2 border-border/50 font-bold pl-12 opacity-70"
+                      />
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     </div>
-                    <div className="p-4 rounded-2xl bg-muted/30 border border-border/50">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">E-mail da Conta</span>
-                      <p className="font-bold text-sm truncate">{user.email}</p>
-                    </div>
+                  </div>
 
-                    {/* Seção de Alterar Senha */}
+                  <div className="pt-4 border-t border-border/50">
                     {!showPasswordFields ? (
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => {
-                          setShowPasswordFields(true);
-                          setNewPassword("");
-                          setConfirmNewPassword("");
-                          setVerificationCode("");
-                          setPasswordsMatch(null);
-                          setCodeSent(false);
-                        }}
-                        className="w-full h-12 rounded-xl border-accent/20 text-accent font-bold text-xs uppercase tracking-widest hover:bg-accent/10"
+                        onClick={() => setShowPasswordFields(true)}
+                        className="w-full h-14 rounded-2xl border-2 border-accent/20 hover:border-accent/40 hover:bg-accent/5 font-black text-xs uppercase tracking-widest"
                       >
-                        <Lock className="h-4 w-4 mr-2" />
-                        Alterar Senha
+                        <Lock className="h-4 w-4 mr-2 text-accent" />
+                        ALTERAR SENHA DE ACESSO
                       </Button>
                     ) : (
-                      <div className="space-y-4 p-4 rounded-2xl bg-accent/5 border border-accent/20 animate-in fade-in slide-in-from-top-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-accent">Alterar Senha</span>
-                          <button 
-                            type="button" 
-                            onClick={() => {
-                              setShowPasswordFields(false);
-                              setNewPassword("");
-                              setConfirmNewPassword("");
-                              setVerificationCode("");
-                              setPasswordsMatch(null);
-                              setCodeSent(false);
-                            }}
-                            className="text-[10px] font-black text-muted-foreground hover:text-foreground"
-                          >
-                            CANCELAR
-                          </button>
-                        </div>
-
-                        {user.loginMethod === "google" && (
-                          <p className="text-[10px] text-yellow-500/80 font-medium mb-2">
-                            Você entrou com o Google. Defina uma senha para acesso manual.
-                          </p>
-                        )}
-
-                        {/* Campo Nova Senha */}
+                      <div className="space-y-4 animate-in slide-in-from-top-4 duration-300">
                         <div className="space-y-2">
                           <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Nova Senha</label>
                           <div className="relative">
                             <Input
                               type={showNewPassword ? "text" : "password"}
-                              placeholder="Mínimo 6 caracteres"
                               value={newPassword}
                               onChange={(e) => setNewPassword(e.target.value)}
-                              className="h-12 rounded-xl bg-background/50 border-border/50 text-sm pr-12"
+                              className="h-12 rounded-xl bg-background/50 border-2 border-border/50 focus:border-accent font-bold"
+                              placeholder="Mínimo 6 caracteres"
                             />
                             <button
                               type="button"
                               onClick={() => setShowNewPassword(!showNewPassword)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-accent transition-colors"
                             >
-                              {showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                              {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                             </button>
                           </div>
-                          {newPassword.length > 0 && newPassword.length < 6 && (
-                            <p className="text-[10px] text-red-400">Mínimo 6 caracteres</p>
-                          )}
                         </div>
 
-                        {/* Campo Confirmar Senha */}
                         <div className="space-y-2">
                           <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Confirmar Nova Senha</label>
                           <div className="relative">
                             <Input
                               type={showConfirmPassword ? "text" : "password"}
-                              placeholder="Confirme a nova senha"
                               value={confirmNewPassword}
                               onChange={(e) => setConfirmNewPassword(e.target.value)}
-                              className="h-12 rounded-xl bg-background/50 border-border/50 text-sm pr-12"
+                              className={`h-12 rounded-xl bg-background/50 border-2 font-bold ${
+                                passwordsMatch === true ? "border-green-500/50" : 
+                                passwordsMatch === false ? "border-red-500/50" : "border-border/50"
+                              }`}
+                              placeholder="Repita a nova senha"
                             />
                             <button
                               type="button"
                               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-accent transition-colors"
                             >
-                              {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                              {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                             </button>
                           </div>
-                          {passwordsMatch === false && (
-                            <p className="text-[10px] text-red-400 font-bold">As senhas não coincidem</p>
-                          )}
-                          {passwordsMatch === true && (
-                            <p className="text-[10px] text-green-400 font-bold">Senhas coincidem ✓</p>
-                          )}
                         </div>
 
-                        {/* Campo Código de Verificação */}
-                        <div className="space-y-3">
+                        <div className="space-y-3 p-4 rounded-2xl bg-accent/5 border border-accent/10">
                           <div className="flex items-center justify-between">
                             <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                               Código de Verificação
@@ -544,7 +472,7 @@ export default function Profile() {
                           type="button"
                           onClick={handleUpdateProfile}
                           disabled={!canSubmitPassword || updateProfile.isPending}
-                          className="w-full bg-accent text-accent-foreground font-black h-12 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-full bg-accent text-white dark:text-accent-foreground font-black h-12 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {updateProfile.isPending ? (
                             <>
