@@ -135,22 +135,33 @@ export default function Checkout() {
 
   const handleConfirmOrder = async () => {
     if (isSubmitting) return;
+    
+    // Verificar se há itens no carrinho antes de prosseguir
+    if (!enrichedItems || enrichedItems.length === 0) {
+      toast.error("Seu carrinho está vazio");
+      navigate("/cart");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const order = await createOrder.mutateAsync({ totalAmount: finalTotalPix });
+      // Garantir que o total está atualizado com base nos itens atuais
+      const currentTotal = enrichedItems.reduce((acc, item) => acc + 500 * (item.quantity || 1), 0);
+      
+      const order = await createOrder.mutateAsync({ totalAmount: currentTotal });
       setOrderId(order.id);
       
       // amount deve ser em REAIS (ex: 10.00)
       const pix = await createPix.mutateAsync({ 
         orderId: order.id, 
-        amount: finalTotalPix / 100 
+        amount: currentTotal / 100 
       });
       
       const pixWithExpiry = { 
         ...pix, 
         expiresIn: 600, 
         orderId: order.id, 
-        amount: finalTotalPix // Mantemos em centavos para o componente de exibição
+        amount: currentTotal // Mantemos em centavos para o componente de exibição
       };
       
       setPixData(pixWithExpiry);
