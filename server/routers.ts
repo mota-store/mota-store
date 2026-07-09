@@ -44,11 +44,22 @@ export const appRouter = router({
           console.log(`[Register Auto-Login] Sucesso para: ${input.email}`);
           
           // Enviar e-mail de boas-vindas apenas no registro manual inicial
-          try {
-            const emailService = await import("./email");
-            await emailService.sendWelcomeEmail(result.user.email!, result.user.name || "Cliente");
-          } catch (e) {
-            console.error("[Register] Failed to send welcome email:", e);
+          // Usamos uma variável global simples para evitar envios duplicados em rajada (burst)
+          const globalAny = global as any;
+          if (!globalAny.lastWelcomeEmailSent) {
+            globalAny.lastWelcomeEmailSent = new Map<string, number>();
+          }
+          const lastSent = globalAny.lastWelcomeEmailSent.get(input.email) || 0;
+          const now = Date.now();
+          
+          if (now - lastSent > 30000) { // 30 segundos de intervalo
+            globalAny.lastWelcomeEmailSent.set(input.email, now);
+            try {
+              const emailService = await import("./email");
+              await emailService.sendWelcomeEmail(result.user.email!, result.user.name || "Cliente");
+            } catch (e) {
+              console.error("[Register] Failed to send welcome email:", e);
+            }
           }
 
           return { success: true, user: result.user };
