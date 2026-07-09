@@ -190,7 +190,7 @@ export const appRouter = router({
         
         // Limpar cookie de sessão
         const { getSessionCookieOptions } = await import("./_core/cookies");
-        const { COOKIE_NAME } = await import("../../shared/const");
+        const { COOKIE_NAME } = await import("../shared/const");
         const cookieOptions = getSessionCookieOptions(ctx.req);
         ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
 
