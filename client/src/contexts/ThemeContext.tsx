@@ -6,11 +6,11 @@ export const ACCENT_COLORS = [
   { name: "Original", value: "221", hex: "#1e40af" }, // Azul Mota Store real
   { name: "Roxo", value: "280", hex: "#7C3AED" },
   { name: "Verde", value: "142", hex: "#16A34A" },
-  { name: "Vermelho", value: "25", hex: "#E11D48" }, 
+  { name: "Vermelho", value: "0", hex: "#E11D48" }, 
   { name: "Rosa", value: "330", hex: "#DB2777" },
   { name: "Branco", value: "white", hex: "#FFFFFF" }, 
   { name: "Ciano", value: "190", hex: "#0891B2" },
-  { name: "Amarelo", value: "45", hex: "#EAB308" }, // Ajustado para amarelo real
+  { name: "Amarelo", value: "48", hex: "#FFD700" }, // Amarelo Ouro real
 ];
 
 interface ThemeContextType {
