@@ -293,20 +293,21 @@ function AdminDashboard() {
                         className="bg-background/50 rounded-xl border-border/50 max-w-xs"
                         id={`balance-${user.id}`}
                       />
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          const input = document.getElementById(`balance-${user.id}`) as HTMLInputElement;
-                          const val = parseFloat(input.value);
-                          if (!val || val <= 0) { toast.error("Valor inválido"); return; }
-                          if (val < 1) { toast.error("Mínimo R$ 1,00"); return; }
-                          addUserBalance.mutate({ userId: user.id, amount: Math.round(val * 100) });
-                          input.value = "";
-                        }}
-                        className="bg-green-600 hover:bg-green-700 font-black text-xs uppercase tracking-widest"
-                      >
-                        <DollarSign className="h-3 w-3 mr-1" /> Créditar
-                      </Button>
+	                      <Button
+	                        size="sm"
+	                        disabled={addUserBalance.isPending}
+	                        onClick={() => {
+	                          const input = document.getElementById(`balance-${user.id}`) as HTMLInputElement;
+	                          const val = parseFloat(input.value);
+	                          if (!val || val <= 0) { toast.error("Valor inválido"); return; }
+	                          if (val < 1) { toast.error("Mínimo R$ 1,00"); return; }
+	                          addUserBalance.mutate({ userId: user.id, amount: Math.round(val * 100) });
+	                          input.value = "";
+	                        }}
+	                        className="bg-green-600 hover:bg-green-700 font-black text-xs uppercase tracking-widest"
+	                      >
+	                        <DollarSign className="h-3 w-3 mr-1" /> {addUserBalance.isPending ? "Créditando..." : "Créditar"}
+	                      </Button>
                     </div>
 
                     {/* Transactions */}
