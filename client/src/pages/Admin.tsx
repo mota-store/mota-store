@@ -474,14 +474,7 @@ function AdminDashboard() {
                       className="bg-background/50 rounded-xl" placeholder="https://..." 
                     />
                   </div>
-                  <div className="col-span-2">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Link de Afiliado</label>
-                    <Input 
-                      value={editingProduct ? editingProduct.affiliateLink : newProduct.affiliateLink} 
-                      onChange={e => editingProduct ? setEditingProduct({...editingProduct, affiliateLink: e.target.value}) : setNewProduct({...newProduct, affiliateLink: e.target.value})} 
-                      className="bg-background/50 rounded-xl" placeholder="Link do produto..." 
-                    />
-                  </div>
+
                   <div className="col-span-2">
                     <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Benefícios (JSON)</label>
                     <Input 
@@ -507,7 +500,7 @@ function AdminDashboard() {
                     disabled={createProduct.isPending || updateProduct.isPending}
                     onClick={() => {
                       const data = editingProduct || newProduct;
-                      if (!data.name || !data.price || !data.affiliateLink) {
+                      if (!data.name || !data.price) {
                         toast.error("Preencha os campos obrigatórios");
                         return;
                       }
@@ -521,7 +514,7 @@ function AdminDashboard() {
                           description: editingProduct.description,
                           benefits: editingProduct.benefits,
                           imageUrl: editingProduct.imageUrl,
-                          affiliateLink: editingProduct.affiliateLink,
+                          affiliateLink: editingProduct.affiliateLink || "",
                           category: editingProduct.category,
                           isActive: editingProduct.isActive
                         });
@@ -533,7 +526,7 @@ function AdminDashboard() {
                           description: newProduct.description,
                           benefits: newProduct.benefits,
                           imageUrl: newProduct.imageUrl,
-                          affiliateLink: newProduct.affiliateLink,
+                          affiliateLink: newProduct.affiliateLink || "",
                           category: newProduct.category,
                         });
                       }

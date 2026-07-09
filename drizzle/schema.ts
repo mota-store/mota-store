@@ -41,7 +41,7 @@ export const products = mysqlTable("products", {
   trialDays: int("trial_days").notNull(), // 30, 7, etc.
   benefits: text("benefits"), // JSON array of benefits
   imageUrl: varchar("image_url", { length: 512 }),
-  affiliateLink: varchar("affiliate_link", { length: 512 }).notNull(),
+  affiliateLink: varchar("affiliate_link", { length: 512 }),
   category: varchar("category", { length: 100 }).notNull(), // "music", "video", "combined"
   isActive: int("is_active").default(1).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
