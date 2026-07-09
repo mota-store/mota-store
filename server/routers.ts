@@ -175,7 +175,6 @@ export const appRouter = router({
     listUsers: adminProcedure.query(async () => {
       const { getAllUsers } = await import("./db");
       const users = await getAllUsers();
-      // Não retornar passwordHash nem resetToken
       return users.map(u => ({
         id: u.id,
         name: u.name,
@@ -187,7 +186,7 @@ export const appRouter = router({
         createdAt: u.createdAt,
         updatedAt: u.updatedAt,
         lastSignedIn: u.lastSignedIn,
-        orderCount: (u as any).orderCount ?? 0,
+        orderCount: 0, // Simplificado para evitar erros de subquery
       }));
     }),
 

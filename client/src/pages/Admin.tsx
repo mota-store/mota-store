@@ -76,7 +76,7 @@ function AdminLogin() {
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
-          <Button type="submit" disabled={isLoading} className="w-full bg-accent hover:bg-accent/90 text-black font-black py-7 rounded-[1.5rem] shadow-xl shadow-accent/20 uppercase tracking-widest">
+          <Button type="submit" disabled={isLoading} className="w-full bg-accent hover:bg-accent/90 text-white dark:text-black font-black py-7 rounded-[1.5rem] shadow-xl shadow-accent/20 uppercase tracking-widest">
             {isLoading ? "Entrando..." : "Entrar"}
           </Button>
         </form>
@@ -194,7 +194,7 @@ function AdminDashboard() {
               onClick={() => setActiveTab(tab.key)}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black uppercase tracking-widest text-xs transition-all ${
                 activeTab === tab.key
-                  ? "bg-accent text-accent-foreground shadow-lg shadow-accent/20"
+                  ? "bg-accent text-white dark:text-black shadow-lg shadow-accent/20"
                   : "bg-muted/20 text-muted-foreground hover:bg-muted/40"
               }`}
             >
@@ -336,7 +336,7 @@ function AdminDashboard() {
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-black uppercase tracking-tighter">Produtos ({allProducts?.length || 0})</h2>
-<Button onClick={() => setShowAddProduct(true)} className="bg-accent text-black font-black text-xs uppercase tracking-widest">
+<Button onClick={() => setShowAddProduct(true)} className="bg-accent text-white dark:text-black font-black text-xs uppercase tracking-widest">
 	                <Plus className="h-4 w-4 mr-1" /> Novo Produto
 	              </Button>
             </div>
@@ -362,7 +362,7 @@ function AdminDashboard() {
                   </div>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => toggleCoupon.mutate({ couponId: product.id, isActive: !product.isActive })}
+                      onClick={() => updateProduct.mutate({ id: product.id, isActive: !product.isActive })}
                       className="p-2 rounded-lg hover:bg-muted/40 text-muted-foreground hover:text-foreground"
                       title={product.isActive ? "Desativar" : "Ativar"}
                     >
@@ -429,7 +429,7 @@ function AdminDashboard() {
                       affiliateLink: newProduct.affiliateLink,
                       category: newProduct.category,
                     });
-                  }} className="bg-accent font-black text-xs uppercase tracking-widest">
+                  }} className="bg-accent text-white dark:text-black font-black text-xs uppercase tracking-widest">
                     Criar Produto
                   </Button>
                   <Button variant="ghost" onClick={() => setShowAddProduct(false)} className="font-black text-xs uppercase tracking-widest">
@@ -446,9 +446,9 @@ function AdminDashboard() {
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-black uppercase tracking-tighter">Cupons ({allCoupons?.length || 0})</h2>
-<Button onClick={() => setShowAddCoupon(true)} className="bg-accent text-black font-black text-xs uppercase tracking-widest">
-	                <Plus className="h-4 w-4 mr-1" /> Novo Cupom
-	              </Button>
+<Button onClick={() => setShowAddCoupon(true)} className="bg-accent text-white dark:text-black font-black text-xs uppercase tracking-widest">
+                  <Plus className="h-4 w-4 mr-1" /> Novo Cupom
+                </Button>
             </div>
 
             {allCoupons?.map(coupon => (
@@ -547,9 +547,9 @@ function AdminDashboard() {
 	                      description: newCoupon.description || undefined,
 	                      expiresAt: newCoupon.expiresAt ? new Date(newCoupon.expiresAt).toISOString() : undefined,
 	                    });
-	                  }} className="bg-accent text-black font-black text-xs uppercase tracking-widest">
-	                    Criar Cupom
-	                  </Button>
+	                  }} className="bg-accent text-white dark:text-black font-black text-xs uppercase tracking-widest">
+		                    Criar Cupom
+		                  </Button>
                   <Button variant="ghost" onClick={() => setShowAddCoupon(false)} className="font-black text-xs uppercase tracking-widest">
                     Cancelar
                   </Button>

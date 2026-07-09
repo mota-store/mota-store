@@ -290,7 +290,7 @@ export async function depositBalance(userId: number, amount: number) {
   if (!db) throw new Error("Database not available");
 
   return await db.transaction(async (tx) => {
-    const [user] = await tx.select().from(users).where(eq(users.id, userId)).for("update").limit(1);
+    const [user] = await tx.select().from(users).where(eq(users.id, userId)).limit(1);
     if (!user) throw new Error("Usuário não encontrado");
 
     const newBalance = user.balance + amount;
@@ -316,7 +316,7 @@ export async function checkoutWithBalance(userId: number, _amountFromClient: num
 
   return await db.transaction(async (tx) => {
     const cartTotal = await calculateCartTotal(tx, userId);
-    const [user] = await tx.select().from(users).where(eq(users.id, userId)).for("update").limit(1);
+    const [user] = await tx.select().from(users).where(eq(users.id, userId)).limit(1);
     
     if (!user) return { success: false, error: "Usuário não encontrado" };
     
@@ -370,7 +370,7 @@ export async function checkoutWithBalanceAndPix(userId: number, _totalFromClient
 
   return await db.transaction(async (tx) => {
     const cartTotal = await calculateCartTotal(tx, userId);
-    const [user] = await tx.select().from(users).where(eq(users.id, userId)).for("update").limit(1);
+    const [user] = await tx.select().from(users).where(eq(users.id, userId)).limit(1);
 
     if (!user) return { success: false, error: "Usuário não encontrado" };
     if (user.balance < balanceToUse) return { success: false, error: "Saldo insuficiente" };
@@ -420,14 +420,23 @@ export async function getAllOrders() {
   const db = await getDb();
   if (!db) return [];
   
-  return db.select({
-    order: orders,
+  const result = await db.select({
+    id: orders.id,
+    userId: orders.userId,
+    totalAmount: orders.totalAmount,
+    status: orders.status,
+    paymentMethod: orders.paymentMethod,
+    transactionId: orders.transactionId,
+    createdAt: orders.createdAt,
+    updatedAt: orders.updatedAt,
     userName: users.name,
     userEmail: users.email,
   })
   .from(orders)
   .leftJoin(users, eq(orders.userId, users.id))
   .orderBy(desc(orders.createdAt));
+  
+  return result;
 }
 
 export async function addUserBalance(userId: number, amount: number) {
@@ -435,7 +444,7 @@ export async function addUserBalance(userId: number, amount: number) {
   if (!db) throw new Error("Database not available");
 
   return await db.transaction(async (tx) => {
-    const [currentUser] = await tx.select({ balance: users.balance }).from(users).where(eq(users.id, userId)).for("update").limit(1);
+    const [currentUser] = await tx.select({ balance: users.balance }).from(users).where(eq(users.id, userId)).limit(1);
     if (!currentUser) throw new Error("Usuário não encontrado");
 
     const newBalance = currentUser.balance + amount;
@@ -508,7 +517,7 @@ export async function redeemCoupon(code: string, userId: number) {
   if (!db) throw new Error("Database not available");
 
   return await db.transaction(async (tx) => {
-    const [coupon] = await tx.select().from(coupons).where(and(eq(coupons.code, code), eq(coupons.isActive, 1))).for("update").limit(1);
+    const [coupon] = await tx.select().from(coupons).where(and(eq(coupons.code, code), eq(coupons.isActive, 1))).limit(1);
     if (!coupon) return { success: false, error: "Cupom inválido ou inativo" };
 
     if (coupon.expiresAt && coupon.expiresAt < new Date()) return { success: false, error: "Cupom expirado" };
@@ -520,7 +529,7 @@ export async function redeemCoupon(code: string, userId: number) {
     await tx.insert(couponRedemptions).values({ couponId: coupon.id, userId });
     await tx.update(coupons).set({ currentRedemptions: coupon.currentRedemptions + 1 }).where(eq(coupons.id, coupon.id));
 
-    const [user] = await tx.select({ balance: users.balance }).from(users).where(eq(users.id, userId)).for("update").limit(1);
+    const [user] = await tx.select({ balance: users.balance }).from(users).where(eq(users.id, userId)).limit(1);
     if (!user) throw new Error("Usuário não encontrado");
 
     const newBalance = user.balance + coupon.value;
