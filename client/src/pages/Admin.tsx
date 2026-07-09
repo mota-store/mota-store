@@ -135,9 +135,10 @@ function AdminDashboard() {
   });
 
   // Transações de usuário
-  const userTransactions = expandedUserId
-    ? trpc.admin.getUserTransactions.useQuery({ userId: expandedUserId }, { enabled: !!expandedUserId })
-    : null;
+  const userTransactions = trpc.admin.getUserTransactions.useQuery(
+    { userId: expandedUserId || 0 }, 
+    { enabled: !!expandedUserId }
+  );
 
   const handleLogout = () => {
     document.cookie = `${ADMIN_COOKIE}=; path=/; max-age=0`;
