@@ -21,6 +21,8 @@ export default function RedeemCoupon() {
 
   const handleRedeem = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isRedeeming) return;
+    
     if (!isAuthenticated) {
       toast.error("Você precisa estar logado para resgatar cupons");
       return;

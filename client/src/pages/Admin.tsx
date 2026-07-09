@@ -76,7 +76,7 @@ function AdminLogin() {
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
-          <Button type="submit" disabled={isLoading} className="w-full bg-accent hover:bg-accent/90 font-black py-7 rounded-[1.5rem] shadow-xl shadow-accent/20 uppercase tracking-widest">
+          <Button type="submit" disabled={isLoading} className="w-full bg-accent hover:bg-accent/90 text-black font-black py-7 rounded-[1.5rem] shadow-xl shadow-accent/20 uppercase tracking-widest">
             {isLoading ? "Entrando..." : "Entrar"}
           </Button>
         </form>
@@ -120,6 +120,7 @@ function AdminDashboard() {
   });
   const deleteCoupon = trpc.admin.deleteCoupon.useMutation({
     onSuccess: () => { refetchCoupons(); toast.success("Cupom excluído"); },
+    onError: (err: any) => toast.error("Erro ao excluir cupom: " + (err.message || "Erro desconhecido")),
   });
   const createProduct = trpc.admin.createProduct.useMutation({
     onSuccess: () => { refetchProducts(); setShowAddProduct(false); toast.success("Produto criado!"); },
@@ -245,17 +246,17 @@ function AdminDashboard() {
                   className="flex items-center justify-between p-5 cursor-pointer hover:bg-muted/10 transition-colors"
                   onClick={() => setExpandedUserId(expandedUserId === user.id ? null : user.id)}
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-xl overflow-hidden bg-muted">
-                      <img src={user.avatarUrl || "/assets/default-avatar.jpg"} alt="" className="w-full h-full object-cover" />
-                    </div>
-	                    <div>
-	                      <p className="font-black text-sm">{user.name || user.email?.split("@")[0] || `Usuário #${user.id}`}</p>
-	                      <p className="text-[10px] text-muted-foreground">{user.email || "Sem email"}</p>
+<div className="flex items-center gap-4 min-w-0 flex-1">
+	                    <div className="h-10 w-10 rounded-xl overflow-hidden bg-muted flex-shrink-0">
+	                      <img src={user.avatarUrl || "/assets/default-avatar.jpg"} alt="" className="w-full h-full object-cover" />
+	                    </div>
+	                    <div className="min-w-0">
+	                      <p className="font-black text-sm truncate">{user.name || user.email?.split("@")[0] || `Usuário #${user.id}`}</p>
+	                      <p className="text-[10px] text-muted-foreground truncate">{user.email || "Sem email"}</p>
 	                      <p className="text-[9px] text-muted-foreground">Desde: {new Date(user.createdAt).toLocaleDateString('pt-BR')}</p>
 	                    </div>
-                  </div>
-	                  <div className="flex items-center gap-4">
+	                  </div>
+	                  <div className="flex items-center gap-4 flex-shrink-0 ml-2">
 	                    <div className="text-right">
 	                      <p className="text-xs font-black text-accent">R$ {(user.balance / 100).toFixed(2).replace(".", ",")}</p>
 	                      <p className="text-[9px] text-muted-foreground font-medium">{(user as any).orderCount ?? 0} compras</p>
@@ -335,9 +336,9 @@ function AdminDashboard() {
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-black uppercase tracking-tighter">Produtos ({allProducts?.length || 0})</h2>
-              <Button onClick={() => setShowAddProduct(true)} className="bg-accent font-black text-xs uppercase tracking-widest">
-                <Plus className="h-4 w-4 mr-1" /> Novo Produto
-              </Button>
+<Button onClick={() => setShowAddProduct(true)} className="bg-accent text-black font-black text-xs uppercase tracking-widest">
+	                <Plus className="h-4 w-4 mr-1" /> Novo Produto
+	              </Button>
             </div>
 
             {allProducts?.map(product => (
@@ -445,9 +446,9 @@ function AdminDashboard() {
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-black uppercase tracking-tighter">Cupons ({allCoupons?.length || 0})</h2>
-              <Button onClick={() => setShowAddCoupon(true)} className="bg-accent font-black text-xs uppercase tracking-widest">
-                <Plus className="h-4 w-4 mr-1" /> Novo Cupom
-              </Button>
+<Button onClick={() => setShowAddCoupon(true)} className="bg-accent text-black font-black text-xs uppercase tracking-widest">
+	                <Plus className="h-4 w-4 mr-1" /> Novo Cupom
+	              </Button>
             </div>
 
             {allCoupons?.map(coupon => (
@@ -538,17 +539,17 @@ function AdminDashboard() {
                   </div>
                 </div>
                 <div className="flex gap-2 mt-4">
-                  <Button onClick={() => {
-                    createCoupon.mutate({
-                      code: newCoupon.code.toUpperCase(),
-                      value: Math.round(parseFloat(newCoupon.value) * 100),
-                      maxRedemptions: parseInt(newCoupon.maxRedemptions) || 1,
-                      description: newCoupon.description || undefined,
-                      expiresAt: newCoupon.expiresAt ? new Date(newCoupon.expiresAt).toISOString() : undefined,
-                    });
-                  }} className="bg-accent font-black text-xs uppercase tracking-widest">
-                    Criar Cupom
-                  </Button>
+<Button onClick={() => {
+	                    createCoupon.mutate({
+	                      code: newCoupon.code.toUpperCase(),
+	                      value: Math.round(parseFloat(newCoupon.value) * 100),
+	                      maxRedemptions: parseInt(newCoupon.maxRedemptions) || 1,
+	                      description: newCoupon.description || undefined,
+	                      expiresAt: newCoupon.expiresAt ? new Date(newCoupon.expiresAt).toISOString() : undefined,
+	                    });
+	                  }} className="bg-accent text-black font-black text-xs uppercase tracking-widest">
+	                    Criar Cupom
+	                  </Button>
                   <Button variant="ghost" onClick={() => setShowAddCoupon(false)} className="font-black text-xs uppercase tracking-widest">
                     Cancelar
                   </Button>

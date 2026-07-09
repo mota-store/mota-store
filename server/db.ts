@@ -58,9 +58,16 @@ export async function upsertUser(data: {
   const db = await getDb();
   if (!db) return;
 
-  const existing = await getUserByOpenId(data.openId);
+  let existing = await getUserByOpenId(data.openId);
+  
+  // Fallback: buscar por email se openId não encontrado
+  if (!existing && data.email) {
+    existing = await getUserByEmail(data.email);
+  }
+  
   if (existing) {
-    await db.update(users).set(data).where(eq(users.id, existing.id));
+    // Atualizar o usuário e garantir que o openId esteja correto (caso tenha vindo do fallback de email)
+    await db.update(users).set({ ...data, openId: data.openId }).where(eq(users.id, existing.id));
     return existing.id;
   } else {
     const [result] = await db.insert(users).values(data as any);
@@ -489,6 +496,10 @@ export async function toggleCouponActive(couponId: number, isActive: boolean) {
 export async function deleteCoupon(couponId: number) {
   const db = await getDb();
   if (!db) return;
+  
+  // Primeiro deletar os registros em coupon_redemptions relacionados ao cupom
+  await db.delete(couponRedemptions).where(eq(couponRedemptions.couponId, couponId));
+  // Depois deletar o cupom em si
   await db.delete(coupons).where(eq(coupons.id, couponId));
 }
 
@@ -497,7 +508,7 @@ export async function redeemCoupon(code: string, userId: number) {
   if (!db) throw new Error("Database not available");
 
   return await db.transaction(async (tx) => {
-    const [coupon] = await tx.select().from(coupons).where(and(eq(coupons.code, code), eq(coupons.isActive, 1))).limit(1);
+    const [coupon] = await tx.select().from(coupons).where(and(eq(coupons.code, code), eq(coupons.isActive, 1))).for("update").limit(1);
     if (!coupon) return { success: false, error: "Cupom inválido ou inativo" };
 
     if (coupon.expiresAt && coupon.expiresAt < new Date()) return { success: false, error: "Cupom expirado" };
