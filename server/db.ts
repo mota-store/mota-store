@@ -84,7 +84,24 @@ export async function updateUser(userId: number, data: any) {
 export async function getAllUsers() {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(users);
+  
+  const result = await db.select({
+    id: users.id,
+    name: users.name,
+    email: users.email,
+    loginMethod: users.loginMethod,
+    avatarUrl: users.avatarUrl,
+    role: users.role,
+    balance: users.balance,
+    createdAt: users.createdAt,
+    updatedAt: users.updatedAt,
+    lastSignedIn: users.lastSignedIn,
+    orderCount: sql<number>`(SELECT COUNT(*) FROM ${orders} WHERE ${orders.userId} = ${users.id})`,
+  })
+  .from(users)
+  .orderBy(desc(users.createdAt));
+  
+  return result;
 }
 
 // Reset Password Functions

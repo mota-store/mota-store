@@ -174,20 +174,7 @@ export const appRouter = router({
   admin: router({
     listUsers: adminProcedure.query(async () => {
       const { getAllUsers } = await import("./db");
-      const users = await getAllUsers();
-      return users.map(u => ({
-        id: u.id,
-        name: u.name,
-        email: u.email,
-        loginMethod: u.loginMethod,
-        avatarUrl: u.avatarUrl,
-        role: u.role,
-        balance: u.balance,
-        createdAt: u.createdAt,
-        updatedAt: u.updatedAt,
-        lastSignedIn: u.lastSignedIn,
-        orderCount: 0, // Simplificado para evitar erros de subquery
-      }));
+      return getAllUsers();
     }),
 
     addUserBalance: adminProcedure
