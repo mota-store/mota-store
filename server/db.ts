@@ -540,11 +540,11 @@ export async function createCoupon(input: any) {
 
   const [result] = await db.insert(coupons).values({
     code: input.code,
-    value: input.value,
+    value: Number(input.value),
     description: input.description || null,
-    maxRedemptions: input.maxRedemptions || 1,
+    maxRedemptions: input.maxRedemptions ? Number(input.maxRedemptions) : 1,
     currentRedemptions: 0,
-    expiresAt: input.expiresAt || null,
+    expiresAt: input.expiresAt ? new Date(input.expiresAt) : null,
     isActive: 1,
   });
 
