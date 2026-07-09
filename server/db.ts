@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import * as schema from "../drizzle/schema";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, count } from "drizzle-orm";
 import { products, cartItems, users, orders, orderItems, coupons, couponRedemptions, balanceTransactions } from "../drizzle/schema";
 import type { InsertProduct, InsertCoupon } from "../drizzle/schema";
 
@@ -226,7 +226,28 @@ export async function updateProduct(id: number, input: Partial<InsertProduct> & 
 export async function deleteProduct(productId: number) {
   const db = await getDb();
   if (!db) return;
-  await db.delete(products).where(eq(products.id, productId));
+
+  return await db.transaction(async (tx) => {
+    // 1. Remover o produto dos carrinhos de todos os usuários
+    await tx.delete(cartItems).where(eq(cartItems.productId, productId));
+
+    // 2. Para itens de pedidos já realizados, o ideal é NÃO deletar para manter o histórico.
+    // Em vez disso, o banco costuma dar erro de Foreign Key.
+    // Vamos apenas marcar o produto como inativo se ele já tiver sido vendido,
+    // ou deletar se for um produto novo sem vendas.
+    
+    const [hasSales] = await tx.select({ count: count() }).from(orderItems).where(eq(orderItems.productId, productId));
+    
+    if (hasSales && (hasSales as any).count > 0) {
+      // Se já foi vendido, apenas desativamos para não quebrar o histórico de pedidos dos clientes
+      await tx.update(products).set({ isActive: 0 }).where(eq(products.id, productId));
+      return { success: true, action: "deactivated" };
+    } else {
+      // Se nunca foi vendido, podemos deletar permanentemente
+      await tx.delete(products).where(eq(products.id, productId));
+      return { success: true, action: "deleted" };
+    }
+  });
 }
 
 // ============================================
