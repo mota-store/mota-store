@@ -582,9 +582,9 @@ export default function Profile() {
                             type="button"
                             onClick={handleSendDeleteCode}
                             disabled={isDeleting}
-                            className="flex-1 h-10 bg-transparent text-zinc-500 dark:text-zinc-400 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center border border-zinc-200 dark:border-zinc-800"
+                            className="flex-1 h-10 bg-transparent text-zinc-500 dark:text-zinc-400 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center"
                           >
-                            {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "SIM"}
+                            SIM
                           </button>
                           <button
                             type="button"
@@ -628,7 +628,7 @@ export default function Profile() {
                             disabled={isDeleting || deleteVerificationCode.length !== 6}
                             className="flex-1 h-10 bg-red-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center"
                           >
-                            {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "EXCLUIR"}
+                            EXCLUIR
                           </button>
                         </div>
                       </div>

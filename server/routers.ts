@@ -159,7 +159,19 @@ export const appRouter = router({
     requestVerificationCode: protectedProcedure
       .input(z.object({ digits: z.number().default(4) }).optional())
       .mutation(async ({ ctx, input }) => {
-        const { setResetToken } = await import("./db");
+        const { setResetToken, getUserByOpenId } = await import("./db");
+        
+        // Verificar se já existe um código enviado recentemente (menos de 30 segundos)
+        const user = await getUserByOpenId(ctx.user.openId);
+        if (user?.resetTokenExpires) {
+          const now = new Date();
+          const expires = new Date(user.resetTokenExpires);
+          const diffSeconds = (expires.getTime() - now.getTime()) / 1000;
+          // Se expira em 10 min (600s), e a diferença é > 570s, significa que foi enviado há menos de 30s
+          if (diffSeconds > 570) {
+            return { success: true, alreadySent: true };
+          }
+        }
         
         const digits = input?.digits || 4;
         const min = Math.pow(10, digits - 1);
