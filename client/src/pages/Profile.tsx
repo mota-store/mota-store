@@ -402,9 +402,7 @@ export default function Profile() {
                             : "border-transparent"
                         }`}
                         style={{ 
-                          backgroundColor: color.value === "white" 
-                            ? (theme === "dark" ? "#FFFFFF" : "#000000") 
-                            : color.hex 
+                          backgroundColor: color.hex 
                         }}
                       />
                     ))}

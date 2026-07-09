@@ -3,14 +3,14 @@ import React, { createContext, useContext, useEffect, useState, useLayoutEffect 
 type Theme = "light" | "dark";
 
 export const ACCENT_COLORS = [
-  { name: "Original", value: "260", hex: "#0F172A" }, // Azul original
+  { name: "Original", value: "221", hex: "#1e40af" }, // Azul Mota Store real
   { name: "Roxo", value: "280", hex: "#7C3AED" },
   { name: "Verde", value: "142", hex: "#16A34A" },
   { name: "Vermelho", value: "25", hex: "#E11D48" }, 
   { name: "Rosa", value: "330", hex: "#DB2777" },
   { name: "Branco", value: "white", hex: "#FFFFFF" }, 
   { name: "Ciano", value: "190", hex: "#0891B2" },
-  { name: "Amarelo", value: "85", hex: "#EAB308" }, 
+  { name: "Amarelo", value: "45", hex: "#EAB308" }, // Ajustado para amarelo real
 ];
 
 interface ThemeContextType {
@@ -43,7 +43,7 @@ export function ThemeProvider({
   });
 
   const [accentHue, setAccentHue] = useState<string>(() => {
-    return localStorage.getItem("accent-hue") || "260";
+    return localStorage.getItem("accent-hue") || "221";
   });
 
   // Usar useLayoutEffect para aplicar as classes de tema antes da renderização
