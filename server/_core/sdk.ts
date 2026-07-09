@@ -320,6 +320,12 @@ class SDKServer {
 
     // Re-fetch user to get updated role and data from DB
     const updatedUser = await db.getUserByOpenId(user.openId);
+    
+    // Log para depuração de permissão admin
+    if (updatedUser?.role === 'admin') {
+      console.log(`[Auth] Admin authenticated: ${updatedUser.email}`);
+    }
+
     return (updatedUser ?? user) as AuthenticatedUser;
   }
 }

@@ -60,22 +60,30 @@ async function startServer() {
         if (!db) throw new Error("Database not available");
 
         const [adminUser] = await db.select().from(users)
-          .where(and(eq(users.email, "arthuremanuelmota@gmail.com"), eq(users.role, "admin")))
+          .where(eq(users.email, "arthuremanuelmota@gmail.com"))
           .orderBy(users.id)
           .limit(1);
 
-        if (adminUser) {
-          const token = await sdk.createSessionToken(adminUser.openId, {
-            name: adminUser.name || "Admin",
-          });
-
-          const cookieOptions = getSessionCookieOptions(req);
-          res.cookie(COOKIE_NAME, token, {
-            ...cookieOptions,
-            maxAge: ONE_YEAR_MS,
-          });
-          console.log("[Admin Login] Session created for:", adminUser.email);
+        if (!adminUser) {
+          return res.status(404).json({ success: false, error: "Usuário admin não encontrado no banco de dados" });
         }
+
+        // Garantir que o role seja admin
+        if (adminUser.role !== 'admin') {
+          await db.update(users).set({ role: 'admin' }).where(eq(users.id, adminUser.id));
+          adminUser.role = 'admin';
+        }
+
+        const token = await sdk.createSessionToken(adminUser.openId, {
+          name: adminUser.name || "Admin",
+        });
+
+        const cookieOptions = getSessionCookieOptions(req);
+        res.cookie(COOKIE_NAME, token, {
+          ...cookieOptions,
+          maxAge: ONE_YEAR_MS,
+        });
+        console.log("[Admin Login] Session created for:", adminUser.email);
 
         res.json({ success: true });
       } catch (error) {
