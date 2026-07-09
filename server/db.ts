@@ -529,9 +529,19 @@ export async function getAllOrders() {
   return result;
 }
 
+const lastAdminCredit = new Map<string, number>();
+
 export async function addUserBalance(userId: number, amount: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+
+  // Trava de 2 segundos por usuário para evitar duplicidade de cliques rápidos que escapam do frontend
+  const now = Date.now();
+  const lastTime = lastAdminCredit.get(userId.toString()) || 0;
+  if (now - lastTime < 2000) {
+    return { success: true, alreadyProcessed: true };
+  }
+  lastAdminCredit.set(userId.toString(), now);
 
   return await db.transaction(async (tx) => {
     const [currentUser] = await tx.select({ balance: users.balance }).from(users).where(eq(users.id, userId)).limit(1);
