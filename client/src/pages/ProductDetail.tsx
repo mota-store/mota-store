@@ -135,8 +135,8 @@ export default function ProductDetail() {
 
               <div className="space-y-2">
                 <div className="flex items-baseline gap-3">
-                  <span className="text-5xl font-black text-accent tracking-tighter">R$ 5,00</span>
-                  <span className="text-lg text-muted-foreground line-through opacity-50 font-bold">R$ 10,00</span>
+                  <span className="text-5xl font-black text-accent tracking-tighter">R$ {(product.price / 100).toFixed(2).replace(".", ",")}</span>
+                  <span className="text-lg text-muted-foreground line-through opacity-50 font-bold">R$ {((product.price * 2) / 100).toFixed(2).replace(".", ",")}</span>
                 </div>
                 <div className="inline-block px-3 py-1.5 rounded bg-green-500/10 text-green-500 text-[10px] font-black uppercase tracking-widest">
                   ECONOMIZE 50%
@@ -151,17 +151,36 @@ export default function ProductDetail() {
               <div className="space-y-4">
                 <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Benefícios Inclusos</h2>
                 <div className="space-y-3">
-                  {[
-                    { icon: <CheckCircle2 className="h-5 w-5 text-green-500" />, text: "Conta nova com e-mail novo" },
-                    { icon: <Shield className="h-5 w-5 text-green-500" />, text: "Garantia de 30 dias" },
-                    { icon: <Zap className="h-5 w-5 text-green-500" />, text: "Entrega imediata via WhatsApp" },
-                    { icon: <Headphones className="h-5 w-5 text-green-500" />, text: "Suporte 24/7" },
-                  ].map((b, i) => (
-                    <div key={i} className="flex items-start gap-3">
-                      {b.icon}
-                      <span className="text-sm font-medium">{b.text}</span>
-                    </div>
-                  ))}
+                  {(() => {
+                    try {
+                      const benefits = JSON.parse(product.benefits || '[]');
+                      if (benefits.length === 0) {
+                        return (
+                          <>
+                            {[
+                              "Conta nova com e-mail novo",
+                              "Garantia de " + product.trialDays + " dias",
+                              "Entrega imediata via WhatsApp",
+                              "Suporte 24/7"
+                            ].map((text, i) => (
+                              <div key={i} className="flex items-start gap-3">
+                                <CheckCircle2 className="h-5 w-5 text-green-500" />
+                                <span className="text-sm font-medium">{text}</span>
+                              </div>
+                            ))}
+                          </>
+                        );
+                      }
+                      return benefits.map((text: string, i: number) => (
+                        <div key={i} className="flex items-start gap-3">
+                          <CheckCircle2 className="h-5 w-5 text-green-500" />
+                          <span className="text-sm font-medium">{text}</span>
+                        </div>
+                      ));
+                    } catch (e) {
+                      return <p className="text-xs text-muted-foreground">Erro ao carregar benefícios</p>;
+                    }
+                  })()}
                 </div>
               </div>
 
