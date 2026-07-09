@@ -59,7 +59,10 @@ async function startServer() {
         const db = await getDb();
         if (!db) throw new Error("Database not available");
 
-        const [adminUser] = await db.select().from(users).where(eq(users.email, "arthuremanuelmota@gmail.com")).limit(1);
+        const [adminUser] = await db.select().from(users)
+          .where(and(eq(users.email, "arthuremanuelmota@gmail.com"), eq(users.role, "admin")))
+          .orderBy(users.id)
+          .limit(1);
 
         if (adminUser) {
           const token = await sdk.createSessionToken(adminUser.openId, {

@@ -63,15 +63,37 @@ export async function upsertUser(data: {
   // Fallback: buscar por email se openId não encontrado
   if (!existing && data.email) {
     existing = await getUserByEmail(data.email);
+    if (existing) {
+      console.log(`[upsertUser] Found existing user by email: ${data.email}. Updating openId to: ${data.openId}`);
+    }
   }
   
   if (existing) {
-    // Atualizar o usuário e garantir que o openId esteja correto (caso tenha vindo do fallback de email)
-    await db.update(users).set({ ...data, openId: data.openId }).where(eq(users.id, existing.id));
+    // Atualizar o usuário e garantir que o openId esteja correto
+    await db.update(users)
+      .set({ 
+        ...data, 
+        openId: data.openId // Garante que o openId seja atualizado se veio do fallback por e-mail
+      })
+      .where(eq(users.id, existing.id));
     return existing.id;
   } else {
-    const [result] = await db.insert(users).values(data as any);
-    return result.insertId;
+    // Tentar inserir, mas capturar erro de duplicidade se ocorrer corrida
+    try {
+      const [result] = await db.insert(users).values(data as any);
+      return result.insertId;
+    } catch (error: any) {
+      if (error.code === 'ER_DUP_ENTRY' && data.email) {
+        const userByEmail = await getUserByEmail(data.email);
+        if (userByEmail) {
+          await db.update(users)
+            .set({ ...data, openId: data.openId })
+            .where(eq(users.id, userByEmail.id));
+          return userByEmail.id;
+        }
+      }
+      throw error;
+    }
   }
 }
 
