@@ -123,7 +123,15 @@ function AdminDashboard() {
     onError: (err: any) => toast.error("Erro ao excluir cupom: " + (err.message || "Erro desconhecido")),
   });
   const createProduct = trpc.admin.createProduct.useMutation({
-    onSuccess: () => { refetchProducts(); setShowAddProduct(false); toast.success("Produto criado!"); },
+    onSuccess: () => { 
+      refetchProducts(); 
+      setShowAddProduct(false); 
+      setNewProduct({
+        name: "", description: "", price: "", trialDays: "30", benefits: "", imageUrl: "",
+        affiliateLink: "", category: "video",
+      });
+      toast.success("Produto criado!"); 
+    },
     onError: () => toast.error("Erro ao criar produto"),
   });
   const updateProduct = trpc.admin.updateProduct.useMutation({
@@ -419,19 +427,26 @@ function AdminDashboard() {
                   </div>
                 </div>
                 <div className="flex gap-2 mt-4">
-                  <Button onClick={() => {
-                    createProduct.mutate({
-                      name: newProduct.name,
-                      price: Math.round(parseFloat(newProduct.price) * 100),
-                      trialDays: parseInt(newProduct.trialDays),
-                      description: newProduct.description,
-                      benefits: newProduct.benefits,
-                      imageUrl: newProduct.imageUrl,
-                      affiliateLink: newProduct.affiliateLink,
-                      category: newProduct.category,
-                    });
-                  }} className="bg-accent text-white dark:text-black font-black text-xs uppercase tracking-widest">
-                    Criar Produto
+                  <Button 
+                    disabled={createProduct.isPending}
+                    onClick={() => {
+                      if (!newProduct.name || !newProduct.price || !newProduct.affiliateLink) {
+                        toast.error("Preencha os campos obrigatórios");
+                        return;
+                      }
+                      createProduct.mutate({
+                        name: newProduct.name,
+                        price: Math.round(parseFloat(newProduct.price) * 100),
+                        trialDays: parseInt(newProduct.trialDays),
+                        description: newProduct.description,
+                        benefits: newProduct.benefits,
+                        imageUrl: newProduct.imageUrl,
+                        affiliateLink: newProduct.affiliateLink,
+                        category: newProduct.category,
+                      });
+                    }} className="bg-accent text-white dark:text-black font-black text-xs uppercase tracking-widest"
+                  >
+                    {createProduct.isPending ? "Criando..." : "Criar Produto"}
                   </Button>
                   <Button variant="ghost" onClick={() => setShowAddProduct(false)} className="font-black text-xs uppercase tracking-widest">
                     Cancelar
