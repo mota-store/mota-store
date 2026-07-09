@@ -98,6 +98,8 @@ function AdminDashboard() {
   const [userSearch, setUserSearch] = useState("");
   const [expandedUserId, setExpandedUserId] = useState<number | null>(null);
   const [showAddProduct, setShowAddProduct] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState<number | null>(null);
   const [showAddCoupon, setShowAddCoupon] = useState(false);
 
   // Admin queries
@@ -135,11 +137,24 @@ function AdminDashboard() {
     onError: () => toast.error("Erro ao criar produto"),
   });
   const updateProduct = trpc.admin.updateProduct.useMutation({
-    onSuccess: () => { refetchProducts(); toast.success("Produto atualizado!"); },
+    onSuccess: () => { 
+      refetchProducts(); 
+      setEditingProduct(null);
+      setShowAddProduct(false);
+      toast.success("Produto atualizado!"); 
+    },
     onError: () => toast.error("Erro ao atualizar produto"),
   });
   const deleteProduct = trpc.admin.deleteProduct.useMutation({
-    onSuccess: () => { refetchProducts(); toast.success("Produto desativado"); },
+    onSuccess: () => { 
+      refetchProducts(); 
+      setIsDeleting(null);
+      toast.success("Produto excluído permanentemente!"); 
+    },
+    onError: () => {
+      setIsDeleting(null);
+      toast.error("Erro ao excluir produto");
+    }
   });
 
   // Transações de usuário
@@ -372,15 +387,29 @@ function AdminDashboard() {
                   </div>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => updateProduct.mutate({ id: product.id, isActive: !product.isActive })}
+                      onClick={() => {
+                        setEditingProduct({
+                          ...product,
+                          price: (product.price / 100).toString(),
+                          trialDays: product.trialDays.toString()
+                        });
+                        setShowAddProduct(true);
+                      }}
                       className="p-2 rounded-lg hover:bg-muted/40 text-muted-foreground hover:text-foreground"
-                      title={product.isActive ? "Desativar" : "Ativar"}
+                      title="Editar"
                     >
                       <Edit2 className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => deleteProduct.mutate({ productId: product.id })}
-                      className="p-2 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                      disabled={isDeleting === product.id}
+                      onClick={() => {
+                        if (confirm("Tem certeza que deseja excluir este produto permanentemente?")) {
+                          setIsDeleting(product.id);
+                          deleteProduct.mutate({ productId: product.id });
+                        }
+                      }}
+                      className="p-2 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive disabled:opacity-50"
+                      title="Excluir"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -389,67 +418,130 @@ function AdminDashboard() {
               </Card>
             ))}
 
-            {/* Add Product Form */}
+            {/* Add/Edit Product Form */}
             {showAddProduct && (
               <Card className="p-6 bg-card/40 border-accent/30 rounded-2xl">
-                <h3 className="font-black text-sm uppercase tracking-widest mb-4">Novo Produto</h3>
+                <h3 className="font-black text-sm uppercase tracking-widest mb-4">
+                  {editingProduct ? "Editar Produto" : "Novo Produto"}
+                </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Nome</label>
-                    <Input value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} className="bg-background/50 rounded-xl" placeholder="Spotify Premium" />
-                  </div>
-                  <div>
-                    <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Categoria</label>
-                    <Input value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} className="bg-background/50 rounded-xl" placeholder="video" />
+                    <Input 
+                      value={editingProduct ? editingProduct.name : newProduct.name} 
+                      onChange={e => editingProduct ? setEditingProduct({...editingProduct, name: e.target.value}) : setNewProduct({...newProduct, name: e.target.value})} 
+                      className="bg-background/50 rounded-xl" placeholder="Spotify Premium" 
+                    />
                   </div>
                   <div>
                     <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Preço (R$)</label>
-                    <Input type="number" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} className="bg-background/50 rounded-xl" placeholder="10.00" />
+                    <Input 
+                      value={editingProduct ? editingProduct.price : newProduct.price} 
+                      onChange={e => editingProduct ? setEditingProduct({...editingProduct, price: e.target.value}) : setNewProduct({...newProduct, price: e.target.value})} 
+                      className="bg-background/50 rounded-xl" placeholder="10.00" 
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Categoria</label>
+                    <Input 
+                      value={editingProduct ? editingProduct.category : newProduct.category} 
+                      onChange={e => editingProduct ? setEditingProduct({...editingProduct, category: e.target.value}) : setNewProduct({...newProduct, category: e.target.value})} 
+                      className="bg-background/50 rounded-xl" placeholder="Streaming" 
+                    />
                   </div>
                   <div>
                     <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Dias Trial</label>
-                    <Input type="number" value={newProduct.trialDays} onChange={e => setNewProduct({...newProduct, trialDays: e.target.value})} className="bg-background/50 rounded-xl" />
+                    <Input 
+                      type="number" 
+                      value={editingProduct ? editingProduct.trialDays : newProduct.trialDays} 
+                      onChange={e => editingProduct ? setEditingProduct({...editingProduct, trialDays: e.target.value}) : setNewProduct({...newProduct, trialDays: e.target.value})} 
+                      className="bg-background/50 rounded-xl" 
+                    />
                   </div>
                   <div className="col-span-2">
                     <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Descrição</label>
-                    <Input value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} className="bg-background/50 rounded-xl" placeholder="Descrição do produto..." />
+                    <Input 
+                      value={editingProduct ? editingProduct.description : newProduct.description} 
+                      onChange={e => editingProduct ? setEditingProduct({...editingProduct, description: e.target.value}) : setNewProduct({...newProduct, description: e.target.value})} 
+                      className="bg-background/50 rounded-xl" placeholder="Descrição do produto..." 
+                    />
                   </div>
                   <div className="col-span-2">
                     <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block mb-1">URL da Imagem</label>
-                    <Input value={newProduct.imageUrl} onChange={e => setNewProduct({...newProduct, imageUrl: e.target.value})} className="bg-background/50 rounded-xl" placeholder="https://..." />
+                    <Input 
+                      value={editingProduct ? editingProduct.imageUrl : newProduct.imageUrl} 
+                      onChange={e => editingProduct ? setEditingProduct({...editingProduct, imageUrl: e.target.value}) : setNewProduct({...newProduct, imageUrl: e.target.value})} 
+                      className="bg-background/50 rounded-xl" placeholder="https://..." 
+                    />
                   </div>
                   <div className="col-span-2">
                     <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Link de Afiliado</label>
-                    <Input value={newProduct.affiliateLink} onChange={e => setNewProduct({...newProduct, affiliateLink: e.target.value})} className="bg-background/50 rounded-xl" placeholder="Link do produto..." />
+                    <Input 
+                      value={editingProduct ? editingProduct.affiliateLink : newProduct.affiliateLink} 
+                      onChange={e => editingProduct ? setEditingProduct({...editingProduct, affiliateLink: e.target.value}) : setNewProduct({...newProduct, affiliateLink: e.target.value})} 
+                      className="bg-background/50 rounded-xl" placeholder="Link do produto..." 
+                    />
                   </div>
                   <div className="col-span-2">
                     <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Benefícios (JSON)</label>
-                    <Input value={newProduct.benefits} onChange={e => setNewProduct({...newProduct, benefits: e.target.value})} className="bg-background/50 rounded-xl" placeholder='["Benefício 1", "Benefício 2"]' />
+                    <Input 
+                      value={editingProduct ? editingProduct.benefits : newProduct.benefits} 
+                      onChange={e => editingProduct ? setEditingProduct({...editingProduct, benefits: e.target.value}) : setNewProduct({...newProduct, benefits: e.target.value})} 
+                      className="bg-background/50 rounded-xl" placeholder='["Benefício 1", "Benefício 2"]' 
+                    />
                   </div>
+                  {editingProduct && (
+                    <div className="col-span-2 flex items-center gap-2">
+                      <input 
+                        type="checkbox" 
+                        id="is-active" 
+                        checked={editingProduct.isActive} 
+                        onChange={e => setEditingProduct({...editingProduct, isActive: e.target.checked})}
+                      />
+                      <label htmlFor="is-active" className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Produto Ativo</label>
+                    </div>
+                  )}
                 </div>
                 <div className="flex gap-2 mt-4">
                   <Button 
-                    disabled={createProduct.isPending}
+                    disabled={createProduct.isPending || updateProduct.isPending}
                     onClick={() => {
-                      if (!newProduct.name || !newProduct.price || !newProduct.affiliateLink) {
+                      const data = editingProduct || newProduct;
+                      if (!data.name || !data.price || !data.affiliateLink) {
                         toast.error("Preencha os campos obrigatórios");
                         return;
                       }
-                      createProduct.mutate({
-                        name: newProduct.name,
-                        price: Math.round(parseFloat(newProduct.price) * 100),
-                        trialDays: parseInt(newProduct.trialDays),
-                        description: newProduct.description,
-                        benefits: newProduct.benefits,
-                        imageUrl: newProduct.imageUrl,
-                        affiliateLink: newProduct.affiliateLink,
-                        category: newProduct.category,
-                      });
+                      
+                      if (editingProduct) {
+                        updateProduct.mutate({
+                          id: editingProduct.id,
+                          name: editingProduct.name,
+                          price: Math.round(parseFloat(editingProduct.price) * 100),
+                          trialDays: parseInt(editingProduct.trialDays),
+                          description: editingProduct.description,
+                          benefits: editingProduct.benefits,
+                          imageUrl: editingProduct.imageUrl,
+                          affiliateLink: editingProduct.affiliateLink,
+                          category: editingProduct.category,
+                          isActive: editingProduct.isActive
+                        });
+                      } else {
+                        createProduct.mutate({
+                          name: newProduct.name,
+                          price: Math.round(parseFloat(newProduct.price) * 100),
+                          trialDays: parseInt(newProduct.trialDays),
+                          description: newProduct.description,
+                          benefits: newProduct.benefits,
+                          imageUrl: newProduct.imageUrl,
+                          affiliateLink: newProduct.affiliateLink,
+                          category: newProduct.category,
+                        });
+                      }
                     }} className="bg-accent text-white dark:text-black font-black text-xs uppercase tracking-widest"
                   >
-                    {createProduct.isPending ? "Criando..." : "Criar Produto"}
+                    {createProduct.isPending || updateProduct.isPending ? "Salvando..." : editingProduct ? "Salvar Alterações" : "Criar Produto"}
                   </Button>
-                  <Button variant="ghost" onClick={() => setShowAddProduct(false)} className="font-black text-xs uppercase tracking-widest">
+                  <Button variant="ghost" onClick={() => { setShowAddProduct(false); setEditingProduct(null); }} className="font-black text-xs uppercase tracking-widest">
                     Cancelar
                   </Button>
                 </div>
