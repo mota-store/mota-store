@@ -52,7 +52,7 @@ async function startServer() {
         const { sdk } = await import("./sdk");
         const { getDb } = await import("../db");
         const { users } = await import("../../drizzle/schema");
-        const { eq } = await import("drizzle-orm");
+        const { eq, and } = await import("drizzle-orm");
         const { getSessionCookieOptions } = await import("./cookies");
         const { COOKIE_NAME, ONE_YEAR_MS } = await import("../../shared/const");
 
@@ -80,7 +80,7 @@ async function startServer() {
         res.json({ success: true });
       } catch (error) {
         console.error("[Admin Login] Error creating session:", error);
-        res.json({ success: true });
+        res.status(500).json({ success: false, error: "Internal server error" });
       }
     } else {
       res.status(401).json({ success: false, error: "Credenciais inválidas" });

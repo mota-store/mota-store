@@ -313,14 +313,14 @@ class SDKServer {
       throw ForbiddenError("User not found");
     }
 
-    await db.upsertUser({
-      openId: user.openId,
+    // Update last login time
+    await db.updateUser(user.id, {
       lastSignedIn: signedInAt,
     });
 
-    // Re-fetch user to get updated role and data after upsert
+    // Re-fetch user to get updated role and data from DB
     const updatedUser = await db.getUserByOpenId(user.openId);
-    return updatedUser ?? user;
+    return (updatedUser ?? user) as AuthenticatedUser;
   }
 }
 
