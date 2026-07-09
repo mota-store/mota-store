@@ -355,7 +355,7 @@ export async function checkoutWithBalance(userId: number, _amountFromClient: num
 
   return await db.transaction(async (tx) => {
     const cartTotal = await calculateCartTotal(tx, userId);
-    const [user] = await tx.select().from(users).where(eq(users.id, userId)).limit(1);
+    const [user] = await tx.select().from(users).where(eq(users.id, userId)).for("update").limit(1);
     
     if (!user) return { success: false, error: "Usuário não encontrado" };
     
@@ -364,7 +364,7 @@ export async function checkoutWithBalance(userId: number, _amountFromClient: num
     const finalAmount = cartTotal - discount;
 
     if (user.balance < finalAmount) {
-      return { success: false, error: "Saldo insuficiente" };
+      return { success: false, error: `Saldo insuficiente (Saldo: R$ ${(user.balance/100).toFixed(2)}, Necessário: R$ ${(finalAmount/100).toFixed(2)})` };
     }
 
     const newBalance = user.balance - finalAmount;
@@ -409,10 +409,10 @@ export async function checkoutWithBalanceAndPix(userId: number, _totalFromClient
 
   return await db.transaction(async (tx) => {
     const cartTotal = await calculateCartTotal(tx, userId);
-    const [user] = await tx.select().from(users).where(eq(users.id, userId)).limit(1);
+    const [user] = await tx.select().from(users).where(eq(users.id, userId)).for("update").limit(1);
 
     if (!user) return { success: false, error: "Usuário não encontrado" };
-    if (user.balance < balanceToUse) return { success: false, error: "Saldo insuficiente" };
+    if (user.balance < balanceToUse) return { success: false, error: `Saldo insuficiente (Saldo: R$ ${(user.balance/100).toFixed(2)})` };
 
     const remainingAmount = cartTotal - balanceToUse;
     if (remainingAmount <= 0) return { success: false, error: "Use saldo total" };

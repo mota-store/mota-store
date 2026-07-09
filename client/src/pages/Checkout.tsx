@@ -28,6 +28,13 @@ export default function Checkout() {
   const createPix = trpc.payments.createPix.useMutation();
   const checkoutWithBalance = trpc.wallet.checkoutWithBalance.useMutation();
   const checkoutWithBalanceAndPix = trpc.wallet.checkoutWithBalanceAndPix.useMutation();
+  const checkPaymentStatus = trpc.payments.checkStatus.useQuery(
+    { txid: pixData?.txid || "" },
+    { 
+      enabled: !!pixData?.txid && step === "pix",
+      refetchInterval: 5000, // Verificar a cada 5 segundos
+    }
+  );
 
   const enrichedItems = cartItems?.map(item => ({
     ...item,
@@ -66,6 +73,30 @@ export default function Checkout() {
     }
   }, []);
 
+  // Efeito para lidar com a confirmação do pagamento PIX via polling
+  useEffect(() => {
+    if (checkPaymentStatus.data?.status === "COMPLETED" && pixData && orderId) {
+      toast.success("Pagamento confirmado!");
+      
+      // Salvar dados para o WhatsApp
+      sessionStorage.setItem("lastOrder", JSON.stringify({
+        id: orderId,
+        total: pixData.amount || total,
+        items: enrichedItems.map(item => ({
+          name: item.product?.name || "Produto",
+          price: 500,
+          quantity: item.quantity
+        }))
+      }));
+
+      sessionStorage.removeItem("pix_payment");
+      sessionStorage.removeItem("pix_expiry_time");
+      queryClient.invalidateQueries({ queryKey: [["cart", "getItems"]] });
+      queryClient.invalidateQueries({ queryKey: [["wallet", "getBalance"]] });
+      navigate(`/order-confirmation?id=${orderId}`);
+    }
+  }, [checkPaymentStatus.data, pixData, orderId, navigate, queryClient, enrichedItems, total]);
+
   const handlePayWithBalance = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
@@ -81,6 +112,18 @@ export default function Checkout() {
 
       if (result.success) {
         toast.success("Pagamento realizado com sucesso!");
+        
+        // Salvar dados do pedido para a página de confirmação (WhatsApp)
+        sessionStorage.setItem("lastOrder", JSON.stringify({
+          id: result.orderId,
+          total: finalTotal,
+          items: enrichedItems.map(item => ({
+            name: item.product?.name || "Produto",
+            price: 500,
+            quantity: item.quantity
+          }))
+        }));
+
         queryClient.invalidateQueries({ queryKey: [["cart", "getItems"]] });
         queryClient.invalidateQueries({ queryKey: [["wallet", "getBalance"]] });
         navigate(`/order-confirmation?id=${result.orderId}`);

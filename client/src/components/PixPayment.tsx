@@ -39,6 +39,19 @@ export function PixPayment({
   const [isChecking, setIsChecking] = useState(false);
   const [bankCopied, setBankCopied] = useState<string | null>(null);
 
+  // Polling para verificar status do pagamento
+  useEffect(() => {
+    if (timeLeft <= 0 || !onPaymentConfirmed) return;
+
+    const interval = setInterval(() => {
+      // Aqui poderíamos chamar uma função de checkStatus se tivéssemos o txid
+      // Como o componente é genérico, vamos apenas simular ou esperar o onPaymentConfirmed ser chamado externamente
+      // Mas para o mota-store, precisamos que o Checkout.tsx gerencie isso.
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [timeLeft, onPaymentConfirmed]);
+
   useEffect(() => {
     if (timeLeft <= 0) return;
     const timer = setInterval(() => {
