@@ -20,13 +20,17 @@ export async function getDb() {
   return drizzle(pool, { schema, mode: "default" });
 }
 
-// REGRA FIXA DE PREÇO: Todos os produtos custam R$ 5,00 (500 centavos)
-const FIXED_PRICE = 500;
-
-// Helper para calcular o total real do carrinho no servidor
+// Helper para calcular o total real do carrinho no servidor usando o preço real do produto
 async function calculateCartTotal(tx: any, userId: number) {
-  const items = await tx.select().from(cartItems).where(eq(cartItems.userId, userId));
-  return items.reduce((sum: number, item: any) => sum + (FIXED_PRICE * item.quantity), 0);
+  const items = await tx.select({
+    quantity: cartItems.quantity,
+    price: products.price
+  })
+  .from(cartItems)
+  .innerJoin(products, eq(cartItems.productId, products.id))
+  .where(eq(cartItems.userId, userId));
+  
+  return items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
 }
 
 // ============================================
@@ -309,13 +313,21 @@ export async function createOrder(userId: number, _totalAmountFromClient: number
 
     const orderId = result.insertId;
 
-    const items = await tx.select().from(cartItems).where(eq(cartItems.userId, userId));
+    const items = await tx.select({
+      productId: cartItems.productId,
+      quantity: cartItems.quantity,
+      price: products.price
+    })
+    .from(cartItems)
+    .innerJoin(products, eq(cartItems.productId, products.id))
+    .where(eq(cartItems.userId, userId));
+
     for (const item of items) {
       await tx.insert(orderItems).values({
         orderId,
         productId: item.productId,
         quantity: item.quantity,
-        priceAtPurchase: FIXED_PRICE,
+        priceAtPurchase: item.price,
       });
     }
 
@@ -410,13 +422,21 @@ export async function checkoutWithBalance(userId: number, _amountFromClient: num
 
     const orderId = orderResult.insertId;
 
-    const items = await tx.select().from(cartItems).where(eq(cartItems.userId, userId));
+    const items = await tx.select({
+      productId: cartItems.productId,
+      quantity: cartItems.quantity,
+      price: products.price
+    })
+    .from(cartItems)
+    .innerJoin(products, eq(cartItems.productId, products.id))
+    .where(eq(cartItems.userId, userId));
+
     for (const item of items) {
       await tx.insert(orderItems).values({
         orderId,
         productId: item.productId,
         quantity: item.quantity,
-        priceAtPurchase: FIXED_PRICE,
+        priceAtPurchase: item.price,
       });
     }
 
@@ -460,13 +480,21 @@ export async function checkoutWithBalanceAndPix(userId: number, _totalFromClient
 
     const orderId = orderResult.insertId;
 
-    const items = await tx.select().from(cartItems).where(eq(cartItems.userId, userId));
+    const items = await tx.select({
+      productId: cartItems.productId,
+      quantity: cartItems.quantity,
+      price: products.price
+    })
+    .from(cartItems)
+    .innerJoin(products, eq(cartItems.productId, products.id))
+    .where(eq(cartItems.userId, userId));
+
     for (const item of items) {
       await tx.insert(orderItems).values({
         orderId,
         productId: item.productId,
         quantity: item.quantity,
-        priceAtPurchase: FIXED_PRICE,
+        priceAtPurchase: item.price,
       });
     }
 
