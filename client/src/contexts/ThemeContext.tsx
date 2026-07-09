@@ -6,11 +6,11 @@ export const ACCENT_COLORS = [
   { name: "Original", value: "221", hex: "#1e40af" }, // Azul Mota Store real
   { name: "Roxo", value: "280", hex: "#7C3AED" },
   { name: "Verde", value: "142", hex: "#16A34A" },
-  { name: "Vermelho", value: "0", hex: "#E11D48" }, 
+  { name: "Vermelho", value: "348", hex: "#E11D48" }, 
   { name: "Rosa", value: "330", hex: "#DB2777" },
   { name: "Branco", value: "white", hex: "#FFFFFF" }, 
   { name: "Ciano", value: "190", hex: "#0891B2" },
-  { name: "Amarelo", value: "48", hex: "#FFCC00" }, // Amarelo solicitado
+  { name: "Amarelo", value: "45", hex: "#FFCC00" }, 
 ];
 
 interface ThemeContextType {
@@ -63,12 +63,18 @@ export function ThemeProvider({
   // Aplicar cores de destaque instantaneamente
   useLayoutEffect(() => {
     const root = document.documentElement;
+    const selectedColor = ACCENT_COLORS.find(c => c.value === accentHue);
+
     if (accentHue === "white") {
       root.style.setProperty("--accent-hue", "0");
       root.style.setProperty("--dynamic-accent-light", "#000000");
       root.style.setProperty("--dynamic-accent-dark", "#FFFFFF");
-      // Ajustar o foreground para preto quando o fundo for branco para manter contraste
       root.style.setProperty("--accent-foreground-dynamic", "#000000");
+    } else if (selectedColor) {
+      root.style.setProperty("--accent-hue", selectedColor.value);
+      root.style.setProperty("--dynamic-accent-light", selectedColor.hex);
+      root.style.setProperty("--dynamic-accent-dark", selectedColor.hex);
+      root.style.removeProperty("--accent-foreground-dynamic");
     } else {
       root.style.setProperty("--accent-hue", accentHue);
       root.style.removeProperty("--dynamic-accent-light");
@@ -93,7 +99,12 @@ export function ThemeProvider({
       <style>{`
         :root {
           --accent-hue: ${accentHue === "white" ? "0" : accentHue};
-          ${accentHue === "white" ? "--dynamic-accent-light: #000000; --dynamic-accent-dark: #FFFFFF; --accent-foreground-dynamic: #000000;" : ""}
+          ${accentHue === "white" 
+            ? "--dynamic-accent-light: #000000; --dynamic-accent-dark: #FFFFFF; --accent-foreground-dynamic: #000000;" 
+            : ACCENT_COLORS.find(c => c.value === accentHue)
+              ? `--dynamic-accent-light: ${ACCENT_COLORS.find(c => c.value === accentHue)?.hex}; --dynamic-accent-dark: ${ACCENT_COLORS.find(c => c.value === accentHue)?.hex};`
+              : ""
+          }
         }
       `}</style>
       {children}

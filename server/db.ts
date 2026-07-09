@@ -387,7 +387,7 @@ export async function checkoutWithBalance(userId: number, _amountFromClient: num
     const finalAmount = cartTotal - discount;
 
     if (user.balance < finalAmount) {
-      return { success: false, error: `Saldo insuficiente (Saldo: R$ ${(user.balance/100).toFixed(2)}, Necessário: R$ ${(finalAmount/100).toFixed(2)})` };
+      throw new Error(`Saldo insuficiente (Saldo: R$ ${(user.balance/100).toFixed(2)}, Necessário: R$ ${(finalAmount/100).toFixed(2)})`);
     }
 
     const newBalance = user.balance - finalAmount;
