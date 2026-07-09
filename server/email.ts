@@ -84,26 +84,18 @@ async function sendMailViaAPI(options: { to: string; subject: string; html: stri
 }
 
 export async function sendWelcomeEmail(email: string, firstName: string) {
-  const subject = `Confirmacao de cadastro: Mota Store`;
+  const subject = `Bem-vindo a Mota Store!`;
 
-  const plainText = `Ola, ${firstName}. Sua conta na Mota Store foi criada com sucesso. Acesse a loja aqui: ${APP_URL}`;
+  const plainText = `Ola, ${firstName}. Sua conta na Mota Store foi criada com sucesso. Seja bem-vindo!`;
 
   const html = `
-    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333; line-height: 1.6;">
-      <h2 style="color: #1e40af;">Confirmacao de Cadastro</h2>
-      <p>Ola, <b>${firstName}</b>.</p>
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+      <h2 style="color: #1e40af;">Bem-vindo!</h2>
+      <p>Ola, ${firstName}.</p>
       <p>Sua conta na <b>Mota Store</b> foi criada com sucesso. Estamos felizes em ter voce conosco.</p>
-      <p>Para comecar a navegar em nossa loja, clique no botao abaixo:</p>
-      <div style="text-align: center; margin: 30px 0;">
-        <a href="${APP_URL}" style="background: #1e40af; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">Acessar Minha Conta</a>
-      </div>
-      <p style="font-size: 14px;">Se o botao acima nao funcionar, copie e cole o link abaixo no seu navegador:</p>
-      <p style="font-size: 14px; color: #1e40af;">${APP_URL}</p>
-      <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;">
-      <p style="font-size: 12px; color: #666; text-align: center;">
-        Este e um e-mail automatico da Mota Store.<br>
-        Se voce nao realizou este cadastro, por favor ignore este e-mail.
-      </p>
+      <p>Sua conta ja esta ativa e pronta para uso.</p>
+      <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+      <p style="font-size: 12px; color: #666;">Equipe Mota Store</p>
     </div>
   `;
 

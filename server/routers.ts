@@ -172,13 +172,21 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         const { setResetToken, getUserByOpenId } = await import("./db");
         
-        // Verificar se já existe um código enviado recentemente (menos de 30 segundos)
+        // Trava global por memória para evitar rajadas (bursts) rápidas que o DB pode não pegar a tempo
+        const globalAny = global as any;
+        if (!globalAny.lastVerificationSent) globalAny.lastVerificationSent = new Map<string, number>();
+        const lastSentMemory = globalAny.lastVerificationSent.get(ctx.user.email!) || 0;
+        if (Date.now() - lastSentMemory < 10000) { // 10 segundos de trava de memória
+          return { success: true, alreadySent: true };
+        }
+        globalAny.lastVerificationSent.set(ctx.user.email!, Date.now());
+
+        // Verificar se já existe um código enviado recentemente no banco (menos de 30 segundos)
         const user = await getUserByOpenId(ctx.user.openId);
         if (user?.resetTokenExpires) {
           const now = new Date();
           const expires = new Date(user.resetTokenExpires);
           const diffSeconds = (expires.getTime() - now.getTime()) / 1000;
-          // Se expira em 10 min (600s), e a diferença é > 570s, significa que foi enviado há menos de 30s
           if (diffSeconds > 570) {
             return { success: true, alreadySent: true };
           }

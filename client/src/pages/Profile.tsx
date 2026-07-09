@@ -87,6 +87,7 @@ export default function Profile() {
   }, [newPassword, confirmNewPassword]);
 
   const handleSendCode = async () => {
+    if (isSendingCode) return;
     try {
       setIsSendingCode(true);
       await requestCodeMutation.mutateAsync();
