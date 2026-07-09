@@ -37,11 +37,14 @@ Total: R$ ${(parsedData.total / 100).toFixed(2)}
 Horário: ${now}
 Aguardo a ativação! 😊`;
 
-        window.location.href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-        // Limpar o pedido para que, ao voltar, o useEffect redirecione para a Home
+        // Abrir WhatsApp em uma nova aba para que a aba atual possa redirecionar para a Home
+        window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`, '_blank');
+        
+        // Redirecionar a aba atual para a Home após 5 segundos da abertura do WhatsApp
         setTimeout(() => {
           sessionStorage.removeItem("lastOrder");
-        }, 1000);
+          navigate("/");
+        }, 5000);
       }, 3000);
 
       return () => clearTimeout(timer);

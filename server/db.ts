@@ -551,6 +551,7 @@ export async function getAllOrders() {
 }
 
 const lastAdminCredit = new Map<string, number>();
+const lastCouponRedeem = new Map<string, number>();
 
 export async function addUserBalance(userId: number, amount: number) {
   const db = await getDb();
@@ -636,6 +637,15 @@ export async function deleteCoupon(couponId: number) {
 export async function redeemCoupon(code: string, userId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+
+  // Trava de 5 segundos por usuário para evitar duplicidade de resgate rápido
+  const now = Date.now();
+  const key = `${userId}-${code}`;
+  const lastTime = lastCouponRedeem.get(key) || 0;
+  if (now - lastTime < 5000) {
+    return { success: true, alreadyProcessed: true };
+  }
+  lastCouponRedeem.set(key, now);
 
   return await db.transaction(async (tx) => {
     const [coupon] = await tx.select().from(coupons).where(and(eq(coupons.code, code), eq(coupons.isActive, 1))).limit(1);
