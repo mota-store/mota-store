@@ -157,10 +157,14 @@ export const appRouter = router({
         return { success: true };
       }),
     requestVerificationCode: protectedProcedure
-      .mutation(async ({ ctx }) => {
+      .input(z.object({ digits: z.number().default(4) }).optional())
+      .mutation(async ({ ctx, input }) => {
         const { setResetToken } = await import("./db");
         
-        const code = Math.floor(1000 + Math.random() * 9000).toString();
+        const digits = input?.digits || 4;
+        const min = Math.pow(10, digits - 1);
+        const max = Math.pow(10, digits) - 1;
+        const code = Math.floor(min + Math.random() * (max - min + 1)).toString();
         const expires = new Date(Date.now() + 600000);
 
         await setResetToken(ctx.user.id, code, expires);
@@ -169,6 +173,27 @@ export const appRouter = router({
           console.error("[VerificationCode] Failed to send code email:", e);
         });
         
+        return { success: true };
+      }),
+
+    deleteAccount: protectedProcedure
+      .input(z.object({ verificationCode: z.string().length(6) }))
+      .mutation(async ({ ctx, input }) => {
+        const { getUserByResetToken, deleteUser, clearResetToken } = await import("./db");
+        
+        const user = await getUserByResetToken(input.verificationCode);
+        if (!user || user.id !== ctx.user.id || !user.resetTokenExpires || user.resetTokenExpires < new Date()) {
+          return { success: false, error: "Código de verificação inválido ou expirado" };
+        }
+
+        await deleteUser(ctx.user.id);
+        
+        // Limpar cookie de sessão
+        const { getSessionCookieOptions } = await import("./_core/cookies");
+        const { COOKIE_NAME } = await import("../../shared/const");
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+
         return { success: true };
       }),
   }),

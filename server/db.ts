@@ -103,6 +103,29 @@ export async function updateUser(userId: number, data: any) {
   await db.update(users).set(data).where(eq(users.id, userId));
 }
 
+export async function deleteUser(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.transaction(async (tx) => {
+    // Deletar dados relacionados
+    await tx.delete(cartItems).where(eq(cartItems.userId, userId));
+    await tx.delete(couponRedemptions).where(eq(couponRedemptions.userId, userId));
+    await tx.delete(balanceTransactions).where(eq(balanceTransactions.userId, userId));
+    
+    // Para ordens, podemos manter para histórico ou deletar
+    // Como é exclusão permanente de conta, vamos deletar tudo relacionado
+    const userOrders = await tx.select({ id: orders.id }).from(orders).where(eq(orders.userId, userId));
+    for (const order of userOrders) {
+      await tx.delete(orderItems).where(eq(orderItems.orderId, order.id));
+    }
+    await tx.delete(orders).where(eq(orders.userId, userId));
+    
+    // Por fim, deletar o usuário
+    await tx.delete(users).where(eq(users.id, userId));
+  });
+}
+
 export async function getAllUsers() {
   const db = await getDb();
   if (!db) return [];

@@ -54,6 +54,22 @@ export default function Profile() {
   const [codeSent, setCodeSent] = useState(false);
   const [passwordsMatch, setPasswordsMatch] = useState<true | false | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDeleteCodeInput, setShowDeleteCodeInput] = useState(false);
+  const [deleteVerificationCode, setDeleteVerificationCode] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const deleteAccountMutation = trpc.auth.deleteAccount.useMutation({
+    onSuccess: () => {
+      toast.success("Sua conta foi excluída permanentemente.");
+      logout();
+      navigate("/");
+    },
+    onError: (err: any) => {
+      toast.error("Erro ao excluir conta: " + (err.message || "Erro desconhecido"));
+      setIsDeleting(false);
+    }
+  });
 
   // Validação em tempo real das senhas
   useEffect(() => {
@@ -181,6 +197,31 @@ export default function Profile() {
     confirmNewPassword.length >= 6 &&
     newPassword === confirmNewPassword &&
     verificationCode.length === 4;
+
+  const handleSendDeleteCode = async () => {
+    try {
+      setIsDeleting(true);
+      await requestCodeMutation.mutateAsync({ digits: 6 });
+      setShowDeleteCodeInput(true);
+      toast.success("Código de 6 dígitos enviado para seu e-mail!");
+    } catch (err: any) {
+      toast.error("Erro ao enviar código: " + err.message);
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteVerificationCode.length !== 6) {
+      toast.error("Digite o código de 6 dígitos.");
+      return;
+    }
+    try {
+      setIsDeleting(true);
+      await deleteAccountMutation.mutateAsync({ verificationCode: deleteVerificationCode });
+    } catch (err: any) {
+      // Erro já tratado no mutation
+    }
+  };
 
   const handleUpdateProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -518,6 +559,79 @@ export default function Profile() {
                     <LogOut className="h-5 w-5 mr-2" />
                     ENCERRAR SESSÃO
                   </Button>
+
+                  <div className="pt-4 mt-4 border-t border-border/30">
+                    {!showDeleteConfirm && !showDeleteCodeInput ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="w-full text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 hover:text-red-500 transition-colors py-2"
+                      >
+                        Excluir conta permanentemente
+                      </button>
+                    ) : showDeleteConfirm && !showDeleteCodeInput ? (
+                      <div className="bg-red-500/5 border border-red-500/10 rounded-2xl p-4 space-y-4">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-red-500 text-center">
+                          Tem certeza que quer excluir sua conta permanente?<br/>
+                          <span className="opacity-60">(essa ação não pode ser desfeita)</span>
+                        </p>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={handleSendDeleteCode}
+                            disabled={isDeleting}
+                            className="flex-1 h-10 bg-zinc-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center"
+                          >
+                            {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "SIM"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowDeleteConfirm(false)}
+                            disabled={isDeleting}
+                            className="flex-1 h-10 bg-red-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest"
+                          >
+                            NÃO
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-red-500/5 border border-red-500/10 rounded-2xl p-4 space-y-4">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-red-500 text-center">
+                          Verifique o código de 6 dígitos enviado pro seu e-mail
+                        </p>
+                        <Input
+                          value={deleteVerificationCode}
+                          onChange={(e) => setDeleteVerificationCode(e.target.value)}
+                          placeholder="000000"
+                          maxLength={6}
+                          className="bg-background/50 border-red-500/20 text-center font-black tracking-[0.5em] text-lg h-12 rounded-xl"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowDeleteCodeInput(false);
+                              setShowDeleteConfirm(false);
+                              setDeleteVerificationCode("");
+                              setIsDeleting(false);
+                            }}
+                            disabled={isDeleting}
+                            className="flex-1 h-10 bg-zinc-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest"
+                          >
+                            CANCELAR
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleDeleteAccount}
+                            disabled={isDeleting || deleteVerificationCode.length !== 6}
+                            className="flex-1 h-10 bg-red-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center"
+                          >
+                            {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "EXCLUIR"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </form>
               </div>
             </Card>

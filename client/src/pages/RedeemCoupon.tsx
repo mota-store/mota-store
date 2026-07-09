@@ -38,6 +38,10 @@ export default function RedeemCoupon() {
       setRedeemResult({ success: result.success, value: result.value, error: result.error });
       if (result.success) {
         toast.success(`Cupom resgatado com sucesso! R$ ${(result.value! / 100).toFixed(2).replace(".", ",")} creditados.`);
+        // Voltar para o perfil após 3 segundos
+        setTimeout(() => {
+          navigate("/profile");
+        }, 3000);
       } else {
         toast.error(result.error || "Erro ao resgatar cupom");
       }
@@ -156,14 +160,9 @@ export default function RedeemCoupon() {
         </form>
 
         {redeemResult?.success && (
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/checkout?direct=true")}
-            className="w-full mt-4 font-black text-xs uppercase tracking-widest text-accent hover:bg-accent/10"
-          >
-            <ShoppingCart className="h-4 w-4 mr-2" />
-            Ir para o Checkout
-          </Button>
+          <div className="mt-6 p-4 rounded-2xl bg-accent/5 border border-accent/10 text-center animate-pulse">
+            <p className="text-[10px] font-black uppercase tracking-widest text-accent">Retornando ao seu perfil em instantes...</p>
+          </div>
         )}
       </Card>
     </div>

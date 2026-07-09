@@ -38,6 +38,10 @@ Horário: ${now}
 Aguardo a ativação! 😊`;
 
         window.location.href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+        // Limpar o pedido para que, ao voltar, o useEffect redirecione para a Home
+        setTimeout(() => {
+          sessionStorage.removeItem("lastOrder");
+        }, 1000);
       }, 3000);
 
       return () => clearTimeout(timer);
