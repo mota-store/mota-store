@@ -10,7 +10,7 @@ export const ACCENT_COLORS = [
   { name: "Rosa", value: "330", hex: "#DB2777" },
   { name: "Branco", value: "white", hex: "#FFFFFF" }, 
   { name: "Ciano", value: "190", hex: "#0891B2" },
-  { name: "Amarelo", value: "48", hex: "#FFD700" }, // Amarelo Ouro real
+  { name: "Amarelo", value: "48", hex: "#FFCC00" }, // Amarelo solicitado
 ];
 
 interface ThemeContextType {
