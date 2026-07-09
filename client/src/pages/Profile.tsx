@@ -199,6 +199,7 @@ export default function Profile() {
     verificationCode.length === 4;
 
   const handleSendDeleteCode = async () => {
+    if (isDeleting) return; // Evitar envio duplo
     try {
       setIsDeleting(true);
       await requestCodeMutation.mutateAsync({ digits: 6 });
@@ -206,6 +207,7 @@ export default function Profile() {
       toast.success("Código de 6 dígitos enviado para seu e-mail!");
     } catch (err: any) {
       toast.error("Erro ao enviar código: " + err.message);
+    } finally {
       setIsDeleting(false);
     }
   };
@@ -565,7 +567,7 @@ export default function Profile() {
                       <button
                         type="button"
                         onClick={() => setShowDeleteConfirm(true)}
-                        className="w-full text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 hover:text-red-500 transition-colors py-2"
+                        className="w-full text-[10px] font-black uppercase tracking-widest text-black dark:text-white hover:text-red-500 transition-colors py-2"
                       >
                         Excluir conta permanentemente
                       </button>
@@ -580,7 +582,7 @@ export default function Profile() {
                             type="button"
                             onClick={handleSendDeleteCode}
                             disabled={isDeleting}
-                            className="flex-1 h-10 bg-zinc-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center"
+                            className="flex-1 h-10 bg-transparent text-zinc-500 dark:text-zinc-400 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center border border-zinc-200 dark:border-zinc-800"
                           >
                             {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "SIM"}
                           </button>
