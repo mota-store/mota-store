@@ -131,11 +131,11 @@ export const coupons = mysqlTable("coupons", {
   code: varchar("code", { length: 50 }).notNull().unique(), // código único (ex: SUMMER10)
   value: int("value").notNull(), // valor do cupom em centavos
   description: text("description"),
-  maxRedemptions: int("max_redemptions").default(1).notNull(), // quantas pessoas podem resgatar (1 = único, null = ilimitado)
-  currentRedemptions: int("current_redemptions").default(0).notNull(),
-  expiresAt: timestamp("expires_at"),
-  isActive: int("is_active").default(1).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  maxRedemptions: int("maxRedemptions").default(1).notNull(), // quantas pessoas podem resgatar (1 = único, null = ilimitado)
+  currentRedemptions: int("currentRedemptions").default(0).notNull(),
+  expiresAt: timestamp("expiresAt"),
+  isActive: int("isActive").default(1).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
 export type Coupon = typeof coupons.$inferSelect;

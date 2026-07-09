@@ -511,17 +511,17 @@ export async function getUserTransactions(userId: number) {
 // COUPON FUNCTIONS
 // ============================================
 
-export async function createCoupon(input: InsertCoupon) {
+export async function createCoupon(input: any) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
   const [result] = await db.insert(coupons).values({
     code: input.code,
     value: input.value,
-    description: input.description ?? null,
-    maxRedemptions: input.maxRedemptions ?? 1,
+    description: input.description || null,
+    maxRedemptions: input.maxRedemptions || 1,
     currentRedemptions: 0,
-    expiresAt: input.expiresAt ?? null,
+    expiresAt: input.expiresAt || null,
     isActive: 1,
   });
 
