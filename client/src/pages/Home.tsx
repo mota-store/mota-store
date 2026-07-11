@@ -220,8 +220,8 @@ export default function Home() {
                         onClick={() => navigate(`/product/${product.id}`)}
                       >
                         <div className="flex items-baseline gap-3 mb-1">
-                          <span className="text-4xl font-black text-accent tracking-tighter">R$ 5,00</span>
-                          <span className="text-muted-foreground text-sm line-through opacity-50 font-bold">R$ 10,00</span>
+                          <span className="text-4xl font-black text-accent tracking-tighter">R$ {(product.price / 100).toFixed(2).replace(".", ",")}</span>
+                          <span className="text-muted-foreground text-sm line-through opacity-50 font-bold">R$ {(product.price * 2 / 100).toFixed(2).replace(".", ",")}</span>
                         </div>
                         <div className="inline-block px-2 py-1 rounded bg-green-500/10 text-green-500 text-[10px] font-black uppercase tracking-widest">
                           ECONOMIZE 50%

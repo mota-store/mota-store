@@ -497,8 +497,8 @@ function AdminDashboard() {
                       <input 
                         type="checkbox" 
                         id="is-active" 
-                        checked={editingProduct.isActive} 
-                        onChange={e => setEditingProduct({...editingProduct, isActive: e.target.checked})}
+                        checked={editingProduct.isActive === 1 || editingProduct.isActive === true} 
+                        onChange={e => setEditingProduct({...editingProduct, isActive: e.target.checked ? 1 : 0})}
                       />
                       <label htmlFor="is-active" className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Produto Ativo</label>
                     </div>

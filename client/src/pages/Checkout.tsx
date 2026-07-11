@@ -41,9 +41,9 @@ export default function Checkout() {
     product: products?.find(p => p.id === item.productId)
   })) || [];
 
-  // Lógica de Preço: REGRA FIXA de R$ 5,00 (500 centavos)
+  // Lógica de Preço: Baseada no preço real do produto (product.price)
   const total = enrichedItems.reduce((acc, item) => {
-    return acc + 500 * (item.quantity || 1);
+    return acc + (item.product?.price || 0) * (item.quantity || 1);
   }, 0);
 
   const hasCashback = user?.hasCashbackBenefit === 1;
@@ -84,7 +84,7 @@ export default function Checkout() {
         total: pixData.amount || total,
         items: enrichedItems.map(item => ({
           name: item.product?.name || "Produto",
-          price: 500,
+          price: item.product?.price || 0,
           quantity: item.quantity
         }))
       }));
@@ -106,7 +106,7 @@ export default function Checkout() {
         cartItems: enrichedItems.map(item => ({
           productId: item.productId,
           quantity: item.quantity,
-          price: 500,
+          price: item.product?.price || 0,
         })),
       });
 
@@ -150,7 +150,7 @@ export default function Checkout() {
         cartItems: enrichedItems.map(item => ({
           productId: item.productId,
           quantity: item.quantity,
-          price: 500,
+          price: item.product?.price || 0,
         })),
       });
 
@@ -198,7 +198,7 @@ export default function Checkout() {
     setIsSubmitting(true);
     try {
       // Garantir que o total está atualizado com base nos itens atuais
-      const currentTotal = enrichedItems.reduce((acc, item) => acc + 500 * (item.quantity || 1), 0);
+      const currentTotal = enrichedItems.reduce((acc, item) => acc + (item.product?.price || 0) * (item.quantity || 1), 0);
       
       const order = await createOrder.mutateAsync({ totalAmount: currentTotal });
       setOrderId(order.id);

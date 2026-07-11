@@ -123,9 +123,9 @@ export default function Cart() {
     });
   });
 
-  // REGRA FIXA: Todos os produtos custam R$ 5,00 (500 centavos) promocionalmente
-  const subtotal = groupedItems.reduce((sum, item) => sum + 500 * item.quantity, 0);
-  const originalTotal = groupedItems.reduce((sum, item) => sum + 1000 * item.quantity, 0);
+  // Preços calculados a partir do preço real do produto no banco de dados
+  const subtotal = groupedItems.reduce((sum, item) => sum + (item.product?.price || 0) * item.quantity, 0);
+  const originalTotal = groupedItems.reduce((sum, item) => sum + ((item.product?.price || 0) * 2) * item.quantity, 0);
   const total = subtotal;
 
   const handleUpdateQuantity = (productId: number, delta: number) => {
@@ -245,7 +245,7 @@ export default function Cart() {
                     {/* Info Centralizada */}
                     <div className="space-y-1">
                       <h3 className="font-black text-base uppercase tracking-tight">{item.product?.name}</h3>
-                      <p className="font-black text-accent text-lg">R$ 5,00</p>
+                      <p className="font-black text-accent text-lg">R$ {((item.product?.price || 0) / 100).toFixed(2).replace(".", ",")}</p>
                     </div>
 
                     {/* Controles Centralizados */}
