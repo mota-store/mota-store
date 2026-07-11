@@ -26,6 +26,7 @@ export default function Checkout() {
   const { data: user } = trpc.auth.me.useQuery(undefined, { enabled: isAuthenticated });
   const createOrder = trpc.orders.create.useMutation();
   const createPix = trpc.payments.createPix.useMutation();
+  const updateOrderStatus = trpc.orders.updateStatus.useMutation();
   const checkoutWithBalance = trpc.wallet.checkoutWithBalance.useMutation();
   const checkoutWithBalanceAndPix = trpc.wallet.checkoutWithBalanceAndPix.useMutation();
   const checkPaymentStatus = trpc.payments.checkStatus.useQuery(
@@ -91,17 +92,8 @@ export default function Checkout() {
 
       sessionStorage.removeItem("pix_payment");
       sessionStorage.removeItem("pix_expiry_time");
+      
       // Atualizar status do pedido no banco de dados para "completed"
-      const updateStatus = async () => {
-        try {
-          const { trpc } = await import("../lib/trpc");
-          // Chamada direta via trpc context não é ideal aqui, mas o mutate já está definido no componente
-          // Como estamos dentro de um useEffect, usamos a instância da mutation já disponível no escopo do componente
-        } catch (e) {
-          console.error("Erro ao atualizar status do pedido:", e);
-        }
-      };
-
       updateOrderStatus.mutate({ orderId, status: "completed" });
       
       queryClient.invalidateQueries({ queryKey: [["cart", "getItems"]] });
