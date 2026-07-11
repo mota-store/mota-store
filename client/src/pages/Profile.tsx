@@ -71,6 +71,20 @@ export default function Profile() {
     }
   });
 
+  const resetAccountMutation = trpc.wallet.resetAccount.useMutation({
+    onSuccess: () => {
+      toast.success("Histórico limpo e saldo definido para R$ 14,90!");
+      utils.wallet.getBalance.invalidate();
+      utils.wallet.getUserTransactions.invalidate();
+      utils.orders.list.invalidate();
+      utils.auth.me.invalidate();
+      window.location.reload();
+    },
+    onError: (err: any) => {
+      toast.error("Erro ao resetar conta: " + (err.message || "Erro desconhecido"));
+    }
+  });
+
   // Validação em tempo real das senhas
   useEffect(() => {
     if (newPassword.length === 0 && confirmNewPassword.length === 0) {
