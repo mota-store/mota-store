@@ -53,7 +53,7 @@ export function InstallPrompt() {
       <div className="bg-card/95 backdrop-blur-xl border border-border/50 p-4 rounded-3xl shadow-2xl flex items-center justify-between gap-4 max-w-md mx-auto">
         <div className="flex items-center gap-3">
           <div className="h-12 w-12 rounded-2xl bg-accent/10 flex items-center justify-center flex-shrink-0">
-            <img src="/assets/icon-192.png" alt="Mota Store" className="h-8 w-8 object-contain" />
+            <img src="/icon-192x192.png" alt="Mota Store" className="h-8 w-8 object-contain" />
           </div>
           <div>
             <h3 className="text-sm font-black uppercase tracking-tight">Instalar Mota Store</h3>

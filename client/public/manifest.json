@@ -1,11 +1,11 @@
 {
-  "name": "MOTA STORE",
+  "name": "Mota Store",
   "short_name": "Mota Store",
-  "description": "As melhores ofertas de streaming em um só lugar.",
+  "description": "Streaming Premium com até 50% OFF. Spotify, YouTube, Prime Video e muito mais.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#000000",
+  "background_color": "#09090b",
+  "theme_color": "#0ea5e9",
   "orientation": "portrait",
   "scope": "/",
   "icons": [
