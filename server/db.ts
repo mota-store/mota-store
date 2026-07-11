@@ -215,7 +215,7 @@ export async function createProduct(input: InsertProduct) {
   return product;
 }
 
-export async function updateProduct(id: number, input: Partial<InsertProduct> & { isActive?: boolean }) {
+export async function updateProduct(id: number, input: Partial<InsertProduct> & { isActive?: boolean | number }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(products).set(input).where(eq(products.id, id));

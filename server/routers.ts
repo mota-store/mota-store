@@ -319,11 +319,15 @@ export const appRouter = router({
         imageUrl: z.string().max(512).optional(),
         affiliateLink: z.string().max(512).optional(),
         category: z.string().min(1).max(100).optional(),
-        isActive: z.boolean().optional(),
+        isActive: z.union([z.boolean(), z.number().int().min(0).max(1)]).optional(),
       }))
       .mutation(async ({ input }) => {
         const { updateProduct } = await import("./db");
-        return updateProduct(input.id, input);
+        const updateData = {
+          ...input,
+          ...(input.isActive !== undefined && { isActive: typeof input.isActive === 'boolean' ? (input.isActive ? 1 : 0) : input.isActive })
+        };
+        return updateProduct(input.id, updateData);
       }),
 
     deleteProduct: adminProcedure

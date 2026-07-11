@@ -1,0 +1,22 @@
+{
+  "name": "Mota Store",
+  "short_name": "Mota Store",
+  "description": "Streaming Premium com até 50% OFF. Spotify, YouTube, Prime Video e muito mais.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#7c3aed",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

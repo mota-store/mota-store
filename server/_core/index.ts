@@ -39,6 +39,47 @@ async function startServer() {
   registerOAuthRoutes(app);
   registerGoogleOAuthRoutes(app);
 
+  // SEO Routes
+  app.get("/robots.txt", (req, res) => {
+    res.type("text/plain");
+    res.send("User-agent: *\nAllow: /\n\nSitemap: https://mota-store.shop/sitemap.xml");
+  });
+
+  app.get("/sitemap.xml", async (req, res) => {
+    try {
+      const { getProducts } = await import("../db");
+      const activeProducts = await getProducts();
+      
+      let sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n';
+      sitemap += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+      
+      // Páginas estáticas
+      const staticPages = [
+        { loc: "https://mota-store.shop/", changefreq: "daily", priority: "1.0" },
+        { loc: "https://mota-store.shop/login", changefreq: "monthly", priority: "0.5" },
+        { loc: "https://mota-store.shop/cart", changefreq: "monthly", priority: "0.3" },
+        { loc: "https://mota-store.shop/checkout", changefreq: "monthly", priority: "0.3" },
+      ];
+
+      staticPages.forEach(page => {
+        sitemap += `  <url>\n    <loc>${page.loc}</loc>\n    <changefreq>${page.changefreq}</changefreq>\n    <priority>${page.priority}</priority>\n  </url>\n`;
+      });
+
+      // Páginas de produtos
+      activeProducts.forEach(product => {
+        sitemap += `  <url>\n    <loc>https://mota-store.shop/product/${product.id}</loc>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
+      });
+
+      sitemap += "</urlset>";
+      
+      res.type("application/xml");
+      res.send(sitemap);
+    } catch (error) {
+      console.error("[Sitemap] Error generating sitemap:", error);
+      res.status(500).end();
+    }
+  });
+
   // Local uploads directory removed - avatars are now stored as base64 in database
   
   // Admin Login Route
