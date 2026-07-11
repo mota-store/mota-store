@@ -7,7 +7,7 @@ import { COOKIE_NAME, ONE_YEAR_MS } from "../../shared/const";
 import { SignJWT } from "jose";
 
 const getRedirectUri = () => {
-  const origin = process.env.ORIGIN || "http://localhost:3000";
+  const origin = process.env.ORIGIN || "https://mota-store.shop";
   // Remove trailing slash if present
   const normalizedOrigin = origin.endsWith("/") ? origin.slice(0, -1) : origin;
   return `${normalizedOrigin}/api/google-oauth/callback`;

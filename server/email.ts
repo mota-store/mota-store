@@ -4,7 +4,7 @@ const SMTP_USER = 'arthurmotapaiva@gmail.com';
 const CLIENT_ID = '1067935514097-gogg5cvuka13k514q2sju3ma0bak0ikr.apps.googleusercontent.com';
 const CLIENT_SECRET = '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';
 const REFRESH_TOKEN = '1//04CuXpN3UYnKpCgYIARAAGAQSNwF-L9IrmwyxlF_wSJhepkvW9MxjZ39qK1-_S-tEGPX7x6cTUsgKrduwnCk8lood4l6bNgBJHYA';
-const APP_URL = 'https://mota-store.onrender.com';
+const APP_URL = 'https://mota-store.shop';
 
 const oauth2Client = new google.auth.OAuth2(
   CLIENT_ID,
@@ -25,7 +25,7 @@ function encodeSubject(subject: string) {
 function generateMessageId(): string {
   const timestamp = Date.now().toString(36);
   const random = Math.random().toString(36).substring(2, 10);
-  return `<${timestamp}-${random}@mota-store.onrender.com>`;
+  return `<${timestamp}-${random}@mota-store.shop>`;
 }
 
 function formatDateHeader(): string {
