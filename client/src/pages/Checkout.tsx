@@ -91,11 +91,25 @@ export default function Checkout() {
 
       sessionStorage.removeItem("pix_payment");
       sessionStorage.removeItem("pix_expiry_time");
+      // Atualizar status do pedido no banco de dados para "completed"
+      const updateStatus = async () => {
+        try {
+          const { trpc } = await import("../lib/trpc");
+          // Chamada direta via trpc context não é ideal aqui, mas o mutate já está definido no componente
+          // Como estamos dentro de um useEffect, usamos a instância da mutation já disponível no escopo do componente
+        } catch (e) {
+          console.error("Erro ao atualizar status do pedido:", e);
+        }
+      };
+
+      updateOrderStatus.mutate({ orderId, status: "completed" });
+      
       queryClient.invalidateQueries({ queryKey: [["cart", "getItems"]] });
       queryClient.invalidateQueries({ queryKey: [["wallet", "getBalance"]] });
+      queryClient.invalidateQueries({ queryKey: [["orders", "list"]] });
       navigate(`/order-confirmation?id=${orderId}`);
     }
-  }, [checkPaymentStatus.data, pixData, orderId, navigate, queryClient, enrichedItems, total]);
+  }, [checkPaymentStatus.data, pixData, orderId, navigate, queryClient, enrichedItems, total, updateOrderStatus]);
 
   const handlePayWithBalance = async () => {
     if (isSubmitting) return;
@@ -126,6 +140,7 @@ export default function Checkout() {
 
         queryClient.invalidateQueries({ queryKey: [["cart", "getItems"]] });
         queryClient.invalidateQueries({ queryKey: [["wallet", "getBalance"]] });
+        queryClient.invalidateQueries({ queryKey: [["orders", "list"]] });
         navigate(`/order-confirmation?id=${result.orderId}`);
       } else {
         toast.error(result.error || "Erro ao processar pagamento");

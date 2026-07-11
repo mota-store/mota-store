@@ -445,6 +445,8 @@ function AdminDashboard() {
                   <div>
                     <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Preço (R$)</label>
                     <Input 
+                      type="number"
+                      step="0.01"
                       value={editingProduct ? editingProduct.price : newProduct.price} 
                       onChange={e => editingProduct ? setEditingProduct({...editingProduct, price: e.target.value}) : setNewProduct({...newProduct, price: e.target.value})} 
                       className="bg-background/50 rounded-xl" placeholder="10.00" 
@@ -634,7 +636,7 @@ function AdminDashboard() {
                   </div>
                   <div>
                     <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Valor (R$)</label>
-                    <Input type="number" value={newCoupon.value} onChange={e => setNewCoupon({...newCoupon, value: e.target.value})} className="bg-background/50 rounded-xl" placeholder="10.00" />
+                    <Input type="number" step="0.01" value={newCoupon.value} onChange={e => setNewCoupon({...newCoupon, value: e.target.value})} className="bg-background/50 rounded-xl" placeholder="10.00" />
                   </div>
                   <div>
                     <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Máx. Resgates</label>

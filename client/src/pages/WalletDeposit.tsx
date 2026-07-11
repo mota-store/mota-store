@@ -10,7 +10,7 @@ import { toast } from "sonner";
 
 export default function WalletDeposit() {
   const [, navigate] = useLocation();
-  const [amount, setAmount] = useState<number | "">("");
+  const [amount, setAmount] = useState<string | "">("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [pixData, setPixData] = useState<{ pixCode: string; qrCodeBase64: string; txid: string; expiresIn: number } | null>(null);
   const [checkInterval, setCheckInterval] = useState<NodeJS.Timeout | null>(null);
@@ -22,7 +22,7 @@ export default function WalletDeposit() {
   const checkDepositStatusMutation = trpc.wallet.checkDepositStatus.useMutation();
 
   const handleAmountSelect = (val: number) => {
-    setAmount(val);
+    setAmount(val.toString());
   };
 
   const handleGeneratePix = async () => {
@@ -187,9 +187,10 @@ export default function WalletDeposit() {
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-black text-muted-foreground">R$</span>
                 <Input
                   type="number"
+                  step="0.01"
                   placeholder="0,00"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value === "" ? "" : Number(e.target.value))}
+                  onChange={(e) => setAmount(e.target.value)}
                   className="pl-12 py-7 text-lg font-black rounded-[1.5rem] border-border/40 bg-card/20 focus:border-accent transition-all"
                 />
               </div>

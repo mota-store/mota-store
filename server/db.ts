@@ -393,6 +393,7 @@ export async function depositBalance(userId: number, amount: number) {
 
     await tx.update(users).set({ balance: newBalance, hasCashbackBenefit }).where(eq(users.id, userId));
 
+    console.log(`[Deposit] Crediting ${amount} cents to user ${userId}. New balance: ${newBalance}`);
     await tx.insert(balanceTransactions).values({
       userId,
       amount,
