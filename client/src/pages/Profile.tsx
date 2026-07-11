@@ -380,7 +380,7 @@ export default function Profile() {
                               {tx.type === "admin_credit" ? "Crédito" : tx.type === "purchase" ? "Compra" : tx.type === "coupon" ? "Cupom" : tx.type}
                             </span>
                             <span className={`font-black ${tx.amount >= 0 ? "text-green-500" : "text-red-500"}`}>
-                              {tx.amount >= 0 ? "+" : ""}R$ {(Math.abs(tx.amount) / 100).toFixed(2).replace(".", ",")}
+                              {tx.amount >= 0 ? "+" : ""}R$ {(Math.abs(tx.amount || 0) / 100).toFixed(2).replace(".", ",")}
                             </span>
                           </div>
                         ))}

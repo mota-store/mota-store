@@ -655,7 +655,7 @@ function AdminDashboard() {
 <Button onClick={() => {
 	                    createCoupon.mutate({
 	                      code: newCoupon.code.toUpperCase(),
-	                      value: Math.round(parseFloat(newCoupon.value) * 100),
+	                      value: Math.round(Number(newCoupon.value) * 100),
 	                      maxRedemptions: parseInt(newCoupon.maxRedemptions) || 1,
 	                      description: newCoupon.description || undefined,
 	                      expiresAt: newCoupon.expiresAt ? new Date(newCoupon.expiresAt).toISOString() : undefined,
