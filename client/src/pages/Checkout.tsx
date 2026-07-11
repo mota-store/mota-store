@@ -107,6 +107,20 @@ export default function Checkout() {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
+      // Verificar se há itens válidos no carrinho
+      const validItems = enrichedItems.filter(item => (item.product?.price || 0) > 0);
+      if (validItems.length === 0) {
+        toast.error("Os produtos do seu carrinho não possuem preço definido. Entre em contato com o suporte.");
+        setStep("payment");
+        return;
+      }
+
+      if (finalTotal <= 0) {
+        toast.error("Total do pedido inválido. Verifique os preços dos produtos.");
+        setStep("payment");
+        return;
+      }
+
       const result = await checkoutWithBalance.mutateAsync({
         amount: finalTotal,
         cartItems: enrichedItems.map(item => ({
@@ -125,7 +139,7 @@ export default function Checkout() {
           total: finalTotal,
           items: enrichedItems.map(item => ({
             name: item.product?.name || "Produto",
-            price: 500,
+            price: item.product?.price || 0,
             quantity: item.quantity
           }))
         }));
@@ -139,7 +153,8 @@ export default function Checkout() {
         setStep("payment");
       }
     } catch (err: any) {
-      toast.error("Erro ao processar pagamento");
+      const errorMsg = err?.message || err?.data?.message || "Erro ao processar pagamento";
+      toast.error(errorMsg);
       setStep("payment");
     } finally {
       setIsSubmitting(false);
@@ -150,6 +165,13 @@ export default function Checkout() {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
+      const validItems = enrichedItems.filter(item => (item.product?.price || 0) > 0);
+      if (validItems.length === 0) {
+        toast.error("Os produtos do seu carrinho não possuem preço definido. Entre em contato com o suporte.");
+        setStep("payment");
+        return;
+      }
+
       const balanceToUse = balance || 0;
       const result = await checkoutWithBalanceAndPix.mutateAsync({
         totalAmount: finalTotalPix,
@@ -185,7 +207,8 @@ export default function Checkout() {
       sessionStorage.setItem("pix_payment", JSON.stringify(pixWithExpiry));
       setStep("pix");
     } catch (err: any) {
-      toast.error("Erro ao processar pagamento");
+      const errorMsg = err?.message || err?.data?.message || "Erro ao processar pagamento";
+      toast.error(errorMsg);
       setStep("payment");
     } finally {
       setIsSubmitting(false);
@@ -207,6 +230,11 @@ export default function Checkout() {
       // Garantir que o total está atualizado com base nos itens atuais
       const currentTotal = enrichedItems.reduce((acc, item) => acc + (item.product?.price || 0) * (item.quantity || 1), 0);
       
+      if (currentTotal <= 0) {
+        toast.error("Total do pedido inválido. Verifique os preços dos produtos.");
+        return;
+      }
+      
       const order = await createOrder.mutateAsync({ totalAmount: currentTotal });
       setOrderId(order.id);
       
@@ -227,7 +255,8 @@ export default function Checkout() {
       sessionStorage.setItem("pix_payment", JSON.stringify(pixWithExpiry));
       setStep("pix");
     } catch (err: any) {
-      toast.error("Erro ao processar pedido");
+      const errorMsg = err?.message || err?.data?.message || "Erro ao processar pedido";
+      toast.error(errorMsg);
     } finally {
       setIsSubmitting(false);
     }
