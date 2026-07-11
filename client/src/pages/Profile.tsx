@@ -553,6 +553,21 @@ export default function Profile() {
 
                   <Button
                     type="button"
+                    onClick={() => {
+                      if(confirm("Tem certeza que deseja limpar todo o seu histórico e resetar seu saldo para R$ 14,90?")) {
+                        resetAccountMutation.mutate();
+                      }
+                    }}
+                    disabled={resetAccountMutation.isPending}
+                    variant="ghost"
+                    className="w-full h-12 rounded-xl text-accent hover:bg-accent/5 font-black text-xs uppercase tracking-widest mb-2"
+                  >
+                    <Sparkles className="h-5 w-5 mr-2" />
+                    {resetAccountMutation.isPending ? "LIMPANDO..." : "LIMPAR HISTÓRICO E RESETAR SALDO"}
+                  </Button>
+
+                  <Button
+                    type="button"
                     onClick={() => logout()}
                     variant="ghost"
                     className="w-full h-12 rounded-xl text-red-500 hover:text-red-600 hover:bg-red-500/5 font-black text-xs uppercase tracking-widest"

@@ -374,6 +374,44 @@ export const appRouter = router({
   // WALLET ROUTES
   // ============================================
   wallet: router({
+    resetAccount: protectedProcedure.mutation(async ({ ctx }) => {
+      const { getDb } = await import("./db");
+      const { users, orders, orderItems, balanceTransactions, couponRedemptions, cartItems } = await import("../drizzle/schema");
+      const { eq } = await import("drizzle-orm");
+      
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+
+      return await db.transaction(async (tx) => {
+        const userId = ctx.user.id;
+
+        // 1. Deletar itens de pedidos
+        const userOrders = await tx.select().from(orders).where(eq(orders.userId, userId));
+        for (const order of userOrders) {
+          await tx.delete(orderItems).where(eq(orderItems.orderId, order.id));
+        }
+
+        // 2. Deletar pedidos
+        await tx.delete(orders).where(eq(orders.userId, userId));
+
+        // 3. Deletar transações de saldo
+        await tx.delete(balanceTransactions).where(eq(balanceTransactions.userId, userId));
+
+        // 4. Deletar resgates de cupons
+        await tx.delete(couponRedemptions).where(eq(couponRedemptions.userId, userId));
+
+        // 5. Limpar carrinho
+        await tx.delete(cartItems).where(eq(cartItems.userId, userId));
+
+        // 6. Atualizar saldo para R$ 14,90 (1490 centavos) e resetar cashback
+        await tx.update(users)
+          .set({ balance: 1490, hasCashbackBenefit: 0 })
+          .where(eq(users.id, userId));
+
+        return { success: true };
+      });
+    }),
+
     getBalance: protectedProcedure.query(async ({ ctx }) => {
       const { getUserBalance } = await import("./db");
       return getUserBalance(ctx.user.id);
