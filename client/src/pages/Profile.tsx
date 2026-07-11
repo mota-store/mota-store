@@ -71,19 +71,7 @@ export default function Profile() {
     }
   });
 
-  const resetAccountMutation = trpc.wallet.resetAccount.useMutation({
-    onSuccess: () => {
-      toast.success("Histórico limpo e saldo definido para R$ 14,90!");
-      utils.wallet.getBalance.invalidate();
-      utils.wallet.getUserTransactions.invalidate();
-      utils.orders.list.invalidate();
-      utils.auth.me.invalidate();
-      window.location.reload();
-    },
-    onError: (err: any) => {
-      toast.error("Erro ao resetar conta: " + (err.message || "Erro desconhecido"));
-    }
-  });
+
 
   // Validação em tempo real das senhas
   useEffect(() => {
@@ -565,20 +553,7 @@ export default function Profile() {
                     )}
                   </div>
 
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      if(confirm("Tem certeza que deseja limpar todo o seu histórico e resetar seu saldo para R$ 14,90?")) {
-                        resetAccountMutation.mutate();
-                      }
-                    }}
-                    disabled={resetAccountMutation.isPending}
-                    variant="ghost"
-                    className="w-full h-12 rounded-xl text-accent hover:bg-accent/5 font-black text-xs uppercase tracking-widest mb-2"
-                  >
-                    <Sparkles className="h-5 w-5 mr-2" />
-                    {resetAccountMutation.isPending ? "LIMPANDO..." : "LIMPAR HISTÓRICO E RESETAR SALDO"}
-                  </Button>
+
 
                   <Button
                     type="button"
