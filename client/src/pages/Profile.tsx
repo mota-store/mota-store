@@ -439,15 +439,29 @@ export default function Profile() {
 
                   <div className="pt-4 border-t border-border/50">
                     {!showPasswordFields ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setShowPasswordFields(true)}
-                        className="w-full h-14 rounded-2xl border-2 border-accent/20 hover:border-accent/40 hover:bg-accent/5 font-black text-xs uppercase tracking-widest"
-                      >
-                        <Lock className="h-4 w-4 mr-2 text-accent" />
-                        ALTERAR SENHA DE ACESSO
-                      </Button>
+                      <div className="space-y-3">
+                        <Button
+                          type="submit"
+                          className="w-full h-14 rounded-2xl bg-accent text-white dark:text-accent-foreground font-black text-xs uppercase tracking-widest"
+                          disabled={updateProfile.isPending}
+                        >
+                          {updateProfile.isPending ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              SALVANDO...
+                            </>
+                          ) : "SALVAR NOME"}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setShowPasswordFields(true)}
+                          className="w-full h-14 rounded-2xl border-2 border-accent/20 hover:border-accent/40 hover:bg-accent/5 font-black text-xs uppercase tracking-widest"
+                        >
+                          <Lock className="h-4 w-4 mr-2 text-accent" />
+                          ALTERAR SENHA DE ACESSO
+                        </Button>
+                      </div>
                     ) : (
                       <div className="space-y-4 animate-in slide-in-from-top-4 duration-300">
                         <div className="space-y-2">

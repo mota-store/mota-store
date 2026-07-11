@@ -95,21 +95,32 @@ export const appRouter = router({
         verificationCode: z.string().length(4).optional()
       }))
       .mutation(async ({ ctx, input }) => {
-        const updateData: any = { name: input.name, avatarUrl: input.avatarUrl };
+        // Se apenas mudar nome/avatar (sem senha), não precisa de código de verificação
+        const hasPasswordChange = !!input.password;
         
-        if (input.password) {
-          if (input.verificationCode) {
-            const { getUserByResetToken, clearResetToken } = await import("./db");
-            const user = await getUserByResetToken(input.verificationCode);
-            if (!user || user.id !== ctx.user.id || !user.resetTokenExpires || user.resetTokenExpires < new Date()) {
-              return { success: false, error: "Código de verificação inválido ou expirado" };
-            }
-            await clearResetToken(ctx.user.id);
+        if (hasPasswordChange) {
+          // Mudança de senha exige código de verificação
+          if (!input.verificationCode) {
+            return { success: false, error: "Código de verificação é obrigatório para alterar senha" };
           }
+          
+          const { getUserByResetToken, clearResetToken } = await import("./db");
+          const user = await getUserByResetToken(input.verificationCode);
+          if (!user || user.id !== ctx.user.id || !user.resetTokenExpires || user.resetTokenExpires < new Date()) {
+            return { success: false, error: "Código de verificação inválido ou expirado" };
+          }
+          await clearResetToken(ctx.user.id);
 
           const bcrypt = await import("bcrypt");
-          updateData.passwordHash = await bcrypt.hash(input.password, 10);
+          const passwordHash = await bcrypt.hash(input.password, 10);
+          await updateUser(ctx.user.id, { passwordHash });
+          return { success: true };
         }
+        
+        // Apenas mudar nome/avatar — direto
+        const updateData: any = {};
+        if (input.name !== undefined) updateData.name = input.name;
+        if (input.avatarUrl !== undefined) updateData.avatarUrl = input.avatarUrl;
         
         await updateUser(ctx.user.id, updateData);
         return { success: true };
