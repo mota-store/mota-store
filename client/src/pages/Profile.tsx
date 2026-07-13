@@ -204,7 +204,7 @@ export default function Profile() {
           <button onClick={() => navigate("/")} className="font-black uppercase tracking-widest text-[10px] flex items-center gap-2">
             <ArrowLeft className="h-4 w-4" /> Voltar
           </button>
-          <h1 className="text-3xl font-black tracking-tighter uppercase">MEU PER<span className="text-accent">FIL</span></h1>
+          <h1 className="text-3xl font-black tracking-tighter uppercase">MINHA <span className="text-accent">CONTA</span></h1>
         </div>
 
         {/* Avatar Section */}
@@ -236,6 +236,14 @@ export default function Profile() {
               <p className="text-xs text-muted-foreground mt-2">{user.email}</p>
             </div>
           </Card>
+
+          <Button
+            onClick={() => navigate("/orders")}
+            className="w-full h-12 rounded-xl bg-accent text-white dark:text-black font-black text-xs uppercase tracking-widest mb-8 flex items-center justify-center gap-2"
+          >
+            <ShoppingBag className="h-4 w-4" />
+            MEUS PEDIDOS
+          </Button>
         </div>
 
         {/* Theme & Accent Selection */}
@@ -287,13 +295,13 @@ export default function Profile() {
         <Card className="p-8 bg-card/30 border-border/30 rounded-2xl mb-8">
           <form onSubmit={handleUpdateProfile} className="w-full space-y-6">
             <div className="space-y-2 text-left">
-              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Seu Nome de Exibição</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Seu Nome</label>
               <div className="relative flex items-center gap-2">
                 <Input 
                   value={name} 
                   onChange={(e) => setName(e.target.value)} 
                   className="h-12 rounded-xl bg-background/50 border-2 border-border/50 focus:border-accent font-bold pl-10 flex-1"
-                  placeholder="Como quer ser chamado?"
+                  placeholder="Digite seu nome"
                 />
                 <Sparkles className="absolute left-3 h-4 w-4 text-accent" />
                 

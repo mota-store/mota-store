@@ -140,7 +140,7 @@ export default function Cart() {
         <div className="flex flex-col md:flex-row items-center justify-between mb-12 gap-6">
           <div className="text-center md:text-left">
             <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase mb-2">
-              Seu <span className="text-accent">Carrinho</span>
+              Carrinho de <span className="text-accent">Compras</span>
             </h1>
             <p className="text-muted-foreground font-medium">Você tem {groupedItems.length} itens selecionados.</p>
           </div>
@@ -150,7 +150,7 @@ export default function Cart() {
             className="font-black uppercase tracking-widest text-xs hover:text-accent flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            Continuar Comprando
+            Continuar na Loja
           </Button>
         </div>
 
@@ -166,13 +166,13 @@ export default function Cart() {
             <div className="p-6 rounded-full bg-accent/5 mb-6">
               <ShoppingCart className="h-16 w-16 text-accent/20" />
             </div>
-            <h2 className="text-2xl font-black uppercase tracking-tight mb-2">Carrinho Vazio</h2>
-            <p className="text-muted-foreground mb-10 text-center max-w-sm">Parece que você ainda não adicionou nenhum produto ao seu carrinho.</p>
+            <h2 className="text-2xl font-black uppercase tracking-tight mb-2">Seu Carrinho Está Vazio</h2>
+            <p className="text-muted-foreground mb-10 text-center max-w-sm">Explore nossos produtos e adicione os que você deseja ao carrinho.</p>
             <Button 
               onClick={() => navigate("/")} 
               className="bg-accent hover:bg-accent/90 text-white dark:text-black font-black px-12 py-7 rounded-2xl shadow-xl shadow-accent/20 transition-all hover:scale-105"
             >
-              EXPLORAR PRODUTOS
+              VER PRODUTOS
             </Button>
           </div>
         ) : (
@@ -243,7 +243,7 @@ export default function Cart() {
                     <span className="font-bold">R$ {(subtotal / 100).toFixed(2).replace(".", ",")}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Taxa de Serviço</span>
+                    <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Frete</span>
                     <span className="text-green-500 font-bold uppercase text-[10px]">Grátis</span>
                   </div>
                   <div className="pt-4 border-t border-border/40 flex justify-between items-end">
@@ -259,7 +259,7 @@ export default function Cart() {
                     className="w-full bg-accent hover:bg-accent/90 text-white dark:text-black font-black py-8 rounded-2xl shadow-xl shadow-accent/20 transition-all hover:scale-[1.02] active:scale-[0.98] text-lg uppercase tracking-tighter"
                     onClick={() => navigate("/checkout?direct=true")}
                   >
-                    FINALIZAR COMPRA
+                    PAGAR AGORA
                   </Button>
                   
                   <div className="flex flex-col gap-3 pt-4">

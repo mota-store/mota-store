@@ -115,15 +115,15 @@ export default function ProductDetail() {
                     </div>
                   )}
                   <div className="absolute top-4 left-4 bg-accent/90 text-white dark:text-black px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest shadow-lg">
-                    Entrega Instantânea
+                    Acesso Imediato
                   </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { icon: <Zap className="w-3 h-3" />, label: "Turbo" },
-                    { icon: <Shield className="w-3 h-3" />, label: "Garantia" },
-                    { icon: <Headphones className="w-3 h-3" />, label: "Suporte" },
+                    { icon: <Zap className="w-3 h-3" />, label: "Rápido" },
+                    { icon: <Shield className="w-3 h-3" />, label: "Seguro" },
+                    { icon: <Headphones className="w-3 h-3" />, label: "Suporte 24h" },
                   ].map((item, i) => (
                     <div key={i} className="flex flex-col items-center justify-center p-3 rounded-xl bg-card/30 border border-border/40 text-center">
                       <div className="text-accent mb-1">{item.icon}</div>
@@ -164,7 +164,7 @@ export default function ProductDetail() {
 
                   <div className="space-y-2 pt-2">
                     <div className="grid grid-cols-1 gap-1.5">
-                      {["Acesso Premium", "Suporte VIP", "Entrega Automática"].map((text, i) => (
+                      {["Acesso Completo", "Suporte Prioritário", "Ativação Automática"].map((text, i) => (
                         <div key={i} className="flex items-center gap-2">
                           <CheckCircle2 className="h-3 w-3 text-green-500" />
                           <span className="text-[10px] font-bold">{text}</span>
@@ -183,7 +183,7 @@ export default function ProductDetail() {
                     ) : (
                       <ShoppingCart className="h-4 w-4 mr-2" />
                     )}
-                    {isAdding ? "AGUARDE..." : "COMPRAR"}
+                    {isAdding ? "ADICIONANDO..." : "ADICIONAR AO CARRINHO"}
                   </Button>
                 </div>
               </motion.div>

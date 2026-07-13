@@ -12,6 +12,8 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Login from "./pages/Login";
 import OrderConfirmation from "./pages/OrderConfirmation";
+import Orders from "./pages/Orders";
+import OrderDetail from "./pages/OrderDetail";
 import ResetPassword from "./pages/ResetPassword";
 import Admin from "./pages/Admin";
 import RedeemCoupon from "./pages/RedeemCoupon";
@@ -28,6 +30,8 @@ function Router() {
       <Route path={"/product/:id"} component={ProductDetail} />
       <Route path={"/checkout"} component={Checkout} />
       <Route path={"/order-confirmation"} component={OrderConfirmation} />
+      <Route path={"/orders"} component={Orders} />
+      <Route path={"/order/:id"} component={OrderDetail} />
       <Route path={"/reset-password"} component={ResetPassword} />
       <Route path={"/admin"} component={Admin} />
       <Route path={"/redeem-coupon"} component={RedeemCoupon} />

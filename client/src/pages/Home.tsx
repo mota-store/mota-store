@@ -104,14 +104,14 @@ export default function Home() {
               >
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20 text-accent text-[10px] font-black uppercase tracking-widest mb-6 backdrop-blur-md">
                   <Sparkles className="h-3 w-3" />
-                  Promoções de Inverno Ativas
+                  Ofertas Exclusivas Ativas
                 </div>
                 <h1 className="text-6xl md:text-9xl font-black tracking-tighter mb-8 leading-[0.85] uppercase">
-                  O MELHOR DO <br />
-                  <span className="text-accent drop-shadow-[0_0_20px_rgba(var(--accent),0.5)]">STREAMING</span>.
+                  O MELHOR EM <br />
+                  <span className="text-accent drop-shadow-[0_0_20px_rgba(var(--accent),0.5)]">ENTRETENIMENTO DIGITAL</span>.
                 </h1>
                 <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 font-medium leading-relaxed">
-                  Acesse suas plataformas favoritas com preços imbatíveis. Entrega automática e suporte especializado 24/7.
+                  Assine suas plataformas favoritas com os melhores preços do mercado. Ativação automática e suporte dedicado 24 horas.
                 </p>
                 <Button
                   size="lg"
@@ -120,7 +120,7 @@ export default function Home() {
                     document.getElementById("products")?.scrollIntoView({ behavior: "smooth" });
                   }}
                 >
-                  VER PRODUTOS
+                  APROVEITAR AGORA
                   <ArrowRight className="ml-2 h-6 w-6" />
                 </Button>
               </motion.div>
@@ -133,7 +133,7 @@ export default function Home() {
       <main className="container max-w-5xl mx-auto px-4 py-16" id="products">
         <div className="flex flex-col items-center mb-12">
           <h2 className="text-2xl md:text-4xl font-black tracking-tighter uppercase mb-3">
-            Nossas <span className="text-accent">Ofertas</span>
+            Produtos em <span className="text-accent">Destaque</span>
           </h2>
           <div className="h-1 w-16 bg-accent rounded-full" />
         </div>
@@ -230,9 +230,9 @@ export default function Home() {
       {/* Trust Badges */}
       <section className="container max-w-5xl mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 border-t border-border/40">
         {[
-          { icon: <Zap className="w-6 h-6 md:w-8 md:h-8" />, title: "Entrega Turbo", desc: "Acesso enviado imediatamente." },
-          { icon: <Star className="w-6 h-6 md:w-8 md:h-8" />, title: "Garantia Total", desc: "Suporte especializado 24/7." },
-          { icon: <ShieldCheck className="w-6 h-6 md:w-8 md:h-8" />, title: "Compra Segura", desc: "Pagamentos protegidos." },
+          { icon: <Zap className="w-6 h-6 md:w-8 md:h-8" />, title: "Ativação Imediata", desc: "Seu acesso ativado na hora." },
+          { icon: <Star className="w-6 h-6 md:w-8 md:h-8" />, title: "Suporte Premium", desc: "Atendimento dedicado 24/7." },
+          { icon: <ShieldCheck className="w-6 h-6 md:w-8 md:h-8" />, title: "Pagamento Protegido", desc: "Transações 100% seguras." },
         ].map((badge, i) => (
           <div key={i} className="flex flex-col items-center text-center p-5 md:p-6 rounded-xl md:rounded-2xl bg-card/20 border border-border/40 space-y-3 group hover:border-accent/30 transition-all">
             <div className="text-accent p-2.5 md:p-3 bg-accent/5 rounded-lg md:rounded-xl group-hover:scale-110 transition-transform">{badge.icon}</div>
