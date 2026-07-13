@@ -83,7 +83,7 @@ export default function Orders() {
                         <h3 className="font-black uppercase tracking-tight">Pedido #{order.id}</h3>
                         <div className="flex flex-wrap items-center gap-3 text-[10px] font-bold text-muted-foreground mt-1">
                           <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {new Date(order.createdAt).toLocaleDateString('pt-BR')}</span>
-                          <span className="flex items-center gap-1"><CreditCard className="h-3 w-3" /> R$ {(order.totalAmount / 100).toFixed(2).replace(".", ",")}</span>
+                          <span className="flex items-center gap-1"><CreditCard className="h-3 w-3" /> R$ {((order.totalAmount ?? 0) / 100).toFixed(2).replace(".", ",")}</span>
                         </div>
                       </div>
                     </div>

@@ -288,7 +288,7 @@ export default function Checkout() {
           <Card className="p-6 bg-card/30 border-border/30 rounded-2xl mb-6">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total do Pedido</span>
-              <span className="text-2xl font-black text-accent tracking-tighter">R$ {(finalTotalPix / 100).toFixed(2).replace(".", ",")}</span>
+              <span className="text-2xl font-black text-accent tracking-tighter">R$ {((finalTotalPix ?? 0) / 100).toFixed(2).replace(".", ",")}</span>
             </div>
           </Card>
         )}
@@ -342,7 +342,7 @@ export default function Checkout() {
                 </div>
                 <div className="flex justify-between text-xs font-black uppercase tracking-widest">
                   <span>Total a pagar</span>
-                  <span className="text-accent">R$ {(finalTotal / 100).toFixed(2).replace(".", ",")}</span>
+                  <span className="text-accent">R$ {((finalTotal ?? 0) / 100).toFixed(2).replace(".", ",")}</span>
                 </div>
               </div>
               <div className="flex gap-3">

@@ -282,7 +282,7 @@ function AdminDashboard() {
 	                  </div>
 	                  <div className="flex items-center gap-4 flex-shrink-0 ml-2">
 	                    <div className="text-right">
-	                      <p className="text-xs font-black text-accent">R$ {(user.balance / 100).toFixed(2).replace(".", ",")}</p>
+	                      <p className="text-xs font-black text-accent">R$ {((user.balance ?? 0) / 100).toFixed(2).replace(".", ",")}</p>
 	                      <p className="text-[9px] text-muted-foreground font-medium">{(user as any).orderCount ?? 0} compras</p>
 	                    </div>
 	                    <span className="text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full bg-accent/10 text-accent">{user.role}</span>
@@ -348,9 +348,9 @@ function AdminDashboard() {
                               </div>
                               <div className="flex items-center gap-3">
                                 <span className={`font-black ${tx.amount >= 0 ? "text-green-500" : "text-red-500"}`}>
-                                  {tx.amount >= 0 ? "+" : ""}R$ {(Math.abs(tx.amount) / 100).toFixed(2).replace(".", ",")}
+                                  {tx.amount >= 0 ? "+" : ""}R$ {((Math.abs(tx.amount) ?? 0) / 100).toFixed(2).replace(".", ",")}
                                 </span>
-                                <span className="text-[9px] text-muted-foreground tabular-nums">Saldo: R$ {(tx.newBalance / 100).toFixed(2).replace(".", ",")}</span>
+                                <span className="text-[9px] text-muted-foreground tabular-nums">Saldo: R$ {((tx.newBalance ?? 0) / 100).toFixed(2).replace(".", ",")}</span>
                               </div>
                             </div>
                           ))}
@@ -392,7 +392,7 @@ function AdminDashboard() {
                         {product.isActive ? "Ativo" : "Inativo"}
                       </span>
                     </div>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{product.category} • R$ {(product.price / 100).toFixed(2).replace(".", ",")}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{product.category} • R$ {((product.price ?? 0) / 100).toFixed(2).replace(".", ",")}</p>
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -589,7 +589,7 @@ function AdminDashboard() {
                         </span>
                       </div>
                       <p className="text-[10px] text-muted-foreground mt-0.5">
-                        Valor: R$ {(coupon.value / 100).toFixed(2).replace(".", ",")}
+                        Valor: R$ {((coupon.value ?? 0) / 100).toFixed(2).replace(".", ",")}
                       </p>
                       <p className="text-[10px] font-semibold text-accent mt-1">
                         {coupon.currentRedemptions} / {coupon.maxRedemptions} resgates
@@ -691,7 +691,7 @@ function AdminDashboard() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-black text-accent text-sm">R$ {(order.totalAmount / 100).toFixed(2).replace(".", ",")}</p>
+                    <p className="font-black text-accent text-sm">R$ {((order.totalAmount ?? 0) / 100).toFixed(2).replace(".", ",")}</p>
                     <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${
                       order.status === "completed" ? "bg-green-500/10 text-green-500" :
                       order.status === "pending" ? "bg-yellow-500/10 text-yellow-500" :

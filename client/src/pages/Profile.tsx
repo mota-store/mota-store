@@ -199,8 +199,10 @@ export default function Profile() {
             
             if (size <= 500000) {
               resolve(base64);
-            } else if (quality > 0.5) {
-              attemptCompression(quality - 0.2);
+            } else if (quality >= 0.6) {
+              attemptCompression(0.7);
+            } else if (quality >= 0.55) {
+              attemptCompression(0.5);
             } else {
               reject(new Error("Não foi possível comprimir a imagem o suficiente. Tente uma imagem menor."));
             }
@@ -291,7 +293,7 @@ export default function Profile() {
                 onClick={() => fileInputRef.current?.click()}
                 className="absolute bottom-0 right-0 h-10 w-10 bg-accent text-white rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
               >
-                <Camera className="h-5 w-5" />
+                <Camera className="h-5 w-5 text-white dark:text-black" />
               </button>
               <input
                 ref={fileInputRef}

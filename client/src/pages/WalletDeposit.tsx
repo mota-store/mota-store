@@ -93,7 +93,7 @@ export default function WalletDeposit() {
           setCheckInterval(null);
         }
         
-        toast.success(`R$ ${Number(amount).toFixed(2)} creditados com sucesso!`);
+        toast.success(`R$ ${Number(amount || 0).toFixed(2)} creditados com sucesso!`);
         if (result.cashbackActivated) {
           toast.success("🎉 Cashback de 10% ativado! Sua próxima compra terá desconto automático.", {
             duration: 5000,
@@ -136,7 +136,7 @@ export default function WalletDeposit() {
             <div className="space-y-1">
               <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Saldo Disponível</p>
               <p className="text-3xl font-black tracking-tighter">
-                R$ {(balance / 100).toFixed(2).replace(".", ",")}
+                R$ {((balance || 0) / 100).toFixed(2).replace(".", ",")}
               </p>
             </div>
             <div className="p-3 bg-accent/10 rounded-2xl">

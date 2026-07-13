@@ -41,7 +41,7 @@ export default function OrderConfirmation() {
 
   const message = `Olá! Acabei de realizar o pedido #${orderNumber} na MOTA STORE.
 Produto(s): ${productList}
-Total: R$ ${(orderData.total / 100).toFixed(2)}
+Total: R$ {((orderData.total ?? 0) / 100).toFixed(2)}
 Horário: ${now}
 Aguardo a ativação! 😊`;
 
@@ -84,7 +84,7 @@ Aguardo a ativação! 😊`;
                 <div className="flex flex-col">
                   <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Valor</span>
                   <span className="text-2xl font-black text-green-500 tracking-tighter">
-                    R$ {(orderData.total / 100).toFixed(2).replace(".", ",")}
+                    R$ {((orderData.total ?? 0) / 100).toFixed(2).replace(".", ",")}
                   </span>
                 </div>
 
@@ -129,7 +129,7 @@ Aguardo a ativação! 😊`;
                   <div className="flex-grow">
                     <h4 className="font-black text-sm uppercase tracking-tight">{item.name}</h4>
                     <div className="flex items-center gap-3 text-[10px] font-bold text-muted-foreground">
-                      <span>Valor unidade: R$ {(item.price / 100).toFixed(2)}</span>
+                      <span>Valor unidade: R$ {((item.price ?? 0) / 100).toFixed(2)}</span>
                       <span>•</span>
                       <span>{item.quantity} unidade{item.quantity > 1 ? 's' : ''}</span>
                     </div>

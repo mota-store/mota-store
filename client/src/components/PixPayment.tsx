@@ -110,7 +110,7 @@ export function PixPayment({
 
   const qrCodeSrc = getQrCodeSrc();
   // amount já vem em centavos, então dividimos por 100 apenas para exibição
-  const amountDisplay = amount ? `R$ ${(amount / 100).toFixed(2).replace(".", ",")}` : "";
+  const amountDisplay = amount ? `R$ ${((amount ?? 0) / 100).toFixed(2).replace(".", ",")}` : "";
 
   return (
     <Card className="p-6 bg-card/40 border-border/40 backdrop-blur-xl rounded-[2.5rem] shadow-2xl max-w-md mx-auto border-t-accent/20 overflow-hidden">

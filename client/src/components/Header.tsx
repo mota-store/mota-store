@@ -130,7 +130,7 @@ export function Header({ onSearch, searchQuery = "" }: HeaderProps) {
                         )}
                         <div className="flex-1 min-w-0">
                           <p className="text-xs md:text-sm font-black truncate uppercase">{product.name}</p>
-                          <p className="text-accent text-[10px] md:text-xs font-bold">R$ {(product.price / 100).toFixed(2).replace(".", ",")}</p>
+                          <p className="text-accent text-[10px] md:text-xs font-bold">R$ {((product.price ?? 0) / 100).toFixed(2).replace(".", ",")}</p>
                         </div>
                       </button>
                     ))}

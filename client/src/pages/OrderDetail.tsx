@@ -93,7 +93,7 @@ export default function OrderDetail() {
                 <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1">
                   <CreditCard className="h-3 w-3" /> Valor Total
                 </span>
-                <p className="font-black text-lg text-accent">R$ {(order.totalAmount / 100).toFixed(2).replace(".", ",")}</p>
+                <p className="font-black text-lg text-accent">R$ {((order.totalAmount ?? 0) / 100).toFixed(2).replace(".", ",")}</p>
               </div>
               <div className="space-y-1">
                 <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1">

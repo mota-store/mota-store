@@ -107,8 +107,8 @@ export default function Home() {
                   Ofertas Exclusivas Ativas
                 </div>
                 <h1 className="text-6xl md:text-9xl font-black tracking-tighter mb-8 leading-[0.85] uppercase">
-                  O MELHOR EM <br />
-                  <span className="text-accent drop-shadow-[0_0_20px_rgba(var(--accent),0.5)]">ENTRETENIMENTO DIGITAL</span>.
+                  O MELHOR <br />
+                  <span className="text-accent drop-shadow-[0_0_20px_rgba(var(--accent),0.5)]">STREAMING</span> AQUI.
                 </h1>
                 <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 font-medium leading-relaxed">
                   Assine suas plataformas favoritas com os melhores preços do mercado. Ativação automática e suporte dedicado 24 horas.

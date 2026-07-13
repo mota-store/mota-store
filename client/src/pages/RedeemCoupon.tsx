@@ -37,7 +37,7 @@ export default function RedeemCoupon() {
       const result = await redeemCoupon.mutateAsync({ code: code.trim().toUpperCase() });
       setRedeemResult({ success: result.success, value: result.value, error: result.error });
       if (result.success) {
-        toast.success(`Cupom resgatado com sucesso! R$ ${(result.value! / 100).toFixed(2).replace(".", ",")} creditados.`);
+        toast.success(`Cupom resgatado com sucesso! R$ ${((result.value ?? 0) / 100).toFixed(2).replace(".", ",")} creditados.`);
         // Voltar para o perfil após 3 segundos
         setTimeout(() => {
           navigate("/profile");
@@ -132,7 +132,7 @@ export default function RedeemCoupon() {
               </div>
               {redeemResult.success && (
                 <p className="text-accent font-black text-2xl mt-2">
-                  + R$ {(redeemResult.value! / 100).toFixed(2).replace(".", ",")}
+                  + R$ {((redeemResult.value ?? 0) / 100).toFixed(2).replace(".", ",")}
                 </p>
               )}
             </motion.div>
