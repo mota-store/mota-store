@@ -406,9 +406,19 @@ export async function depositBalance(userId: number, amount: number) {
   });
 }
 
+const lastCheckoutTime = new Map<string, number>();
+
 export async function checkoutWithBalance(userId: number, _amountFromClient: number, _itemsFromClient: any[]) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+
+  // Trava de segurança: impede requisições duplicadas em menos de 5 segundos
+  const now = Date.now();
+  const lastTime = lastCheckoutTime.get(userId.toString()) || 0;
+  if (now - lastTime < 5000) {
+    throw new Error("Por favor, aguarde alguns segundos antes de tentar novamente.");
+  }
+  lastCheckoutTime.set(userId.toString(), now);
 
   return await db.transaction(async (tx) => {
     const cartTotal = await calculateCartTotal(tx, userId);
