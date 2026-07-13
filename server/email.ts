@@ -1,10 +1,13 @@
 import { google } from 'googleapis';
 
-const SMTP_USER = 'arthurmotapaiva@gmail.com';
-const CLIENT_ID = '1067935514097-gogg5cvuka13k514q2sju3ma0bak0ikr.apps.googleusercontent.com';
-const CLIENT_SECRET = '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';
-const REFRESH_TOKEN = '1//04CuXpN3UYnKpCgYIARAAGAQSNwF-L9IrmwyxlF_wSJhepkvW9MxjZ39qK1-_S-tEGPX7x6cTUsgKrduwnCk8lood4l6bNgBJHYA';
-const APP_URL = 'https://mota-store.shop';
+// Usar variáveis de ambiente ou valores padrão para desenvolvimento
+const SMTP_USER = process.env.GMAIL_USER || 'arthurmotapaiva@gmail.com';
+const CLIENT_ID = process.env.GMAIL_CLIENT_ID || '1067935514097-gogg5cvuka13k514q2sju3ma0bak0ikr.apps.googleusercontent.com';
+const CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET || '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';
+const REFRESH_TOKEN = process.env.GMAIL_REFRESH_TOKEN || '1//04CuXpN3UYnKpCgYIARAAGAQSNwF-L9IrmwyxlF_wSJhepkvW9MxjZ39qK1-_S-tEGPX7x6cTUsgKrduwnCk8lood4l6bNgBJHYA';
+const APP_URL = process.env.APP_URL || 'https://mota-store.shop';
+
+console.log(`[Email] Configurado com usuário: ${SMTP_USER}`);
 
 const oauth2Client = new google.auth.OAuth2(
   CLIENT_ID,
@@ -79,6 +82,7 @@ async function sendMailViaAPI(options: { to: string; subject: string; html: stri
     return true;
   } catch (error: any) {
     console.error(`[Email] Falha no envio: ${error.message}`);
+    console.error(`[Email] Erro completo:`, error);
     throw error;
   }
 }
