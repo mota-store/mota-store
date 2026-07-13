@@ -1,15 +1,16 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Header } from "@/components/Header";
-import { ShoppingCart, Zap, Music, Play, CheckCircle2, Star, ShieldCheck, Headphones, ArrowRight, Sparkles } from "lucide-react";
+import { ShoppingCart, Zap, Music, Play, CheckCircle2, Star, ShieldCheck, Headphones, ArrowRight, Sparkles, Search, LayoutGrid, Tv, Layers } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { FlyAnimationsContainer } from "@/components/FlyToCart";
 import { useLocation } from "wouter";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
 
 export default function Home() {
   const { isAuthenticated } = useAuth();
@@ -24,6 +25,10 @@ export default function Home() {
   const productsRef = useRef<HTMLElement>(null);
   const [isAdding, setIsAdding] = useState<number | null>(null);
   const lastClickTime = useRef<number>(0);
+
+  // Estados para busca e filtro
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState<string>("all");
 
   const addItem = trpc.cart.addItem.useMutation({
     onSuccess: () => {
@@ -41,7 +46,6 @@ export default function Home() {
     e.preventDefault();
     e.stopPropagation();
 
-    // 1. Throttle rigoroso de 2 segundos no frontend
     const now = Date.now();
     if (now - lastClickTime.current < 2000) return;
     lastClickTime.current = now;
@@ -51,7 +55,6 @@ export default function Home() {
       return;
     }
 
-    // 2. Bloqueio por estado de loading
     if (isAdding !== null) return;
 
     const cartItems = utils.cart.getItems.getData();
@@ -71,14 +74,32 @@ export default function Home() {
     setIsAdding(productId);
     triggerFlyAnimation(startPos);
     
-    // Envia a mutação
     addItem.mutate({ productId, quantity: 1 });
   };
+
+  // Lógica de filtragem
+  const filteredProducts = useMemo(() => {
+    if (!products) return [];
+    
+    return products.filter(product => {
+      const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                           product.description?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = activeCategory === "all" || product.category === activeCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [products, searchQuery, activeCategory]);
+
+  const categories = [
+    { id: "all", label: "Todos", icon: <LayoutGrid className="w-4 h-4" /> },
+    { id: "video", label: "Vídeo", icon: <Tv className="w-4 h-4" /> },
+    { id: "music", label: "Música", icon: <Music className="w-4 h-4" /> },
+    { id: "combined", label: "Combos", icon: <Layers className="w-4 h-4" /> },
+  ];
 
   return (
     <div 
       ref={containerRef}
-      className="h-screen bg-background text-foreground selection:bg-accent selection:text-accent-foreground overflow-x-hidden overflow-y-auto scroll-smooth"
+      className="min-h-screen bg-background text-foreground selection:bg-accent selection:text-accent-foreground overflow-x-hidden scroll-smooth pb-20"
     >
       <Header />
 
@@ -86,44 +107,45 @@ export default function Home() {
       {!isAuthenticated && (
       <section 
         ref={heroRef}
-        className="relative w-full h-screen flex items-center justify-center overflow-hidden"
+        className="relative w-full h-[80vh] flex items-center justify-center overflow-hidden"
       >
         <div className="absolute inset-0 z-0">
           <img 
             src="/assets/home-bg.gif" 
             alt="Mota Store Banner" 
-            className="w-full h-full object-cover object-center opacity-100"
+            className="w-full h-full object-cover object-center opacity-40 grayscale-[0.5]"
           />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/60 to-background z-10" />
         </div>
 
-        <div className="container relative z-20 px-4 -mt-72 sm:-mt-32">
+        <div className="container relative z-20 px-4">
           <div className="max-w-4xl mx-auto text-center">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 border border-accent/30 text-accent text-sm font-black mt-[5px] mb-8 backdrop-blur-md">
-                <Sparkles className="h-4 w-4" />
-                <span className="text-[#FFFFFF] dark:text-accent">OFERTA DE LANÇAMENTO: 50% OFF EM TODO O SITE</span>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20 text-accent text-xs font-black mb-8 backdrop-blur-md">
+                <Sparkles className="h-3 w-3" />
+                <span className="uppercase tracking-widest">Ofertas Exclusivas de Lançamento</span>
               </div>
-              <h1 className="text-6xl md:text-8xl font-black tracking-tighter mb-8 leading-[0.8] text-white drop-shadow-2xl">
+              <h1 className="text-5xl md:text-8xl font-black tracking-tighter mb-8 leading-[0.9] uppercase">
                 O MELHOR DO <br />
-                <span className="text-accent">STREAMING</span> AQUI.
+                <span className="text-accent drop-shadow-[0_0_15px_rgba(var(--accent),0.3)]">STREAMING</span> AQUI.
               </h1>
-              <p className="text-xl md:text-2xl text-white/80 max-w-2xl mx-auto mb-8 font-bold leading-relaxed drop-shadow-md">
-                Compre Spotify, YouTube, Prime Video e muito mais por um preço que você nunca viu. Entrega instantânea via WhatsApp.
+              <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 font-medium leading-relaxed">
+                Acesse suas plataformas favoritas com preços imbatíveis. Entrega automática e suporte especializado.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
                 <Button
                   size="lg"
-                  className="w-full sm:w-auto bg-transparent hover:bg-white/10 border-2 border-accent text-white px-12 py-8 text-xl font-black rounded-[2rem] shadow-2xl shadow-accent/20 transition-all hover:scale-105 active:scale-95 -translate-y-[27px]"
+                  className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-white dark:text-black px-10 py-7 text-lg font-black rounded-2xl shadow-2xl shadow-accent/20 transition-all hover:scale-105 active:scale-95"
                   onClick={() => {
-                    navigate("/login?tab=register");
+                    document.getElementById("products")?.scrollIntoView({ behavior: "smooth" });
                   }}
                 >
-                  GARANTIR MEU ACESSO
-                  <ArrowRight className="ml-2 h-6 w-6" />
+                  VER PRODUTOS
+                  <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </div>
             </motion.div>
@@ -131,159 +153,189 @@ export default function Home() {
         </div>
       </section>
       )}
-									
-      {/* Trust Badges */}
-      {!isAuthenticated && (
-        <div className="container px-4 relative z-30 -mt-[362px] sm:-mt-[138px]">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-8 bg-transparent border-2 border-accent/20 rounded-[2.5rem] shadow-2xl shadow-accent/5">
-            {[
-              { icon: <Zap className="text-accent h-6 w-6" />, title: "Entrega Imediata", desc: "Acesso na hora" },
-              { icon: <ShieldCheck className="text-accent h-6 w-6" />, title: "Compra Segura", desc: "Pagamento via PIX" },
-              { icon: <Star className="text-accent h-6 w-6" />, title: "Suporte 24/7", desc: "Via WhatsApp" },
-              { icon: <CheckCircle2 className="text-accent h-6 w-6" />, title: "Garantia Total", desc: "Satisfação ou Reembolso" },
-            ].map((item, i) => (
-              <div key={i} className="flex flex-col items-center md:items-start gap-1 text-center md:text-left px-4">
-                <div className="mb-2 p-2 rounded-xl bg-accent/10">{item.icon}</div>
-                <span className="font-black text-sm uppercase tracking-wider text-white">{item.title}</span>
-                <span className="text-xs text-white/70 font-medium">{item.desc}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
+										
       {/* Products Section */}
       <section 
         ref={productsRef}
         id="products" 
-        className={`py-24 ${isAuthenticated ? "pt-12" : "min-h-screen flex flex-col justify-center"}`}
+        className={`py-12 ${isAuthenticated ? "pt-24" : ""}`}
       >
         <div className="container px-4">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
-            <div>
-              <h2 className={`text-4xl md:text-6xl font-black tracking-tighter uppercase leading-none ${isAuthenticated ? "mt-[15px] mb-4" : "mb-4"}`}>
-                NOSSAS <span className="text-accent">PLATAFORMAS</span>
-              </h2>
-              <p className={`text-muted-foreground text-lg max-w-xl font-medium ${isAuthenticated ? "mt-[10px]" : ""}`}>
-                Escolha o plano que mais combina com você e comece a maratonar hoje mesmo.
-              </p>
+          {/* Search and Filters */}
+          <div className="max-w-5xl mx-auto mb-16 space-y-8">
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-muted-foreground group-focus-within:text-accent transition-colors" />
+              </div>
+              <Input
+                type="text"
+                placeholder="O que você está procurando hoje?"
+                className="w-full h-16 pl-14 pr-6 bg-card/50 border-border/50 rounded-3xl text-lg font-medium focus-visible:ring-accent focus-visible:border-accent transition-all shadow-xl shadow-black/5"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setActiveCategory(cat.id)}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-black uppercase tracking-widest transition-all ${
+                    activeCategory === cat.id
+                      ? "bg-accent text-white dark:text-black shadow-lg shadow-accent/20 scale-105"
+                      : "bg-card/50 text-muted-foreground hover:bg-card hover:text-foreground border border-border/50"
+                  }`}
+                >
+                  {cat.icon}
+                  {cat.label}
+                </button>
+              ))}
             </div>
           </div>
 
+          <div className="flex flex-col items-center mb-12">
+            <h2 className="text-3xl md:text-5xl font-black tracking-tighter uppercase mb-4">
+              Nossas <span className="text-accent">Opções</span>
+            </h2>
+            <div className="h-1.5 w-20 bg-accent rounded-full" />
+          </div>
+
           {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-[450px] rounded-[2.5rem] bg-muted animate-pulse" />
+                <div key={i} className="h-[400px] rounded-[2rem] bg-card/50 animate-pulse border border-border/50" />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {products?.map((product) => (
-                <motion.div
-                  key={product.id}
-                  whileHover={{ y: -12 }}
-                  className="group"
+            <>
+              <AnimatePresence mode="popLayout">
+                <motion.div 
+                  layout
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
                 >
-                  <Card className="h-full flex flex-col overflow-hidden bg-card/30 border-border/50 backdrop-blur-sm rounded-[2.5rem] transition-all duration-500 group-hover:border-accent/50 group-hover:shadow-2xl group-hover:shadow-accent/10">
-                    <div 
-                      className="relative h-56 overflow-hidden bg-gradient-to-br from-accent/10 to-accent/5 flex items-center justify-center p-8 cursor-pointer"
-                      onClick={() => navigate(`/product/${product.id}`)}
+                  {filteredProducts.map((product) => (
+                    <motion.div
+                      layout
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      key={product.id}
+                      whileHover={{ y: -8 }}
+                      className="group"
                     >
-                      {product.imageUrl ? (
-                        <img
-                          src={product.imageUrl}
-                          alt={product.name}
-                          className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
-                        />
-                      ) : (
-                        <div className="p-8 text-accent/20">
-                          {product.category === 'music' ? <Music className="w-full h-full" /> : <Play className="w-full h-full" />}
+                      <Card className="h-full flex flex-col overflow-hidden bg-card/40 border-border/40 backdrop-blur-md rounded-[2rem] transition-all duration-500 group-hover:border-accent/40 group-hover:shadow-2xl group-hover:shadow-accent/5">
+                        <div 
+                          className="relative h-48 overflow-hidden bg-gradient-to-br from-accent/5 to-transparent flex items-center justify-center p-6 cursor-pointer"
+                          onClick={() => navigate(`/product/${product.id}`)}
+                        >
+                          {product.imageUrl ? (
+                            <img
+                              src={product.imageUrl}
+                              alt={product.name}
+                              className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110 drop-shadow-2xl"
+                            />
+                          ) : (
+                            <div className="p-8 text-accent/20">
+                              {product.category === 'music' ? <Music className="w-16 h-16" /> : <Play className="w-16 h-16" />}
+                            </div>
+                          )}
+                          <div className="absolute top-4 left-4 bg-background/80 backdrop-blur-md border border-border/50 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
+                            {product.category}
+                          </div>
                         </div>
-                      )}
-                      <div className="absolute top-4 right-4 bg-accent text-white dark:text-accent-foreground px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
-                        PREMIUM
-                      </div>
-                    </div>
 
-                    <div className="p-8 flex flex-col flex-grow">
-                      <h3
-                        className="text-2xl font-black mb-2 group-hover:text-accent transition-colors line-clamp-1 cursor-pointer"
-                        onClick={() => navigate(`/product/${product.id}`)}
-                      >{product.name}</h3>
-                      <p
-                        className="text-muted-foreground text-sm mb-6 font-medium cursor-pointer"
-                        onClick={() => navigate(`/product/${product.id}`)}
-                      >{product.description}</p>
-                      
-                      <div
-                        className="mb-8 mt-auto cursor-pointer"
-                        onClick={() => navigate(`/product/${product.id}`)}
-                      >
-                        <div className="flex items-baseline gap-3 mb-1">
-                          <span className="text-4xl font-black text-accent tracking-tighter">R$ {(product.price / 100).toFixed(2).replace(".", ",")}</span>
-                          <span className="text-muted-foreground text-sm line-through opacity-50 font-bold">R$ {(product.price * 2 / 100).toFixed(2).replace(".", ",")}</span>
-                        </div>
-                        <div className="inline-block px-2 py-1 rounded bg-green-500/10 text-green-500 text-[10px] font-black uppercase tracking-widest">
-                          ECONOMIZE 50%
-                        </div>
-                      </div>
+                        <div className="p-6 flex flex-col flex-grow">
+                          <h3
+                            className="text-xl font-black mb-2 group-hover:text-accent transition-colors line-clamp-1 cursor-pointer uppercase tracking-tight"
+                            onClick={() => navigate(`/product/${product.id}`)}
+                          >{product.name}</h3>
+                          
+                          <div className="flex items-center gap-1 mb-4">
+                            {[1, 2, 3, 4, 5].map((s) => (
+                              <Star key={s} className="w-3 h-3 fill-accent text-accent" />
+                            ))}
+                            <span className="text-[10px] text-muted-foreground ml-1 font-bold">(4.9)</span>
+                          </div>
+                          
+                          <div
+                            className="mb-6 mt-auto cursor-pointer"
+                            onClick={() => navigate(`/product/${product.id}`)}
+                          >
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-3xl font-black text-accent tracking-tighter">R$ {(product.price / 100).toFixed(2).replace(".", ",")}</span>
+                              <span className="text-muted-foreground text-xs line-through opacity-50 font-bold">R$ {(product.price * 1.5 / 100).toFixed(2).replace(".", ",")}</span>
+                            </div>
+                          </div>
 
-                      <Button
-                        type="button"
-                        className="w-full bg-accent hover:bg-accent/90 text-white dark:text-accent-foreground font-black py-7 rounded-2xl shadow-xl shadow-accent/20 transition-all text-base active:scale-95"
-                        onClick={(e) => handleAddToCart(e, product.id)}
-                        disabled={isAdding === product.id}
-                      >
-                        {isAdding === product.id ? (
-                          <div className="h-5 w-5 border-2 border-white dark:border-accent-foreground/30 border-t-white dark:border-t-accent-foreground rounded-full animate-spin mr-2" />
-                        ) : (
-                          <ShoppingCart className="h-5 w-5 mr-2 text-white dark:text-accent-foreground" />
-                        )}
-                        {isAdding === product.id ? "ADICIONANDO..." : "ADICIONAR AO CARRINHO"}
-                      </Button>
-                    </div>
-                  </Card>
+                          <Button
+                            type="button"
+                            className="w-full bg-accent hover:bg-accent/90 text-white dark:text-black font-black py-6 rounded-xl shadow-lg shadow-accent/10 transition-all text-sm active:scale-95 flex items-center justify-center gap-2"
+                            onClick={(e) => handleAddToCart(e, product.id)}
+                            disabled={isAdding === product.id}
+                          >
+                            {isAdding === product.id ? (
+                              <div className="h-4 w-4 border-2 border-white dark:border-black border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <ShoppingCart className="h-4 w-4" />
+                            )}
+                            {isAdding === product.id ? "ADICIONANDO..." : "COMPRAR AGORA"}
+                          </Button>
+                        </div>
+                      </Card>
+                    </motion.div>
+                  ))}
                 </motion.div>
-              ))}
-            </div>
+              </AnimatePresence>
+              
+              {filteredProducts.length === 0 && (
+                <div className="text-center py-20">
+                  <Search className="w-16 h-16 text-muted-foreground/20 mx-auto mb-4" />
+                  <p className="text-xl font-bold text-muted-foreground">Nenhum produto encontrado.</p>
+                  <Button 
+                    variant="link" 
+                    className="text-accent font-black mt-2"
+                    onClick={() => {
+                      setSearchQuery("");
+                      setActiveCategory("all");
+                    }}
+                  >
+                    LIMPAR FILTROS
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-24 bg-accent/5 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-accent/20 to-transparent" />
+      <section className="py-20 bg-card/20 relative overflow-hidden border-y border-border/50">
         <div className="container px-4">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-6 uppercase">
-              POR QUE A <span className="text-accent">MOTA STORE?</span>
-            </h2>
-          </div>
-          
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               {
-                title: "Ativação Turbo",
-                desc: "Esqueça a burocracia. Nosso sistema é focado em velocidade para você não perder nem um segundo.",
-                icon: <Zap className="h-10 w-10 text-accent" />
+                title: "Entrega Automática",
+                desc: "Receba seus dados de acesso instantaneamente após a confirmação do pagamento.",
+                icon: <Zap className="h-8 w-8 text-accent" />
               },
               {
-                title: "Suporte Real",
-                desc: "Pessoas de verdade atendendo pessoas de verdade. No WhatsApp, quando você precisar.",
-                icon: <Headphones className="h-10 w-10 text-accent" />
+                title: "Suporte Especializado",
+                desc: "Nossa equipe está pronta para te ajudar 24h por dia via WhatsApp e Discord.",
+                icon: <Headphones className="h-8 w-8 text-accent" />
               },
               {
-                title: "Segurança Máxima",
-                desc: "Seus dados e sua compra protegidos pelos melhores protocolos do mercado.",
-                icon: <ShieldCheck className="h-10 w-10 text-accent" />
+                title: "Garantia de Satisfação",
+                desc: "Produtos testados e aprovados com 100% de garantia de funcionamento.",
+                icon: <ShieldCheck className="h-8 w-8 text-accent" />
               }
             ].map((f, i) => (
-              <div key={i} className="flex flex-col items-center text-center space-y-6 p-10 rounded-[2.5rem] bg-card/20 border border-border/30 hover:border-accent/30 transition-all duration-500">
-                <div className="p-5 rounded-3xl bg-accent/10 text-accent mb-2">
+              <div key={i} className="flex flex-col items-center text-center p-8 rounded-3xl bg-background/50 border border-border/50 hover:border-accent/30 transition-all">
+                <div className="p-4 rounded-2xl bg-accent/10 text-accent mb-6">
                   {f.icon}
                 </div>
-                <h3 className="text-2xl font-black uppercase tracking-tight">{f.title}</h3>
-                <p className="text-muted-foreground font-medium leading-relaxed">{f.desc}</p>
+                <h3 className="text-xl font-black uppercase tracking-tight mb-3">{f.title}</h3>
+                <p className="text-muted-foreground text-sm font-medium leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
