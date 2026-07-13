@@ -14,40 +14,7 @@ export default function OrderConfirmation() {
     if (data) {
       const parsedData = JSON.parse(data);
       setOrderData(parsedData);
-
-      // Redirecionamento automático após 3 segundos
-      const timer = setTimeout(() => {
-        const orderNumber = parsedData.id.toString().padStart(4, '0');
-        const whatsappNumber = "5591984886473";
-        const now = new Date().toLocaleString('pt-BR');
-        
-        // Agrupar produtos por nome para a mensagem do WhatsApp
-        const groupedItems: Record<string, number> = {};
-        parsedData.items.forEach((item: any) => {
-          groupedItems[item.name] = (groupedItems[item.name] || 0) + 1;
-        });
-
-        const productList = Object.entries(groupedItems)
-          .map(([name, qty]) => qty > 1 ? `${name} x${qty}` : name)
-          .join(", ");
-
-        const message = `Olá! Acabei de realizar o pedido #${orderNumber} na MOTA STORE.
-Produto(s): ${productList}
-Total: R$ ${(parsedData.total / 100).toFixed(2)}
-Horário: ${now}
-Aguardo a ativação! 😊`;
-
-        // Abrir WhatsApp em uma nova aba para que a aba atual possa redirecionar para a Home
-        window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`, '_blank');
-        
-        // Redirecionar a aba atual para a Home após 5 segundos da abertura do WhatsApp
-        setTimeout(() => {
-          sessionStorage.removeItem("lastOrder");
-          navigate("/");
-        }, 5000);
-      }, 3000);
-
-      return () => clearTimeout(timer);
+      setRedirecting(false); // Desativar o estado de redirecionamento automático
     } else {
       navigate("/");
     }
@@ -120,12 +87,9 @@ Aguardo a ativação! 😊`;
 
           <h1 className="text-3xl md:text-4xl font-black mb-4">Pagamento Confirmado!</h1>
           
-          {redirecting && (
-            <div className="flex flex-col items-center gap-2 mb-8 text-accent">
-              <Loader2 className="h-6 w-6 animate-spin" />
-              <p className="font-bold animate-pulse">Redirecionando para o WhatsApp do vendedor...</p>
-            </div>
-          )}
+          <div className="flex flex-col items-center gap-2 mb-8 text-green-500">
+            <p className="font-bold">Seu acesso está pronto para ser ativado.</p>
+          </div>
 
           <p className="text-muted-foreground text-lg mb-8">
             Seu pedido foi processado. Estamos te enviando para o suporte para ativar seu acesso.
