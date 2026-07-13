@@ -461,9 +461,9 @@ export const appRouter = router({
       }),
 
     getCashbackStatus: protectedProcedure.query(async ({ ctx }) => {
-      const { getUserByOpenId } = await import("./db");
-      const user = await getUserByOpenId(ctx.user.openId!);
-      return { hasCashbackBenefit: user?.hasCashbackBenefit === 1 };
+      // const { getUserByOpenId } = await import("./db");
+      // const user = await getUserByOpenId(ctx.user.openId!);
+      return { hasCashbackBenefit: false };
     }),
   }),
 

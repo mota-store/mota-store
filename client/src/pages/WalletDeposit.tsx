@@ -143,12 +143,12 @@ export default function WalletDeposit() {
               <Wallet className="w-8 h-8 text-accent" />
             </div>
           </div>
-          {cashbackStatus?.hasCashbackBenefit && (
+          {/* {cashbackStatus?.hasCashbackBenefit && (
             <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-500 text-[10px] font-black uppercase tracking-widest">
               <Star className="w-3 h-3 fill-current" />
               Cashback Ativo 10%
             </div>
-          )}
+          )} */}
         </Card>
 
         {!pixData ? (

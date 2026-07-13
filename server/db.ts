@@ -389,9 +389,9 @@ export async function depositBalance(userId: number, amount: number) {
     if (!user) throw new Error("Usuário não encontrado");
 
     const newBalance = user.balance + amount;
-    const hasCashbackBenefit = user.hasCashbackBenefit === 1 || amount >= 500 ? 1 : 0;
+    // const hasCashbackBenefit = user.hasCashbackBenefit === 1 || amount >= 500 ? 1 : 0;
 
-    await tx.update(users).set({ balance: newBalance, hasCashbackBenefit }).where(eq(users.id, userId));
+    await tx.update(users).set({ balance: newBalance }).where(eq(users.id, userId));
 
     console.log(`[Deposit] Crediting ${amount} cents to user ${userId}. New balance: ${newBalance}`);
     await tx.insert(balanceTransactions).values({
@@ -402,7 +402,7 @@ export async function depositBalance(userId: number, amount: number) {
       newBalance,
     });
 
-    return { success: true, newBalance, cashbackActivated: amount >= 500 && user.hasCashbackBenefit === 0 };
+    return { success: true, newBalance, cashbackActivated: false };
   });
 }
 
@@ -426,7 +426,7 @@ export async function checkoutWithBalance(userId: number, _amountFromClient: num
     
     if (!user) return { success: false, error: "Usuário não encontrado" };
     
-    const hasCashback = user.hasCashbackBenefit === 1;
+    const hasCashback = false; // user.hasCashbackBenefit === 1;
     const discount = hasCashback ? Math.floor(cartTotal * 0.1) : 0;
     const finalAmount = cartTotal - discount;
 

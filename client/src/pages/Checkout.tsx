@@ -49,7 +49,7 @@ export default function Checkout() {
     return acc + (item.product?.price || 0) * (item.quantity || 1);
   }, 0);
 
-  const hasCashback = user?.hasCashbackBenefit === 1;
+  const hasCashback = false; // user?.hasCashbackBenefit === 1;
   const discountAmount = hasCashback ? Math.floor(total * 0.1) : 0;
   const finalTotal = total - discountAmount;
   
