@@ -495,12 +495,14 @@ export default function Profile() {
             >
               <div className="text-center space-y-2">
                 <Check className="h-12 w-12 text-green-500 mx-auto" />
-                <h2 className="text-xl font-black uppercase">Confirmar Alteração</h2>
               </div>
               
-              <div className="bg-background/50 rounded-xl p-4 text-center space-y-2">
-                <p className="text-[10px] font-black uppercase text-muted-foreground">Você está alterando seu nome para</p>
-                <p className="text-2xl font-black text-accent uppercase">{name}</p>
+              <div className="bg-background/50 rounded-xl p-4 text-center space-y-4">
+                <div>
+                  <p className="text-[10px] font-black uppercase text-muted-foreground">Você está alterando seu nome para</p>
+                  <p className="text-2xl font-black text-accent uppercase">{name}</p>
+                </div>
+                <p className="text-xl font-black uppercase">Você confirma?</p>
               </div>
 
               <div className="flex gap-3">
@@ -509,7 +511,7 @@ export default function Profile() {
                   variant="ghost"
                   className="flex-1 h-11 rounded-xl font-black text-xs uppercase tracking-widest"
                 >
-                  Não
+                  não
                 </Button>
                 <Button
                   onClick={handleConfirmNameChange}
@@ -517,7 +519,7 @@ export default function Profile() {
                   disabled={updateProfile.isPending}
                 >
                   {updateProfile.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}
-                  Sim
+                  sim
                 </Button>
               </div>
             </motion.div>
