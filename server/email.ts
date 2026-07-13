@@ -1,91 +1,20 @@
-import { google } from 'googleapis';
+import nodemailer from 'nodemailer';
 
-// Usar variáveis de ambiente ou valores padrão para desenvolvimento
-const SMTP_USER = process.env.GMAIL_USER || 'arthurmotapaiva@gmail.com';
-const CLIENT_ID = process.env.GMAIL_CLIENT_ID || '1067935514097-gogg5cvuka13k514q2sju3ma0bak0ikr.apps.googleusercontent.com';
-const CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET || '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';
-const REFRESH_TOKEN = process.env.GMAIL_REFRESH_TOKEN || '1//04CuXpN3UYnKpCgYIARAAGAQSNwF-L9IrmwyxlF_wSJhepkvW9MxjZ39qK1-_S-tEGPX7x6cTUsgKrduwnCk8lood4l6bNgBJHYA';
+// Configurações via variáveis de ambiente (configuradas no Render)
+const SMTP_USER = process.env.SMTP_USER || 'arthurmotapaiva@gmail.com';
+const SMTP_PASS = process.env.SMTP_PASS; // Senha de App do Gmail
 const APP_URL = process.env.APP_URL || 'https://mota-store.shop';
 
-console.log(`[Email] Configurado com usuário: ${SMTP_USER}`);
+console.log(`[Email] Iniciando transportador SMTP para: ${SMTP_USER}`);
 
-const oauth2Client = new google.auth.OAuth2(
-  CLIENT_ID,
-  CLIENT_SECRET,
-  'https://developers.google.com/oauthplayground'
-);
-
-oauth2Client.setCredentials({
-  refresh_token: REFRESH_TOKEN,
+// Configuração do Transportador Nodemailer
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: SMTP_USER,
+    pass: SMTP_PASS,
+  },
 });
-
-const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
-
-function encodeSubject(subject: string) {
-  return `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
-}
-
-function generateMessageId(): string {
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substring(2, 10);
-  return `<${timestamp}-${random}@mota-store.shop>`;
-}
-
-function formatDateHeader(): string {
-  return new Date().toUTCString();
-}
-
-function createRawMessage(options: { to: string; subject: string; html: string; plainText: string }) {
-  const utf8Subject = encodeSubject(options.subject);
-  const boundary = '__MOTA_STORE_BOUNDARY__';
-  const messageId = generateMessageId();
-  const dateHeader = formatDateHeader();
-
-  const str = [
-    `MIME-Version: 1.0\n`,
-    `To: ${options.to}\n`,
-    `From: "Mota Store" <${SMTP_USER}>\n`,
-    `Reply-To: ${SMTP_USER}\n`,
-    `Subject: ${utf8Subject}\n`,
-    `Date: ${dateHeader}\n`,
-    `Message-ID: ${messageId}\n`,
-    `X-Mailer: Mota Store Mailer v3.0\n`,
-    `List-Unsubscribe: <mailto:${SMTP_USER}?subject=unsubscribe>, <${APP_URL}>\n`,
-    `Content-Type: multipart/alternative; boundary="${boundary}"\n\n`,
-    `--${boundary}\n`,
-    `Content-Type: text/plain; charset="UTF-8"\n`,
-    `Content-Transfer-Encoding: quoted-printable\n\n`,
-    `${options.plainText}\n\n`,
-    `--${boundary}\n`,
-    `Content-Type: text/html; charset="UTF-8"\n`,
-    `Content-Transfer-Encoding: base64\n\n`,
-    Buffer.from(options.html).toString('base64'),
-    `\n--${boundary}--`,
-  ].join('');
-
-  return Buffer.from(str)
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
-}
-
-async function sendMailViaAPI(options: { to: string; subject: string; html: string; plainText: string }) {
-  console.log(`[Email] Enviando para ${options.to} - Assunto: ${options.subject}`);
-  try {
-    const raw = createRawMessage(options);
-    const res = await gmail.users.messages.send({
-      userId: 'me',
-      requestBody: { raw },
-    });
-    console.log(`[Email] Enviado com sucesso. ID: ${res.data.id}`);
-    return true;
-  } catch (error: any) {
-    console.error(`[Email] Falha no envio: ${error.message}`);
-    console.error(`[Email] Erro completo:`, error);
-    throw error;
-  }
-}
 
 const DARK_TEMPLATE = (content: string) => `
   <div style="background-color: #09090b; color: #fafafa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px 20px; margin: 0; width: 100%;">
@@ -107,9 +36,31 @@ const DARK_TEMPLATE = (content: string) => `
   </div>
 `;
 
+async function sendMail(options: { to: string; subject: string; html: string; text: string }) {
+  if (!SMTP_PASS) {
+    console.error("[Email] Erro: SMTP_PASS não configurado no ambiente.");
+    return false;
+  }
+
+  try {
+    const info = await transporter.sendMail({
+      from: `"Mota Store" <${SMTP_USER}>`,
+      to: options.to,
+      subject: options.subject,
+      text: options.text,
+      html: options.html,
+    });
+    console.log(`[Email] Enviado com sucesso! MessageId: ${info.messageId}`);
+    return true;
+  } catch (error: any) {
+    console.error(`[Email] Falha no envio para ${options.to}: ${error.message}`);
+    return false;
+  }
+}
+
 export async function sendWelcomeEmail(email: string, firstName: string) {
   const subject = `Bem-vindo à Mota Store!`;
-  const plainText = `Olá, ${firstName}. Sua conta na Mota Store foi criada com sucesso.`;
+  const text = `Olá, ${firstName}. Sua conta na Mota Store foi criada com sucesso.`;
   
   const html = DARK_TEMPLATE(`
     <div style="text-align: center; margin-bottom: 30px;">
@@ -125,17 +76,17 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
       Sua conta na <strong style="color: #10b981;">Mota Store</strong> foi criada com sucesso. Agora você tem acesso aos melhores serviços de streaming com preços exclusivos.
     </p>
     <div style="text-align: center;">
-      <a href="${APP_URL}" style="display: inline-block; background-color: #10b981; color: #000000; padding: 18px 35px; border-radius: 16px; text-decoration: none; font-weight: 900; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.2);">Acessar Loja Agora</a>
+      <a href="${APP_URL}" style="display: inline-block; background-color: #10b981; color: #000000; padding: 18px 35px; border-radius: 16px; text-decoration: none; font-weight: 900; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Acessar Loja Agora</a>
     </div>
   `);
 
-  return sendMailViaAPI({ to: email, subject, html, plainText });
+  return sendMail({ to: email, subject, html, text });
 }
 
 export async function sendPasswordResetEmail(email: string, firstName: string, token: string) {
   const resetLink = `${APP_URL}/reset-password?token=${token}`;
   const subject = `Recuperação de senha - Mota Store`;
-  const plainText = `Olá, ${firstName}. Use o link para redefinir sua senha: ${resetLink}`;
+  const text = `Olá, ${firstName}. Use o link para redefinir sua senha: ${resetLink}`;
 
   const html = DARK_TEMPLATE(`
     <div style="text-align: center; margin-bottom: 30px;">
@@ -152,12 +103,12 @@ export async function sendPasswordResetEmail(email: string, firstName: string, t
     </div>
   `);
 
-  return sendMailViaAPI({ to: email, subject, html, plainText });
+  return sendMail({ to: email, subject, html, text });
 }
 
 export async function sendVerificationCodeEmail(email: string, firstName: string, code: string) {
   const subject = `Código de verificação: ${code}`;
-  const plainText = `Olá, ${firstName}. Seu código é: ${code}`;
+  const text = `Olá, ${firstName}. Seu código é: ${code}`;
 
   const html = DARK_TEMPLATE(`
     <div style="text-align: center; margin-bottom: 30px;">
@@ -172,5 +123,5 @@ export async function sendVerificationCodeEmail(email: string, firstName: string
     <p style="text-align: center; font-size: 12px; color: #71717a; font-weight: 600; text-transform: uppercase;">Válido por 10 minutos</p>
   `);
 
-  return sendMailViaAPI({ to: email, subject, html, plainText });
+  return sendMail({ to: email, subject, html, text });
 }
