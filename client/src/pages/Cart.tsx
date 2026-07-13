@@ -137,19 +137,19 @@ export default function Cart() {
       <Header />
 
       <div className="container px-4 max-w-6xl mx-auto">
-        <div className="flex flex-col md:flex-row items-center justify-between mb-12 gap-6">
+        <div className="flex flex-col md:flex-row items-center justify-between mb-6 md:mb-12 gap-4 md:gap-6">
           <div className="text-center md:text-left">
-            <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase mb-2">
+            <h1 className="text-2xl md:text-5xl font-black tracking-tighter uppercase mb-1 md:mb-2">
               Carrinho de <span className="text-accent">Compras</span>
             </h1>
-            <p className="text-muted-foreground font-medium">Você tem {groupedItems.length} itens selecionados.</p>
+            <p className="text-xs md:text-base text-muted-foreground font-medium">Você tem {groupedItems.length} itens selecionados.</p>
           </div>
           <Button
             variant="ghost"
             onClick={() => navigate("/")}
-            className="font-black uppercase tracking-widest text-xs hover:text-accent flex items-center gap-2"
+            className="font-black uppercase tracking-widest text-[10px] md:text-xs hover:text-accent flex items-center gap-2 h-8 md:h-10"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-3 w-3 md:h-4 md:w-4" />
             Continuar na Loja
           </Button>
         </div>
@@ -178,48 +178,48 @@ export default function Cart() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
             {/* Itens do Carrinho */}
-            <div className="lg:col-span-2 space-y-4">
+            <div className="lg:col-span-2 space-y-3 md:space-y-4">
               {groupedItems.map((item) => (
-                <Card key={item.productId} className="p-6 bg-card/40 border-border/40 backdrop-blur-md rounded-[2rem] hover:border-accent/30 transition-all overflow-hidden group">
-                  <div className="flex flex-col sm:flex-row items-center gap-6">
+                <Card key={item.productId} className="p-4 md:p-6 bg-card/40 border-border/40 backdrop-blur-md rounded-2xl md:rounded-[2rem] hover:border-accent/30 transition-all overflow-hidden group">
+                  <div className="flex items-center gap-4 md:gap-6">
                     {/* Imagem do Produto */}
-                    <div className="h-24 w-24 rounded-2xl bg-accent/5 flex items-center justify-center border border-border/50 group-hover:scale-105 transition-transform">
+                    <div className="h-16 w-16 md:h-24 md:w-24 rounded-xl md:rounded-2xl bg-accent/5 flex items-center justify-center border border-border/50 group-hover:scale-105 transition-transform shrink-0">
                       {item.product?.imageUrl ? (
-                        <img src={item.product.imageUrl} alt={item.product.name} className="w-14 h-14 object-contain drop-shadow-xl" />
+                        <img src={item.product.imageUrl} alt={item.product.name} className="w-10 h-10 md:w-14 md:h-14 object-contain drop-shadow-xl" />
                       ) : (
-                        <ShoppingCart className="h-10 w-10 text-accent/20" />
+                        <ShoppingCart className="h-6 w-6 md:h-10 md:w-10 text-accent/20" />
                       )}
                     </div>
                     
                     {/* Detalhes do Produto */}
-                    <div className="flex-grow text-center sm:text-left">
-                      <h3 className="text-lg font-black uppercase tracking-tight mb-1">{item.product?.name}</h3>
-                      <p className="text-accent font-black text-xl tracking-tighter">
+                    <div className="flex-grow min-w-0">
+                      <h3 className="text-sm md:text-lg font-black uppercase tracking-tight mb-0.5 md:mb-1 truncate">{item.product?.name}</h3>
+                      <p className="text-accent font-black text-base md:text-xl tracking-tighter">
                         R$ {(item.product?.price / 100).toFixed(2).replace(".", ",")}
                       </p>
                     </div>
 
                     {/* Controles de Quantidade */}
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="flex items-center bg-background/50 rounded-2xl p-1 border border-border/50">
+                    <div className="flex flex-col items-center gap-2 md:gap-3 shrink-0">
+                      <div className="flex items-center bg-background/50 rounded-lg md:rounded-2xl p-0.5 md:p-1 border border-border/50">
                         <button
                           onClick={() => handleUpdateQuantity(item.productId, -1)}
-                          className="h-10 w-10 rounded-xl hover:bg-accent hover:text-white dark:hover:text-black flex items-center justify-center transition-all active:scale-90"
+                          className="h-7 w-7 md:h-10 md:w-10 rounded-md md:rounded-xl hover:bg-accent hover:text-white dark:hover:text-black flex items-center justify-center transition-all active:scale-90"
                         >
-                          <Minus className="h-4 w-4" />
+                          <Minus className="h-3 w-3 md:h-4 md:w-4" />
                         </button>
-                        <span className="text-sm font-black w-10 text-center">{item.quantity}</span>
+                        <span className="text-xs md:text-sm font-black w-6 md:w-10 text-center">{item.quantity}</span>
                         <button
                           onClick={() => handleUpdateQuantity(item.productId, 1)}
                           disabled={item.quantity >= 5}
-                          className="h-10 w-10 rounded-xl hover:bg-accent hover:text-white dark:hover:text-black flex items-center justify-center transition-all active:scale-90 disabled:opacity-30"
+                          className="h-7 w-7 md:h-10 md:w-10 rounded-md md:rounded-xl hover:bg-accent hover:text-white dark:hover:text-black flex items-center justify-center transition-all active:scale-90 disabled:opacity-30"
                         >
-                          <Plus className="h-4 w-4" />
+                          <Plus className="h-3 w-3 md:h-4 md:w-4" />
                         </button>
                       </div>
                       <button
                         onClick={() => handleRemoveAll(item)}
-                        className="text-[10px] font-black uppercase tracking-widest text-destructive/60 hover:text-destructive transition-colors"
+                        className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-destructive/60 hover:text-destructive transition-colors"
                       >
                         Remover Item
                       </button>
@@ -231,32 +231,32 @@ export default function Cart() {
 
             {/* Resumo da Compra */}
             <div className="lg:col-span-1">
-              <Card className="p-8 bg-card/40 border-border/40 backdrop-blur-md rounded-[2.5rem] shadow-2xl sticky top-28">
-                <h2 className="text-xl font-black uppercase tracking-tighter mb-8 flex items-center gap-3">
-                  <div className="h-2 w-2 bg-accent rounded-full animate-pulse" />
+              <Card className="p-6 md:p-8 bg-card/40 border-border/40 backdrop-blur-md rounded-3xl md:rounded-[2.5rem] shadow-2xl sticky top-28">
+                <h2 className="text-lg md:text-xl font-black uppercase tracking-tighter mb-4 md:mb-8 flex items-center gap-3">
+                  <div className="h-1.5 w-1.5 md:h-2 md:w-2 bg-accent rounded-full animate-pulse" />
                   Resumo do Pedido
                 </h2>
 
-                <div className="space-y-4 mb-8">
+                <div className="space-y-3 md:space-y-4 mb-6 md:mb-8">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Subtotal</span>
-                    <span className="font-bold">R$ {(subtotal / 100).toFixed(2).replace(".", ",")}</span>
+                    <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-muted-foreground">Subtotal</span>
+                    <span className="text-sm md:font-bold">R$ {(subtotal / 100).toFixed(2).replace(".", ",")}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Frete</span>
-                    <span className="text-green-500 font-bold uppercase text-[10px]">Grátis</span>
+                    <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-muted-foreground">Frete</span>
+                    <span className="text-green-500 font-bold uppercase text-[9px] md:text-[10px]">Grátis</span>
                   </div>
-                  <div className="pt-4 border-t border-border/40 flex justify-between items-end">
-                    <span className="text-xs font-black uppercase tracking-widest">Total</span>
-                    <span className="text-4xl font-black text-accent tracking-tighter">
+                  <div className="pt-3 md:pt-4 border-t border-border/40 flex justify-between items-end">
+                    <span className="text-[10px] md:text-xs font-black uppercase tracking-widest">Total</span>
+                    <span className="text-2xl md:text-4xl font-black text-accent tracking-tighter">
                       R$ {(total / 100).toFixed(2).replace(".", ",")}
                     </span>
                   </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-3 md:space-y-4">
                   <Button
-                    className="w-full bg-accent hover:bg-accent/90 text-white dark:text-black font-black py-8 rounded-2xl shadow-xl shadow-accent/20 transition-all hover:scale-[1.02] active:scale-[0.98] text-lg uppercase tracking-tighter"
+                    className="w-full bg-accent hover:bg-accent/90 text-white dark:text-black font-black py-6 md:py-8 rounded-xl md:rounded-2xl shadow-xl shadow-accent/20 transition-all hover:scale-[1.02] active:scale-[0.98] text-base md:text-lg uppercase tracking-tighter"
                     onClick={() => navigate("/checkout?direct=true")}
                   >
                     PAGAR AGORA
