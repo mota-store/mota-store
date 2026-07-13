@@ -19,22 +19,36 @@ export default function Profile() {
   const searchParams = new URLSearchParams(window.location.search);
   const isOnboarding = searchParams.get("onboarding") === "true";
 
-  const { data: allOrders } = trpc.orders.list.useQuery();
-  const orders = allOrders?.filter(order => order.status === "completed");
+
   const { data: balance } = trpc.wallet.getBalance.useQuery(undefined, { enabled: !!user });
   const { data: transactions } = trpc.wallet.getUserTransactions.useQuery(undefined, { enabled: !!user });
   
   const updateProfile = trpc.auth.updateProfile.useMutation({
-    onSuccess: () => {
+    onMutate: async (variables) => {
+      if (variables.name) {
+        await utils.auth.me.cancel();
+        const previousUser = utils.auth.me.getData();
+        if (previousUser) {
+          utils.auth.me.setData(undefined, {
+            ...previousUser,
+            name: variables.name
+          });
+        }
+        return { previousUser };
+      }
+    },
+    onSuccess: (data) => {
       toast.success("Perfil atualizado com sucesso!");
       utils.auth.me.invalidate();
+      if (data && 'name' in data) {
+        setName(data.name as string);
+      }
       setNewPassword("");
       setConfirmNewPassword("");
       setVerificationCode("");
       setShowPasswordFields(false);
       setPasswordsMatch(null);
       setShowNameConfirm(false);
-      setName(user?.name || "");
     },
     onError: (err: any) => {
       toast.error("Erro ao atualizar perfil: " + (err.message || "Erro desconhecido"));
@@ -55,6 +69,7 @@ export default function Profile() {
   const [codeSent, setCodeSent] = useState(false);
   const [passwordsMatch, setPasswordsMatch] = useState<true | false | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [previewAvatar, setPreviewAvatar] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showDeleteCodeInput, setShowDeleteCodeInput] = useState(false);
   const [deleteVerificationCode, setDeleteVerificationCode] = useState("");
@@ -149,29 +164,80 @@ export default function Profile() {
     await updateProfile.mutateAsync({ name });
   };
 
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > 512) {
+              height *= 512 / width;
+              width = 512;
+            }
+          } else {
+            if (height > 512) {
+              width *= 512 / height;
+              height = 512;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          const attemptCompression = (quality: number) => {
+            const base64 = canvas.toDataURL("image/jpeg", quality);
+            const size = Math.round((base64.length * 3) / 4);
+            
+            if (size <= 500000) {
+              resolve(base64);
+            } else if (quality > 0.5) {
+              attemptCompression(quality - 0.2);
+            } else {
+              reject(new Error("Não foi possível comprimir a imagem o suficiente. Tente uma imagem menor."));
+            }
+          };
+
+          attemptCompression(0.85);
+        };
+        img.onerror = () => reject(new Error("Erro ao carregar imagem."));
+      };
+      reader.onerror = () => reject(new Error("Erro ao ler arquivo."));
+    });
+  };
+
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 500000) {
-      toast.error("Imagem muito grande. Máximo 500KB.");
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Imagem muito grande. Máximo 5MB.");
       return;
     }
 
     setIsUploading(true);
     try {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        const base64 = event.target?.result as string;
-        await uploadAvatarMutation.mutateAsync({ base64Data: base64 });
-        utils.auth.me.invalidate();
-        toast.success("Avatar atualizado com sucesso!");
-      };
-      reader.readAsDataURL(file);
+      const compressedBase64 = await compressImage(file);
+      setPreviewAvatar(compressedBase64);
+      
+      await uploadAvatarMutation.mutateAsync({ base64Data: compressedBase64 });
+      await utils.auth.me.invalidate();
+      
+      toast.success("Avatar atualizado com sucesso!");
     } catch (err: any) {
-      toast.error("Erro ao fazer upload: " + err.message);
+      toast.error(err.message || "Erro ao fazer upload.");
+      setPreviewAvatar(null);
     } finally {
       setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -212,10 +278,15 @@ export default function Profile() {
           <Card className="p-8 bg-card/30 border-border/30 rounded-3xl text-center space-y-6">
             <div className="relative w-32 h-32 mx-auto">
               <img 
-                src={user.avatarUrl || "/assets/default-avatar.jpg"} 
+                src={previewAvatar || user.avatarUrl || "/assets/default-avatar.jpg"} 
                 alt="Avatar" 
-                className="w-full h-full object-cover rounded-[2rem] border-4 border-accent/20"
+                className={`w-full h-full object-cover rounded-[2rem] border-4 border-accent/20 ${isUploading ? "opacity-50" : ""}`}
               />
+              {isUploading && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-accent" />
+                </div>
+              )}
               <button
                 onClick={() => fileInputRef.current?.click()}
                 className="absolute bottom-0 right-0 h-10 w-10 bg-accent text-white rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
@@ -239,10 +310,19 @@ export default function Profile() {
 
           <Button
             onClick={() => navigate("/orders")}
-            className="w-full h-12 rounded-xl bg-accent text-white dark:text-black font-black text-xs uppercase tracking-widest mb-8 flex items-center justify-center gap-2"
+            className="w-full h-12 rounded-xl bg-accent text-white dark:text-black font-black text-xs uppercase tracking-widest mb-4 flex items-center justify-center gap-2"
           >
             <ShoppingBag className="h-4 w-4" />
             MEUS PEDIDOS
+          </Button>
+
+          <Button
+            onClick={() => navigate("/redeem-coupon")}
+            className="w-full h-12 rounded-xl bg-card/50 border border-border/50 hover:border-accent/50 text-foreground font-black text-xs uppercase tracking-widest mb-8 flex items-center justify-center gap-2"
+            variant="outline"
+          >
+            <Gift className="h-4 w-4 text-accent" />
+            RESGATAR CUPOM
           </Button>
         </div>
 
@@ -452,23 +532,7 @@ export default function Profile() {
           </form>
         </Card>
 
-        {/* Orders Section */}
-        {orders && orders.length > 0 && (
-          <Card className="p-8 bg-card/30 border-border/30 rounded-2xl mb-8">
-            <h3 className="text-xl font-black uppercase mb-6">Meus Pedidos</h3>
-            <div className="space-y-4">
-              {orders.slice(0, 5).map(order => (
-                <div key={order.id} className="p-4 rounded-xl bg-background/30 border border-border/30 flex justify-between items-center">
-                  <div>
-                    <p className="text-xs font-black text-muted-foreground">Pedido #{order.id}</p>
-                    <p className="text-sm font-bold">R$ {(order.totalAmount / 100).toFixed(2).replace(".", ",")}</p>
-                  </div>
-                  <span className="text-[10px] font-black px-3 py-1 rounded-full bg-green-500/10 text-green-500 uppercase">Completo</span>
-                </div>
-              ))}
-            </div>
-          </Card>
-        )}
+
 
         {/* Delete Account Section */}
         <Card className="p-8 bg-destructive/5 border border-destructive/20 rounded-2xl">

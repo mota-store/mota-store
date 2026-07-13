@@ -159,7 +159,7 @@ export default function ProductDetail() {
                       <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground mb-0.5">Preço</span>
                       <span className="text-3xl md:text-4xl font-black text-accent tracking-tighter">R$ {(product.price / 100).toFixed(2).replace(".", ",")}</span>
                     </div>
-                    <span className="text-sm text-muted-foreground line-through opacity-40 font-bold mb-1">R$ {((product.price * 1.5) / 100).toFixed(2).replace(".", ",")}</span>
+                    <span className="text-sm text-muted-foreground line-through opacity-40 font-bold mb-1">R$ {((product.price * 2) / 100).toFixed(2).replace(".", ",")}</span>
                   </div>
 
                   <div className="space-y-2 pt-2">

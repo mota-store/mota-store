@@ -194,7 +194,7 @@ export default function Home() {
                       <div className="mb-3 md:mb-5 mt-auto">
                         <div className="flex items-baseline gap-1">
                           <span className="text-lg md:text-2xl font-black text-accent tracking-tighter">R$ {(product.price / 100).toFixed(2).replace(".", ",")}</span>
-                          <span className="text-[7px] md:text-[8px] text-muted-foreground line-through opacity-40 font-bold">R$ {(product.price * 1.5 / 100).toFixed(2).replace(".", ",")}</span>
+                          <span className="text-[7px] md:text-[8px] text-muted-foreground line-through opacity-40 font-bold">R$ {(product.price * 2 / 100).toFixed(2).replace(".", ",")}</span>
                         </div>
                       </div>
 
