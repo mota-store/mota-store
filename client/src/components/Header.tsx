@@ -113,7 +113,7 @@ export function Header({ onSearch, searchQuery = "" }: HeaderProps) {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="absolute top-full left-0 right-0 mt-2 bg-card/95 border border-border/50 rounded-lg md:rounded-xl shadow-xl backdrop-blur-md z-50 overflow-hidden"
+                    className="absolute top-full left-0 right-0 mt-2 bg-card/98 border border-accent/30 rounded-2xl shadow-2xl backdrop-blur-2xl z-50 overflow-hidden"
                   >
                     {filteredProducts.map((product) => (
                       <button
