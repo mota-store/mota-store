@@ -199,10 +199,12 @@ export default function Profile() {
             
             if (size <= 500000) {
               resolve(base64);
-            } else if (quality >= 0.6) {
+            } else if (quality > 0.7) {
               attemptCompression(0.7);
-            } else if (quality >= 0.55) {
+            } else if (quality > 0.5) {
               attemptCompression(0.5);
+            } else if (quality > 0.3) {
+              attemptCompression(0.3);
             } else {
               reject(new Error("Não foi possível comprimir a imagem o suficiente. Tente uma imagem menor."));
             }
