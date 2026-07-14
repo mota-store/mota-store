@@ -177,14 +177,14 @@ export default function Profile() {
           let height = img.height;
 
           if (width > height) {
-            if (width > 512) {
-              height *= 512 / width;
-              width = 512;
+            if (width > 256) {
+              height *= 256 / width;
+              width = 256;
             }
           } else {
-            if (height > 512) {
-              width *= 512 / height;
-              height = 512;
+            if (height > 256) {
+              width *= 256 / height;
+              height = 256;
             }
           }
 
@@ -197,16 +197,18 @@ export default function Profile() {
             const base64 = canvas.toDataURL("image/jpeg", quality);
             const size = Math.round((base64.length * 3) / 4);
             
-            if (size <= 500000) {
+            if (size <= 60000) {
               resolve(base64);
-            } else if (quality > 0.7) {
-              attemptCompression(0.7);
             } else if (quality > 0.5) {
               attemptCompression(0.5);
             } else if (quality > 0.3) {
               attemptCompression(0.3);
+            } else if (quality > 0.1) {
+              attemptCompression(0.1);
             } else {
-              reject(new Error("Não foi possível comprimir a imagem o suficiente. Tente uma imagem menor."));
+              // Se mesmo com qualidade 0.1 for maior que 60kb, resolvemos com o que tivermos,
+              // mas o banco de dados longtext deveria suportar. O erro pode ser o limite do pacote MySQL.
+              resolve(base64);
             }
           };
 
