@@ -103,15 +103,22 @@ export default function ProductDetail() {
                 className="space-y-4"
               >
                 <div className="relative h-[300px] overflow-hidden bg-gradient-to-br from-accent/5 to-transparent flex items-center justify-center p-8 rounded-[2rem] border border-border/40 backdrop-blur-sm group">
-                  {product.imageUrl ? (
-                    <img
-                      src={product.imageUrl}
-                      alt={product.name}
-                      className="w-full h-full object-contain drop-shadow-xl transition-transform duration-700 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="p-6 text-accent/10">
-                      {product.category === 'music' ? <Music className="w-24 h-24" /> : <Play className="w-24 h-24" />}
+                  <div className={`w-full h-full flex items-center justify-center ${product.stock === 0 ? "blur-[2px]" : ""}`}>
+                    {product.imageUrl ? (
+                      <img
+                        src={product.imageUrl}
+                        alt={product.name}
+                        className="w-full h-full object-contain drop-shadow-xl transition-transform duration-700 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="p-6 text-accent/10">
+                        {product.category === 'music' ? <Music className="w-24 h-24" /> : <Play className="w-24 h-24" />}
+                      </div>
+                    )}
+                  </div>
+                  {product.stock === 0 && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10">
+                      <span className="text-white font-black text-2xl md:text-4xl uppercase tracking-tighter drop-shadow-lg">ESGOTADO</span>
                     </div>
                   )}
                   <div className="absolute top-4 left-4 bg-accent/90 text-white dark:text-black px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest shadow-lg">
@@ -176,14 +183,14 @@ export default function ProductDetail() {
                   <Button
                     className="w-full bg-accent hover:bg-accent/90 text-white dark:text-black font-black py-6 rounded-xl shadow-lg shadow-accent/20 transition-all hover:scale-[1.02] active:scale-[0.98] text-sm uppercase tracking-widest mt-2"
                     onClick={handleAddToCart}
-                    disabled={isAdding}
+                    disabled={isAdding || product.stock === 0}
                   >
                     {isAdding ? (
                       <div className="h-4 w-4 border-2 border-white dark:border-black border-t-transparent rounded-full animate-spin mr-2" />
-                    ) : (
+                    ) : product.stock === 0 ? null : (
                       <ShoppingCart className="h-4 w-4 mr-2" />
                     )}
-                    {isAdding ? "ADICIONANDO..." : "ADICIONAR AO CARRINHO"}
+                    {isAdding ? "ADICIONANDO..." : product.stock === 0 ? "ESGOTADO" : "ADICIONAR AO CARRINHO"}
                   </Button>
                 </div>
               </motion.div>

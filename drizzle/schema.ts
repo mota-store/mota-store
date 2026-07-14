@@ -44,6 +44,7 @@ export const products = mysqlTable("products", {
   affiliateLink: varchar("affiliate_link", { length: 512 }),
   category: varchar("category", { length: 100 }).notNull(), // "music", "video", "combined"
   isActive: int("is_active").default(1).notNull(),
+  stock: int("stock").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 });

@@ -162,15 +162,22 @@ export default function Home() {
                       className="relative h-32 md:h-40 overflow-hidden bg-gradient-to-br from-accent/5 to-transparent flex items-center justify-center p-4 md:p-6 cursor-pointer"
                       onClick={() => navigate(`/product/${product.id}`)}
                     >
-                      {product.imageUrl ? (
-                        <img
-                          src={product.imageUrl}
-                          alt={product.name}
-                          className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110 drop-shadow-lg"
-                        />
-                      ) : (
-                        <div className="p-6 text-accent/10">
-                          {product.category === 'music' ? <Music className="w-12 h-12" /> : <Play className="w-12 h-12" />}
+                      <div className={`w-full h-full flex items-center justify-center ${product.stock === 0 ? "blur-[2px]" : ""}`}>
+                        {product.imageUrl ? (
+                          <img
+                            src={product.imageUrl}
+                            alt={product.name}
+                            className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110 drop-shadow-lg"
+                          />
+                        ) : (
+                          <div className="p-6 text-accent/10">
+                            {product.category === 'music' ? <Music className="w-12 h-12" /> : <Play className="w-12 h-12" />}
+                          </div>
+                        )}
+                      </div>
+                      {product.stock === 0 && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10">
+                          <span className="text-white font-black text-lg md:text-2xl uppercase tracking-tighter drop-shadow-lg">ESGOTADO</span>
                         </div>
                       )}
                       <div className="absolute top-2 left-2 bg-background/90 backdrop-blur-md border border-border/50 text-[7px] md:text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest text-accent">
@@ -201,15 +208,19 @@ export default function Home() {
                       <Button
                         className="w-full bg-accent hover:bg-accent/90 text-white dark:text-black font-black py-3 md:py-5 rounded-lg md:rounded-xl shadow-lg shadow-accent/10 transition-all text-[8px] md:text-xs uppercase tracking-widest active:scale-95 flex items-center justify-center gap-1"
                         onClick={(e) => handleAddToCart(e, product.id)}
-                        disabled={isAdding === product.id}
+                        disabled={isAdding === product.id || product.stock === 0}
                       >
                         {isAdding === product.id ? (
                           <div className="h-2.5 w-2.5 md:h-3 md:w-3 border-2 border-white dark:border-black border-t-transparent rounded-full animate-spin" />
-                        ) : (
+                        ) : product.stock === 0 ? null : (
                           <ShoppingCart className="h-2.5 w-2.5 md:h-3 md:w-3" />
                         )}
-                        <span className="hidden xs:inline">{isAdding === product.id ? "..." : "COMPRAR"}</span>
-                        <span className="xs:hidden">{isAdding === product.id ? "..." : "OK"}</span>
+                        <span className="hidden xs:inline">
+                          {isAdding === product.id ? "..." : product.stock === 0 ? "ESGOTADO" : "ADICIONAR AO CARRINHO"}
+                        </span>
+                        <span className="xs:hidden">
+                          {isAdding === product.id ? "..." : product.stock === 0 ? "ESGOTADO" : "ADICIONAR"}
+                        </span>
                       </Button>
                     </div>
                   </Card>

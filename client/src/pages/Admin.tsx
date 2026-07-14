@@ -128,10 +128,10 @@ function AdminDashboard() {
     onSuccess: () => { 
       refetchProducts(); 
       setShowAddProduct(false); 
-      setNewProduct({
-        name: "", description: "", price: "", trialDays: "30", benefits: "", imageUrl: "",
-        affiliateLink: "", category: "video",
-      });
+	                      setNewProduct({
+	        name: "", description: "", price: "", trialDays: "30", benefits: "", imageUrl: "",
+	        affiliateLink: "", category: "video", stock: "0",
+	      });
       toast.success("Produto criado!"); 
     },
     onError: () => toast.error("Erro ao criar produto"),
@@ -172,7 +172,7 @@ function AdminDashboard() {
   // Novo produto form
   const [newProduct, setNewProduct] = useState({
     name: "", description: "", price: "", trialDays: "30", benefits: "", imageUrl: "",
-    affiliateLink: "", category: "video",
+    affiliateLink: "", category: "video", stock: "0",
   });
 
   // Novo cupom form
@@ -397,11 +397,12 @@ function AdminDashboard() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => {
-                        setEditingProduct({
-                          ...product,
-                          price: (product.price / 100).toString(),
-                          trialDays: product.trialDays.toString()
-                        });
+	                      setEditingProduct({
+	                        ...product,
+	                        price: (product.price / 100).toString(),
+	                        trialDays: product.trialDays.toString(),
+	                        stock: product.stock.toString()
+	                      });
                         setShowAddProduct(true);
                       }}
                       className="p-2 rounded-lg hover:bg-muted/40 text-muted-foreground hover:text-foreground"
@@ -460,15 +461,25 @@ function AdminDashboard() {
                       className="bg-background/50 rounded-xl" placeholder="Streaming" 
                     />
                   </div>
-                  <div>
-                    <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Dias Trial</label>
-                    <Input 
-                      type="number" 
-                      value={editingProduct ? editingProduct.trialDays : newProduct.trialDays} 
-                      onChange={e => editingProduct ? setEditingProduct({...editingProduct, trialDays: e.target.value}) : setNewProduct({...newProduct, trialDays: e.target.value})} 
-                      className="bg-background/50 rounded-xl" 
-                    />
-                  </div>
+	                  <div>
+	                    <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Dias Trial</label>
+	                    <Input 
+	                      type="number" 
+	                      value={editingProduct ? editingProduct.trialDays : newProduct.trialDays} 
+	                      onChange={e => editingProduct ? setEditingProduct({...editingProduct, trialDays: e.target.value}) : setNewProduct({...newProduct, trialDays: e.target.value})} 
+	                      className="bg-background/50 rounded-xl" 
+	                    />
+	                  </div>
+	                  <div>
+	                    <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Estoque</label>
+	                    <Input 
+	                      type="number" 
+	                      min="0"
+	                      value={editingProduct ? editingProduct.stock : newProduct.stock} 
+	                      onChange={e => editingProduct ? setEditingProduct({...editingProduct, stock: e.target.value}) : setNewProduct({...newProduct, stock: e.target.value})} 
+	                      className="bg-background/50 rounded-xl" 
+	                    />
+	                  </div>
                   <div className="col-span-2">
                     <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Descrição</label>
                     <Input 
@@ -525,21 +536,23 @@ function AdminDashboard() {
                           description: editingProduct.description,
                           benefits: editingProduct.benefits,
                           imageUrl: editingProduct.imageUrl,
-                          affiliateLink: editingProduct.affiliateLink || "",
-                          category: editingProduct.category,
-                          isActive: editingProduct.isActive
-                        });
-                      } else {
-                        createProduct.mutate({
-                          name: newProduct.name,
-                          price: Math.round(parseFloat(newProduct.price) * 100),
-                          trialDays: parseInt(newProduct.trialDays),
-                          description: newProduct.description,
-                          benefits: newProduct.benefits,
-                          imageUrl: newProduct.imageUrl,
-                          affiliateLink: newProduct.affiliateLink || "",
-                          category: newProduct.category,
-                        });
+	                          affiliateLink: editingProduct.affiliateLink || "",
+	                          category: editingProduct.category,
+	                          isActive: editingProduct.isActive,
+	                          stock: parseInt(editingProduct.stock) || 0
+	                        });
+	                      } else {
+	                        createProduct.mutate({
+	                          name: newProduct.name,
+	                          price: Math.round(parseFloat(newProduct.price) * 100),
+	                          trialDays: parseInt(newProduct.trialDays),
+	                          description: newProduct.description,
+	                          benefits: newProduct.benefits,
+	                          imageUrl: newProduct.imageUrl,
+	                          affiliateLink: newProduct.affiliateLink || "",
+	                          category: newProduct.category,
+	                          stock: parseInt(newProduct.stock) || 0
+	                        });
                       }
                     }} className="bg-accent text-white dark:text-black font-black text-xs uppercase tracking-widest"
                   >

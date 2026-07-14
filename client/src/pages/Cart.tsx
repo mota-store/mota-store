@@ -130,7 +130,7 @@ export default function Cart() {
     setLocalQuantities(prev => ({ ...prev, [productId]: newQty }));
     pendingUpdates.current[productId] = (pendingUpdates.current[productId] || 0) + 1;
     checkPending();
-    addItemMutation.mutate({ productId, quantity: Number(delta) });
+    addItemMutation.mutate({ productId, quantity: delta });
   };
 
   const handleRemoveAll = (item: any) => {

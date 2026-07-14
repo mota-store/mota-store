@@ -26,6 +26,7 @@ export async function getDb() {
       await connection.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS resetToken VARCHAR(255)");
       await connection.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS resetTokenExpires TIMESTAMP NULL");
       await connection.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS balance INT NOT NULL DEFAULT 0");
+      await connection.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS stock INT NOT NULL DEFAULT 0");
       connection.release();
       console.log("[DB] Esquema verificado/atualizado.");
     } catch (e) {
@@ -297,9 +298,8 @@ export async function addToCart(userId: number, productId: number, quantity: num
     }
     
     if (newQty < 1 && existingItem) {
-      // Se a quantidade for menor que 1, poderíamos remover, mas o frontend geralmente chama remove
-      // Por segurança, vamos manter no mínimo 1 se estivermos apenas atualizando
-      newQty = 1;
+      await tx.delete(cartItems).where(eq(cartItems.id, existingItem.id));
+      return;
     }
     
     if (existingItem) {

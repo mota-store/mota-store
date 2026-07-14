@@ -313,6 +313,7 @@ export const appRouter = router({
         imageUrl: z.string().max(512).optional(),
         affiliateLink: z.string().max(512),
         category: z.string().min(1).max(100),
+        stock: z.number().int().min(0).default(0),
       }))
       .mutation(async ({ input }) => {
         const { createProduct } = await import("./db");
@@ -331,6 +332,7 @@ export const appRouter = router({
         affiliateLink: z.string().max(512).optional(),
         category: z.string().min(1).max(100).optional(),
         isActive: z.union([z.boolean(), z.number().int().min(0).max(1)]).optional(),
+        stock: z.number().int().min(0).optional(),
       }))
       .mutation(async ({ input }) => {
         const { updateProduct } = await import("./db");
@@ -382,7 +384,7 @@ export const appRouter = router({
       return getCartItems(ctx.user.id);
     }),
     addItem: protectedProcedure
-      .input(z.object({ productId: z.number(), quantity: z.number().min(1).max(5).default(1) }))
+      .input(z.object({ productId: z.number(), quantity: z.number().min(-5).max(5).default(1) }))
       .mutation(async ({ ctx, input }) => {
         await addToCart(ctx.user.id, input.productId, input.quantity);
         return { success: true };
