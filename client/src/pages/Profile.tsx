@@ -21,7 +21,7 @@ export default function Profile() {
 
 
   const { data: balance } = trpc.wallet.getBalance.useQuery(undefined, { enabled: !!user });
-  const { data: transactions } = trpc.wallet.getUserTransactions.useQuery(undefined, { enabled: !!user });
+  const { data: transactions } = trpc.wallet.getTransactions.useQuery(undefined, { enabled: !!user });
   
   const updateProfile = trpc.auth.updateProfile.useMutation({
     onMutate: async (variables) => {

@@ -465,14 +465,14 @@ export const appRouter = router({
     createPix: protectedProcedure
       .input(z.object({ orderId: z.number(), amount: z.number() }))
       .mutation(async ({ input }) => {
-        const { createPixCharge } = await import("./payments");
-        return createPixCharge(input.orderId, input.amount);
+        const { createPixPayment } = await import("./efi-payment");
+        return createPixPayment(input.amount, input.orderId);
       }),
     checkStatus: protectedProcedure
       .input(z.object({ txid: z.string() }))
       .query(async ({ input }) => {
-        const { checkPixStatus } = await import("./payments");
-        return checkPixStatus(input.txid);
+        const { checkPixPaymentStatus } = await import("./efi-payment");
+        return checkPixPaymentStatus(input.txid);
       }),
   }),
 });
