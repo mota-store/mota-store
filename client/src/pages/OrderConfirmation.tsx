@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useLocation } from "wouter";
-import { CheckCircle2, MessageCircle, ArrowLeft, Zap, Info, ExternalLink, Mail } from "lucide-react";
+import { CheckCircle2, MessageCircle, ArrowLeft, Zap, Info, ExternalLink, Mail, Wallet, QrCode } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { motion } from "framer-motion";

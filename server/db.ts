@@ -282,18 +282,21 @@ export async function addToCart(userId: number, productId: number, quantity: num
   const db = await getDb();
   if (!db) return;
   
-  // Removido debounce de 500ms para permitir atualizações rápidas do carrinho
-  // A transação do banco de dados e a restrição de quantidade garantem a integridade.
+  // Trava de idempotência de 1 segundo para evitar duplicação por cliques rápidos ou bugs de rede
+  const requestId = `${userId}-${productId}-${quantity}`;
+  const now = Date.now();
+  if (lastAddRequest.has(requestId) && now - lastAddRequest.get(requestId)! < 1000) {
+    console.log(`[addToCart] Ignorando requisição duplicada para ${requestId}`);
+    return;
+  }
+  lastAddRequest.set(requestId, now);
   
   await db.transaction(async (tx) => {
     const [existingItem] = await tx.select().from(cartItems).where(
       and(eq(cartItems.userId, userId), eq(cartItems.productId, productId))
-    ).limit(1);
+    ).for("update").limit(1);
     
     const currentQty = existingItem?.quantity || 0;
-    // Se estiver adicionando (quantity > 0) e já existe o item, não soma, apenas mantém ou limita.
-    // O problema de duplicação ocorre porque o frontend envia quantity: 1, e o backend soma ao que já existe.
-    // Para novas adições (não atualizações no carrinho), devemos garantir que não duplique.
     let newQty = currentQty + quantity;
     
     if (newQty > 5) {
@@ -671,9 +674,21 @@ export async function getAdminStats() {
   };
 }
 
+const lastBalanceRequest = new Map<string, number>();
+
 export async function addUserBalance(userId: number, amount: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+
+  // Trava de idempotência de 2 segundos para evitar duplicação no admin
+  const requestId = `${userId}-${amount}`;
+  const now = Date.now();
+  if (lastBalanceRequest.has(requestId) && now - lastBalanceRequest.get(requestId)! < 2000) {
+    console.log(`[addUserBalance] Ignorando requisição duplicada para ${requestId}`);
+    const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    return { success: true, newBalance: user?.balance || 0 };
+  }
+  lastBalanceRequest.set(requestId, now);
 
   return await db.transaction(async (tx) => {
     const [user] = await tx.select().from(users).where(eq(users.id, userId)).for("update").limit(1);
