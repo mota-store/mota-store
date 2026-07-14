@@ -100,7 +100,11 @@ export async function upsertUser(data: {
   } else {
     // Tentar inserir, mas capturar erro de duplicidade se ocorrer corrida
     try {
-      const [result] = await db.insert(users).values(data as any);
+      const [result] = await db.insert(users).values({
+        ...data,
+        balance: 0,
+        role: 'user',
+      } as any);
       return result.insertId;
     } catch (error: any) {
       if (error.code === 'ER_DUP_ENTRY' && data.email) {
