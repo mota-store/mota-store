@@ -218,9 +218,21 @@ export async function getProductById(id: number) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+const lastProductCreateRequest = new Map<string, number>();
+
 export async function createProduct(input: InsertProduct) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+
+  // Trava de idempotência de 2 segundos para evitar duplicação de produtos
+  const requestId = `${input.name}-${input.price}-${input.category}`;
+  const now = Date.now();
+  if (lastProductCreateRequest.has(requestId) && now - lastProductCreateRequest.get(requestId)! < 2000) {
+    console.log(`[createProduct] Ignorando requisição duplicada para ${requestId}`);
+    const [existing] = await db.select().from(products).where(eq(products.name, input.name!)).orderBy(desc(products.createdAt)).limit(1);
+    return existing;
+  }
+  lastProductCreateRequest.set(requestId, now);
 
   const [result] = await db.insert(products).values({
     ...input,
