@@ -16,6 +16,21 @@ export async function getDb() {
       return null;
     }
     pool = mysql.createPool(dbUrl);
+    
+    // Tentar criar colunas ausentes automaticamente na primeira conexão
+    try {
+      const connection = await pool.getConnection();
+      console.log("[DB] Verificando integridade do esquema...");
+      await connection.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatarUrl LONGTEXT");
+      await connection.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS passwordHash TEXT");
+      await connection.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS resetToken VARCHAR(255)");
+      await connection.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS resetTokenExpires TIMESTAMP NULL");
+      await connection.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS balance INT NOT NULL DEFAULT 0");
+      connection.release();
+      console.log("[DB] Esquema verificado/atualizado.");
+    } catch (e) {
+      console.error("[DB] Erro ao verificar esquema:", e);
+    }
   }
   return drizzle(pool, { schema, mode: "default" });
 }
@@ -431,19 +446,11 @@ export async function checkoutWithBalance(userId: number, _amountFromClient: num
     const finalAmount = cartTotal - discount;
 
     if (user.balance < finalAmount) {
-      throw new Error(`Saldo insuficiente (Saldo: R$ ${(user.balance/100).toFixed(2)}, Necessário: R$ ${(finalAmount/100).toFixed(2)})`);
+      return { success: false, error: "Saldo insuficiente" };
     }
 
     const newBalance = user.balance - finalAmount;
     await tx.update(users).set({ balance: newBalance }).where(eq(users.id, userId));
-
-    await tx.insert(balanceTransactions).values({
-      userId,
-      amount: -finalAmount,
-      type: "purchase",
-      description: hasCashback ? "Compra com 10% de cashback" : "Compra via saldo",
-      newBalance,
-    });
 
     const [orderResult] = await tx.insert(orders).values({
       userId,
@@ -472,36 +479,41 @@ export async function checkoutWithBalance(userId: number, _amountFromClient: num
       });
     }
 
+    await tx.insert(balanceTransactions).values({
+      userId,
+      amount: -finalAmount,
+      type: "purchase",
+      description: `Compra realizada com saldo - Pedido #${orderId}`,
+      relatedOrderId: orderId,
+      newBalance,
+    });
+
     await tx.delete(cartItems).where(eq(cartItems.userId, userId));
 
-    return { success: true, orderId, newBalance, cashbackApplied: hasCashback, discountAmount: discount };
+    return { success: true, orderId };
   });
 }
 
-export async function checkoutWithBalanceAndPix(userId: number, _totalFromClient: number, balanceToUse: number, _itemsFromClient: any[]) {
+export async function checkoutWithBalanceAndPix(userId: number, input: { totalAmount: number, balanceToUse: number, cartItems: any[] }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
   return await db.transaction(async (tx) => {
     const cartTotal = await calculateCartTotal(tx, userId);
     const [user] = await tx.select().from(users).where(eq(users.id, userId)).for("update").limit(1);
-
+    
     if (!user) return { success: false, error: "Usuário não encontrado" };
-    if (user.balance < balanceToUse) return { success: false, error: `Saldo insuficiente (Saldo: R$ ${(user.balance/100).toFixed(2)})` };
-
+    
+    const balanceToUse = Math.min(user.balance, input.balanceToUse);
     const remainingAmount = cartTotal - balanceToUse;
-    if (remainingAmount <= 0) return { success: false, error: "Use saldo total" };
 
+    if (remainingAmount <= 0) {
+      return { success: false, error: "Saldo é suficiente para pagar o total. Use pagamento com saldo." };
+    }
+
+    // Deduzir saldo imediatamente e criar pedido pendente
     const newBalance = user.balance - balanceToUse;
     await tx.update(users).set({ balance: newBalance }).where(eq(users.id, userId));
-
-    await tx.insert(balanceTransactions).values({
-      userId,
-      amount: -balanceToUse,
-      type: "purchase",
-      description: `Pagamento parcial via saldo - restante via PIX`,
-      newBalance,
-    });
 
     const [orderResult] = await tx.insert(orders).values({
       userId,
@@ -530,64 +542,149 @@ export async function checkoutWithBalanceAndPix(userId: number, _totalFromClient
       });
     }
 
-    return { success: true, orderId, remainingAmount, newBalance };
+    await tx.insert(balanceTransactions).values({
+      userId,
+      amount: -balanceToUse,
+      type: "purchase",
+      description: `Pagamento parcial com saldo - Pedido #${orderId}`,
+      relatedOrderId: orderId,
+      newBalance,
+    });
+
+    return { success: true, orderId, remainingAmount };
   });
 }
 
 // ============================================
-// ADMIN FUNCTIONS
+// COUPON FUNCTIONS
 // ============================================
 
-export async function getAllOrders() {
+export async function getAllCoupons() {
   const db = await getDb();
   if (!db) return [];
+  return db.select().from(coupons).orderBy(desc(coupons.createdAt));
+}
+
+export async function createCoupon(data: InsertProduct) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [result] = await db.insert(coupons).values(data as any);
+  const [coupon] = await db.select().from(coupons).where(eq(coupons.id, result.insertId)).limit(1);
+  return coupon;
+}
+
+export async function toggleCouponActive(id: number, isActive: boolean) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(coupons).set({ isActive: isActive ? 1 : 0 }).where(eq(coupons.id, id));
+}
+
+export async function deleteCoupon(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(coupons).where(eq(coupons.id, id));
+}
+
+export async function redeemCoupon(userId: number, code: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db.transaction(async (tx) => {
+    const [coupon] = await tx.select().from(coupons).where(eq(coupons.code, code.toUpperCase())).limit(1);
+    
+    if (!coupon) throw new Error("Cupom inválido");
+    if (coupon.isActive === 0) throw new Error("Cupom inativo");
+    if (coupon.expiresAt && coupon.expiresAt < new Date()) throw new Error("Cupom expirado");
+    if (coupon.currentRedemptions >= coupon.maxRedemptions) throw new Error("Cupom esgotado");
+
+    const [alreadyRedeemed] = await tx.select().from(couponRedemptions).where(
+      and(eq(couponRedemptions.couponId, coupon.id), eq(couponRedemptions.userId, userId))
+    ).limit(1);
+
+    if (alreadyRedeemed) throw new Error("Você já resgatou este cupom");
+
+    const [user] = await tx.select().from(users).where(eq(users.id, userId)).for("update").limit(1);
+    if (!user) throw new Error("Usuário não encontrado");
+
+    const newBalance = user.balance + coupon.value;
+    await tx.update(users).set({ balance: newBalance }).where(eq(users.id, userId));
+    
+    await tx.update(coupons)
+      .set({ currentRedemptions: coupon.currentRedemptions + 1 })
+      .where(eq(coupons.id, coupon.id));
+
+    await tx.insert(couponRedemptions).values({
+      couponId: coupon.id,
+      userId,
+    });
+
+    await tx.insert(balanceTransactions).values({
+      userId,
+      amount: coupon.value,
+      type: "coupon",
+      description: `Cupom resgatado: ${coupon.code}`,
+      relatedCouponId: coupon.id,
+      newBalance,
+    });
+
+    return { success: true, value: coupon.value, newBalance };
+  });
+}
+
+// ============================================
+// ADMIN DASHBOARD STATS
+// ============================================
+
+export async function getAdminStats() {
+  const db = await getDb();
+  if (!db) return null;
+
+  const [totalUsers] = await db.select({ count: count() }).from(users);
+  const [totalProducts] = await db.select({ count: count() }).from(products);
+  const [totalOrders] = await db.select({ count: count() }).from(orders);
+  const [completedOrders] = await db.select({ count: count() }).from(orders).where(eq(orders.status, "completed"));
   
-  const result = await db.select({
+  const revenueResult = await db.select({ total: sql<number>`SUM(${orders.totalAmount})` }).from(orders).where(eq(orders.status, "completed"));
+  const totalRevenue = revenueResult[0]?.total || 0;
+
+  const recentOrders = await db.select({
     id: orders.id,
-    userId: orders.userId,
+    userName: users.name,
     totalAmount: orders.totalAmount,
     status: orders.status,
-    paymentMethod: orders.paymentMethod,
-    transactionId: orders.transactionId,
-    createdAt: orders.createdAt,
-    updatedAt: orders.updatedAt,
-    userName: users.name,
-    userEmail: users.email,
+    createdAt: orders.createdAt
   })
   .from(orders)
   .leftJoin(users, eq(orders.userId, users.id))
-  .orderBy(desc(orders.createdAt));
-  
-  return result;
-}
+  .orderBy(desc(orders.createdAt))
+  .limit(5);
 
-const lastAdminCredit = new Map<string, number>();
-const lastCouponRedeem = new Map<string, number>();
+  return {
+    users: (totalUsers as any).count,
+    products: (totalProducts as any).count,
+    orders: (totalOrders as any).count,
+    completedOrders: (completedOrders as any).count,
+    revenue: totalRevenue,
+    recentOrders
+  };
+}
 
 export async function addUserBalance(userId: number, amount: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // Trava de 2 segundos por usuário para evitar duplicidade de cliques rápidos que escapam do frontend
-  const now = Date.now();
-  const lastTime = lastAdminCredit.get(userId.toString()) || 0;
-  if (now - lastTime < 2000) {
-    return { success: true, alreadyProcessed: true };
-  }
-  lastAdminCredit.set(userId.toString(), now);
-
   return await db.transaction(async (tx) => {
-    const [currentUser] = await tx.select({ balance: users.balance }).from(users).where(eq(users.id, userId)).limit(1);
-    if (!currentUser) throw new Error("Usuário não encontrado");
+    const [user] = await tx.select().from(users).where(eq(users.id, userId)).for("update").limit(1);
+    if (!user) throw new Error("Usuário não encontrado");
 
-    const newBalance = currentUser.balance + amount;
+    const newBalance = user.balance + amount;
     await tx.update(users).set({ balance: newBalance }).where(eq(users.id, userId));
 
     await tx.insert(balanceTransactions).values({
       userId,
       amount,
       type: "admin_credit",
-      description: `Crédito administrativo de R$ ${(amount / 100).toFixed(2).replace(".", ",")}`,
+      description: `Crédito administrativo - R$ ${(amount / 100).toFixed(2).replace(".", ",")}`,
       newBalance,
     });
 
@@ -599,93 +696,4 @@ export async function getUserTransactions(userId: number) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(balanceTransactions).where(eq(balanceTransactions.userId, userId)).orderBy(desc(balanceTransactions.createdAt));
-}
-
-// ============================================
-// COUPON FUNCTIONS
-// ============================================
-
-export async function createCoupon(input: any) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  const [result] = await db.insert(coupons).values({
-    code: input.code,
-    value: Number(input.value),
-    description: input.description || null,
-    maxRedemptions: input.maxRedemptions ? Number(input.maxRedemptions) : 1,
-    currentRedemptions: 0,
-    expiresAt: input.expiresAt ? new Date(input.expiresAt) : null,
-    isActive: 1,
-  });
-
-  const [coupon] = await db.select().from(coupons).where(eq(coupons.id, result.insertId)).limit(1);
-  return coupon;
-}
-
-export async function getAllCoupons() {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select().from(coupons).orderBy(desc(coupons.createdAt));
-}
-
-export async function toggleCouponActive(couponId: number, isActive: boolean) {
-  const db = await getDb();
-  if (!db) return;
-  await db.update(coupons).set({ isActive: isActive ? 1 : 0 }).where(eq(coupons.id, couponId));
-}
-
-export async function deleteCoupon(couponId: number) {
-  const db = await getDb();
-  if (!db) return;
-  
-  // Primeiro deletar os registros em coupon_redemptions relacionados ao cupom
-  await db.delete(couponRedemptions).where(eq(couponRedemptions.couponId, couponId));
-  // Depois deletar o cupom em si
-  await db.delete(coupons).where(eq(coupons.id, couponId));
-}
-
-export async function redeemCoupon(code: string, userId: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  // Trava de 5 segundos por usuário para evitar duplicidade de resgate rápido
-  const now = Date.now();
-  const key = `${userId}-${code}`;
-  const lastTime = lastCouponRedeem.get(key) || 0;
-  if (now - lastTime < 5000) {
-    return { success: true, alreadyProcessed: true };
-  }
-  lastCouponRedeem.set(key, now);
-
-  return await db.transaction(async (tx) => {
-    const [coupon] = await tx.select().from(coupons).where(and(eq(coupons.code, code), eq(coupons.isActive, 1))).limit(1);
-    if (!coupon) return { success: false, error: "Cupom inválido ou inativo" };
-
-    if (coupon.expiresAt && coupon.expiresAt < new Date()) return { success: false, error: "Cupom expirado" };
-    if (coupon.currentRedemptions >= coupon.maxRedemptions) return { success: false, error: "Limite de resgates atingido" };
-
-    const existing = await tx.select().from(couponRedemptions).where(and(eq(couponRedemptions.couponId, coupon.id), eq(couponRedemptions.userId, userId))).limit(1);
-    if (existing.length > 0) return { success: false, error: "Cupom já resgatado" };
-
-    await tx.insert(couponRedemptions).values({ couponId: coupon.id, userId });
-    await tx.update(coupons).set({ currentRedemptions: coupon.currentRedemptions + 1 }).where(eq(coupons.id, coupon.id));
-
-    const [user] = await tx.select({ balance: users.balance }).from(users).where(eq(users.id, userId)).limit(1);
-    if (!user) throw new Error("Usuário não encontrado");
-
-    const newBalance = user.balance + coupon.value;
-    await tx.update(users).set({ balance: newBalance }).where(eq(users.id, userId));
-
-    await tx.insert(balanceTransactions).values({
-      userId,
-      amount: coupon.value,
-      type: "coupon",
-      description: `Resgate de cupom: ${coupon.code}`,
-      relatedCouponId: coupon.id,
-      newBalance,
-    });
-
-    return { success: true, value: coupon.value, newBalance };
-  });
 }

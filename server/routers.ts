@@ -361,145 +361,53 @@ export const appRouter = router({
         const { getUserTransactions } = await import("./db");
         return getUserTransactions(input.userId);
       }),
-
-    // Todas as orders do banco
-    listAllOrders: adminProcedure.query(async () => {
-      const { getAllOrders } = await import("./db");
-      return getAllOrders();
-    }),
   }),
 
   // ============================================
-  // COUPON ROUTES
+  // PUBLIC / USER ROUTES
   // ============================================
-  coupon: router({
-    redeem: protectedProcedure
-      .input(z.object({ code: z.string().toUpperCase().min(1).max(50) }))
-      .mutation(async ({ ctx, input }) => {
-        const { redeemCoupon } = await import("./db");
-        return redeemCoupon(input.code, ctx.user.id);
-      }),
-  }),
-
-  // ============================================
-  // WALLET ROUTES
-  // ============================================
-  wallet: router({
-    getBalance: protectedProcedure.query(async ({ ctx }) => {
-      const { getUserBalance } = await import("./db");
-      return getUserBalance(ctx.user.id);
-    }),
-
-    getUserTransactions: protectedProcedure.query(async ({ ctx }) => {
-      const { getUserTransactions } = await import("./db");
-      return getUserTransactions(ctx.user.id);
-    }),
-
-    checkoutWithBalance: protectedProcedure
-      .input(z.object({
-        amount: z.number().positive(), // em centavos
-        cartItems: z.array(z.object({
-          productId: z.number(),
-          quantity: z.number().min(1),
-          price: z.number().positive(),
-        })),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        const { checkoutWithBalance } = await import("./db");
-        return checkoutWithBalance(ctx.user.id, input.amount, input.cartItems);
-      }),
-
-    checkoutWithBalanceAndPix: protectedProcedure
-      .input(z.object({
-        totalAmount: z.number().positive(),
-        balanceToUse: z.number().positive(),
-        cartItems: z.array(z.object({
-          productId: z.number(),
-          quantity: z.number().min(1),
-          price: z.number().positive(),
-        })),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        const { checkoutWithBalanceAndPix } = await import("./db");
-        return checkoutWithBalanceAndPix(ctx.user.id, input.totalAmount, input.balanceToUse, input.cartItems);
-      }),
-
-    createDepositPix: protectedProcedure
-      .input(z.object({ amount: z.number().min(100) }))
-      .mutation(async ({ ctx, input }) => {
-        const { efiPayment } = await import("./efi-payment");
-        const txid = `DEP${Date.now()}${ctx.user.id}`;
-        return efiPayment.createPix(input.amount / 100, ctx.user.id, `Recarga de Carteira - MOTA STORE`);
-      }),
-
-    confirmDeposit: protectedProcedure
-      .input(z.object({ amount: z.number().positive(), txid: z.string() }))
-      .mutation(async ({ ctx, input }) => {
-        const { depositBalance } = await import("./db");
-        const { efiPayment } = await import("./efi-payment");
-        
-        // Validar status do PIX antes de creditar (segurança)
-        const pixStatus = await efiPayment.checkPixStatus(input.txid);
-        if (pixStatus.status !== "COMPLETED") {
-          throw new Error("PIX não foi confirmado. Status: " + pixStatus.status);
-        }
-        
-        // Validar que o valor pago corresponde ao valor solicitado (tolerância de 1 centavo)
-        const amountDifference = Math.abs((pixStatus.amount || 0) - (input.amount / 100));
-        if (amountDifference > 0.01) {
-          throw new Error(`Valor do PIX (R$ ${pixStatus.amount?.toFixed(2)}) não corresponde ao valor solicitado (R$ ${(input.amount / 100).toFixed(2)})`);
-        }
-        
-        return depositBalance(ctx.user.id, input.amount);
-      }),
-
-    checkDepositStatus: protectedProcedure
-      .input(z.object({ txid: z.string() }))
-      .query(async ({ input }) => {
-        const { efiPayment } = await import("./efi-payment");
-        return efiPayment.checkPixStatus(input.txid);
-      }),
-
-    getCashbackStatus: protectedProcedure.query(async ({ ctx }) => {
-      // const { getUserByOpenId } = await import("./db");
-      // const user = await getUserByOpenId(ctx.user.openId!);
-      return { hasCashbackBenefit: false };
-    }),
-  }),
-
   products: router({
-    list: publicProcedure.query(() => getProducts()),
-    getById: publicProcedure.input(z.number()).query(({ input }) => getProductById(input)),
+    list: publicProcedure.query(async () => {
+      return getProducts();
+    }),
+    getById: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return getProductById(input.id);
+      }),
   }),
 
   cart: router({
-    getItems: protectedProcedure.query(({ ctx }) => getCartItems(ctx.user.id)),
-    addItem: protectedProcedure
-      .input(z.object({ productId: z.number(), quantity: z.number().optional() }))
-      .mutation(({ ctx, input }) => addToCart(ctx.user.id, input.productId, input.quantity || 1)),
-    removeItem: protectedProcedure
-      .input(z.number())
+    getItems: protectedProcedure.query(async ({ ctx }) => {
+      return getCartItems(ctx.user.id);
+    }),
+    add: protectedProcedure
+      .input(z.object({ productId: z.number(), quantity: z.number().min(1).max(5).default(1) }))
       .mutation(async ({ ctx, input }) => {
+        await addToCart(ctx.user.id, input.productId, input.quantity);
+        return { success: true };
+      }),
+    remove: protectedProcedure
+      .input(z.object({ cartItemId: z.number() }))
+      .mutation(async ({ input }) => {
         const { removeFromCart } = await import("./db");
-        await removeFromCart(input);
+        await removeFromCart(input.cartItemId);
         return { success: true };
       }),
   }),
 
   orders: router({
-    list: protectedProcedure.query(({ ctx }) => getUserOrders(ctx.user.id)),
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return getUserOrders(ctx.user.id);
+    }),
     create: protectedProcedure
       .input(z.object({ totalAmount: z.number() }))
       .mutation(async ({ ctx, input }) => {
         const { createOrder } = await import("./db");
         return createOrder(ctx.user.id, input.totalAmount);
       }),
-
     updateStatus: protectedProcedure
-      .input(z.object({
-        orderId: z.number(),
-        status: z.enum(["pending", "completed", "failed", "cancelled"])
-      }))
+      .input(z.object({ orderId: z.number(), status: z.string() }))
       .mutation(async ({ input }) => {
         const { updateOrderStatus } = await import("./db");
         await updateOrderStatus(input.orderId, input.status);
@@ -507,18 +415,64 @@ export const appRouter = router({
       }),
   }),
 
+  wallet: router({
+    getBalance: protectedProcedure.query(async ({ ctx }) => {
+      const { getUserBalance } = await import("./db");
+      return getUserBalance(ctx.user.id);
+    }),
+    deposit: protectedProcedure
+      .input(z.object({ amount: z.number().positive() }))
+      .mutation(async ({ ctx, input }) => {
+        const { depositBalance } = await import("./db");
+        return depositBalance(ctx.user.id, input.amount);
+      }),
+    checkoutWithBalance: protectedProcedure
+      .input(z.object({ 
+        amount: z.number(), 
+        cartItems: z.array(z.object({
+          productId: z.number(),
+          quantity: z.number(),
+          price: z.number()
+        }))
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { checkoutWithBalance } = await import("./db");
+        return checkoutWithBalance(ctx.user.id, input.amount, input.cartItems);
+      }),
+    checkoutWithBalanceAndPix: protectedProcedure
+      .input(z.object({
+        totalAmount: z.number(),
+        balanceToUse: z.number(),
+        cartItems: z.array(z.any())
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { checkoutWithBalanceAndPix } = await import("./db");
+        return checkoutWithBalanceAndPix(ctx.user.id, input);
+      }),
+    redeemCoupon: protectedProcedure
+      .input(z.object({ code: z.string().min(3) }))
+      .mutation(async ({ ctx, input }) => {
+        const { redeemCoupon } = await import("./db");
+        return redeemCoupon(ctx.user.id, input.code);
+      }),
+    getTransactions: protectedProcedure.query(async ({ ctx }) => {
+      const { getUserTransactions } = await import("./db");
+      return getUserTransactions(ctx.user.id);
+    }),
+  }),
+
   payments: router({
     createPix: protectedProcedure
       .input(z.object({ orderId: z.number(), amount: z.number() }))
       .mutation(async ({ input }) => {
-        const { createPixPayment } = await import("./efi-payment");
-        return createPixPayment(input.amount, input.orderId);
+        const { createPixCharge } = await import("./payments");
+        return createPixCharge(input.orderId, input.amount);
       }),
     checkStatus: protectedProcedure
       .input(z.object({ txid: z.string() }))
       .query(async ({ input }) => {
-        const { checkPixPaymentStatus } = await import("./efi-payment");
-        return checkPixPaymentStatus(input.txid);
+        const { checkPixStatus } = await import("./payments");
+        return checkPixStatus(input.txid);
       }),
   }),
 });
