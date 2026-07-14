@@ -204,7 +204,7 @@ export function Header({ onSearch, searchQuery = "" }: HeaderProps) {
                 className="bg-accent hover:bg-accent/90 text-white dark:text-black font-black uppercase tracking-widest px-4 md:px-6 rounded-lg md:rounded-xl shadow-lg shadow-accent/10 h-8 md:h-10 text-[9px] md:text-[10px]"
                 onClick={() => navigate("/login?tab=register")}
               >
-                Entrar
+                cadastrar-se
               </Button>
             )}
           </div>
@@ -267,7 +267,7 @@ export function Header({ onSearch, searchQuery = "" }: HeaderProps) {
                       setMobileMenuOpen(false);
                     }}
                   >
-                    Entrar na Loja
+                    Cadastrar-se
                   </Button>
                 )}
               </div>

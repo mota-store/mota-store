@@ -117,7 +117,7 @@ export default function Home() {
                   size="lg"
                   className="bg-accent hover:bg-accent/90 text-white dark:text-black px-12 py-8 text-xl font-black rounded-[2rem] shadow-2xl shadow-accent/20 transition-all hover:scale-105 active:scale-95"
                   onClick={() => {
-                    document.getElementById("products")?.scrollIntoView({ behavior: "smooth" });
+                    navigate("/login?tab=register");
                   }}
                 >
                   APROVEITAR AGORA
