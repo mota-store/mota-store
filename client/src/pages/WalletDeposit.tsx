@@ -13,20 +13,28 @@ export default function WalletDeposit() {
   const [amount, setAmount] = useState<string | "">("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [pixData, setPixData] = useState<{ pixCode: string; qrCodeBase64: string; txid: string; expiresIn: number } | null>(null);
-  const [checkInterval, setCheckInterval] = useState<NodeJS.Timeout | null>(null);
 
   const { data: balance = 0 } = trpc.wallet.getBalance.useQuery();
-  const { data: cashbackStatus } = trpc.wallet.getCashbackStatus.useQuery();
-  const createPixMutation = trpc.wallet.createDepositPix.useMutation();
-  const confirmDepositMutation = trpc.wallet.confirmDeposit.useMutation();
-  const checkDepositStatusMutation = trpc.wallet.checkDepositStatus.useMutation();
+  const utils = trpc.useUtils();
+  
+  const createPixMutation = trpc.payments.createPix.useMutation();
+  const confirmDepositMutation = trpc.wallet.deposit.useMutation();
+
+  // Usar query com refetchInterval para polling, assim como no Checkout.tsx
+  const { data: statusData } = trpc.payments.checkStatus.useQuery(
+    { txid: pixData?.txid || "" },
+    { 
+      enabled: !!pixData,
+      refetchInterval: 5000,
+    }
+  );
 
   const handleAmountSelect = (val: number) => {
     setAmount(val.toString());
   };
 
   const handleGeneratePix = async () => {
-    const amountCents = Number(amount) * 100;
+    const amountCents = Math.round(Number(amount) * 100);
     if (amountCents < 100) {
       toast.error("O valor mínimo para recarga é R$ 1,00");
       return;
@@ -34,7 +42,13 @@ export default function WalletDeposit() {
 
     setIsGenerating(true);
     try {
-      const result = await createPixMutation.mutateAsync({ amount: amountCents });
+      // O endpoint payments.createPix exige um orderId. 
+      // Como é uma recarga direta, passamos 0 ou um ID fictício, 
+      // já que o efi-payment.ts usa o orderId apenas para a descrição se não houver uma.
+      const result = await createPixMutation.mutateAsync({ 
+        orderId: 0, 
+        amount: amountCents / 100 
+      });
       setPixData(result);
       toast.success("QR Code gerado com sucesso!");
     } catch (error) {
@@ -45,60 +59,18 @@ export default function WalletDeposit() {
     }
   };
 
-  // Polling para verificar pagamento PIX automaticamente
-  useEffect(() => {
-    if (!pixData) return;
-    
-    let stopped = false;
-    const interval = setInterval(async () => {
-      if (stopped) return;
-      
-      try {
-        const status = await checkDepositStatusMutation.mutateAsync({ txid: pixData.txid });
-        
-        if (status.status === "COMPLETED") {
-          stopped = true;
-          clearInterval(interval);
-          setCheckInterval(null);
-          
-          // Chamar handlePaymentConfirmed automaticamente quando PIX for confirmado
-          await handlePaymentConfirmed();
-        }
-      } catch (e) {
-        console.error("Erro ao verificar status do PIX", e);
-      }
-    }, 5000);
-    
-    setCheckInterval(interval);
-    return () => {
-      stopped = true;
-      clearInterval(interval);
-    };
-  }, [pixData, checkDepositStatusMutation]);
-
   const handlePaymentConfirmed = async () => {
     if (!pixData) return;
     
     try {
-      const amountCents = Number(amount) * 100;
+      const amountCents = Math.round(Number(amount) * 100);
       const result = await confirmDepositMutation.mutateAsync({ 
-        amount: amountCents, 
-        txid: pixData.txid 
+        amount: amountCents
       });
 
       if (result.success) {
-        // Limpar intervalo de polling
-        if (checkInterval) {
-          clearInterval(checkInterval);
-          setCheckInterval(null);
-        }
-        
         toast.success(`R$ ${Number(amount || 0).toFixed(2)} creditados com sucesso!`);
-        if (result.cashbackActivated) {
-          toast.success("🎉 Cashback de 10% ativado! Sua próxima compra terá desconto automático.", {
-            duration: 5000,
-          });
-        }
+        utils.wallet.getBalance.invalidate();
         navigate("/profile");
       }
     } catch (error: any) {
@@ -107,6 +79,13 @@ export default function WalletDeposit() {
       console.error("Erro ao confirmar depósito:", error);
     }
   };
+
+  // Efeito para observar a mudança de status do PIX
+  useEffect(() => {
+    if (statusData?.status === "COMPLETED") {
+      handlePaymentConfirmed();
+    }
+  }, [statusData]);
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
@@ -143,12 +122,6 @@ export default function WalletDeposit() {
               <Wallet className="w-8 h-8 text-accent" />
             </div>
           </div>
-          {/* {cashbackStatus?.hasCashbackBenefit && (
-            <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-500 text-[10px] font-black uppercase tracking-widest">
-              <Star className="w-3 h-3 fill-current" />
-              Cashback Ativo 10%
-            </div>
-          )} */}
         </Card>
 
         {!pixData ? (
@@ -165,7 +138,7 @@ export default function WalletDeposit() {
                   key={item.value}
                   onClick={() => handleAmountSelect(item.value)}
                   className={`relative p-4 rounded-[1.5rem] border-2 transition-all active:scale-95 text-left group ${
-                    amount === item.value 
+                    amount === item.value.toString() 
                       ? "border-accent bg-accent/5" 
                       : "border-border/40 bg-card/20 hover:border-border"
                   }`}
@@ -230,7 +203,7 @@ export default function WalletDeposit() {
               qrCodeBase64={pixData.qrCodeBase64}
               pixCode={pixData.pixCode}
               expiresIn={pixData.expiresIn}
-              amount={Number(amount) * 100}
+              amount={Math.round(Number(amount) * 100)}
               onPaymentConfirmed={handlePaymentConfirmed}
             />
             

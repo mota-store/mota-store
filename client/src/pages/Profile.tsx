@@ -319,6 +319,16 @@ export default function Profile() {
           </Button>
 
           <Button
+            onClick={() => navigate("/wallet-deposit")}
+            className="w-full h-12 rounded-xl bg-card/50 border border-border/50 hover:border-accent/50 text-foreground font-black text-xs uppercase tracking-widest mb-4 flex items-center justify-center gap-2"
+            variant="outline"
+          >
+            <Wallet className="h-4 w-4 text-accent" />
+            RECARREGAR CARTEIRA
+            <span className="text-accent ml-1">R$ {((balance || 0) / 100).toFixed(2).replace(".", ",")}</span>
+          </Button>
+
+          <Button
             onClick={() => navigate("/redeem-coupon")}
             className="w-full h-12 rounded-xl bg-card/50 border border-border/50 hover:border-accent/50 text-foreground font-black text-xs uppercase tracking-widest mb-8 flex items-center justify-center gap-2"
             variant="outline"
