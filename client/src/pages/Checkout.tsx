@@ -8,11 +8,13 @@ import { ShoppingBag, ArrowLeft, Loader2, Wallet, QrCode } from "lucide-react";
 import { useLocation } from "wouter";
 import { PixPayment } from "@/components/PixPayment";
 import { toast } from "sonner";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function Checkout() {
   const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
   const [, navigate] = useLocation();
+  const { theme, accentHue } = useTheme();
   const [step, setStep] = useState<"payment" | "pix" | "balance_confirm" | "balance_pix_confirm">("payment");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pixData, setPixData] = useState<{ pixCode: string; qrCodeBase64: string; txid: string; expiresIn: number; amount?: number } | null>(null);
@@ -311,7 +313,7 @@ export default function Checkout() {
                     <Wallet className="h-5 w-5 text-accent" />
                   </div>
                   <div className="text-left">
-                    <p className="text-xs font-black uppercase tracking-widest">Saldo em Carteira</p>
+                    <p className={`text-xs font-black uppercase tracking-widest ${(theme === 'light' && accentHue === 'white') ? 'text-black' : ''}`}>Saldo em Carteira</p>
                     <p className="text-[10px] text-muted-foreground">Disponível: R$ {((balance || 0) / 100).toFixed(2).replace(".", ",")}</p>
                   </div>
                 </div>
@@ -327,7 +329,7 @@ export default function Checkout() {
                     <QrCode className="h-5 w-5 text-accent" />
                   </div>
                   <div className="text-left">
-                    <p className="text-xs font-black uppercase tracking-widest">Pagar com PIX</p>
+                    <p className={`text-xs font-black uppercase tracking-widest ${(theme === 'light' && accentHue === 'white') ? 'text-black' : ''}`}>Pagar com PIX</p>
                     <p className="text-[10px] text-muted-foreground">Aprovação instantânea</p>
                   </div>
                 </div>
