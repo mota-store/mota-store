@@ -390,10 +390,10 @@ export const appRouter = router({
         return { success: true };
       }),
     removeItem: protectedProcedure
-      .input(z.object({ cartItemId: z.number() }))
+      .input(z.number())
       .mutation(async ({ input }) => {
         const { removeFromCart } = await import("./db");
-        await removeFromCart(input.cartItemId);
+        await removeFromCart(input);
         return { success: true };
       }),
   }),
