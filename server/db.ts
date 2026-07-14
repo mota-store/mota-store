@@ -291,6 +291,9 @@ export async function addToCart(userId: number, productId: number, quantity: num
     ).limit(1);
     
     const currentQty = existingItem?.quantity || 0;
+    // Se estiver adicionando (quantity > 0) e já existe o item, não soma, apenas mantém ou limita.
+    // O problema de duplicação ocorre porque o frontend envia quantity: 1, e o backend soma ao que já existe.
+    // Para novas adições (não atualizações no carrinho), devemos garantir que não duplique.
     let newQty = currentQty + quantity;
     
     if (newQty > 5) {

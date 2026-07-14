@@ -39,9 +39,9 @@ export default function OrderConfirmation() {
     .map((item: any) => item.quantity > 1 ? `${item.name} x${item.quantity}` : item.name)
     .join(", ");
 
-  const message = `Olá! Acabei de realizar o pedido #${orderNumber} na MOTA STORE.
+  const message = `Olá! Acabei de realizar o pedido #${orderData.id} na MOTA STORE.
 Produto(s): ${productList}
-Total: R$ {((orderData.total ?? 0) / 100).toFixed(2)}
+Total: R$ ${((orderData.total ?? 0) / 100).toFixed(2).replace(".", ",")}
 Horário: ${now}
 Aguardo a ativação! 😊`;
 
@@ -92,9 +92,15 @@ Aguardo a ativação! 😊`;
                   <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Método</span>
                   <div className="flex items-center gap-2">
                     <div className="h-5 w-5 bg-accent/20 rounded flex items-center justify-center">
-                      <Zap className="h-3 w-3 text-accent" />
+                      {orderData.paymentMethod === "balance" ? (
+                        <Wallet className="h-3 w-3 text-accent" />
+                      ) : (
+                        <QrCode className="h-3 w-3 text-accent" />
+                      )}
                     </div>
-                    <span className="font-bold text-sm">PIX / Saldo</span>
+                    <span className="font-bold text-sm">
+                      {orderData.paymentMethod === "balance" ? "Saldo da Carteira" : "PIX"}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -107,73 +113,25 @@ Aguardo a ativação! 😊`;
             </div>
           </Card>
 
-          {/* Order Items Detail */}
+          {/* Product with Image Preview */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between px-2">
-              <span className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">Detalhes do Pedido</span>
-              <span className="text-[11px] font-black uppercase tracking-widest text-accent flex items-center gap-1">
-                <Zap className="h-3 w-3" /> Automático
-              </span>
-            </div>
-            
             {displayItems.map((item: any, idx: number) => (
-              <Card key={idx} className="bg-card/30 border-border/30 rounded-2xl p-4 hover:border-accent/30 transition-all group">
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-xl bg-background flex items-center justify-center border border-border/50">
-                    {item.imageUrl ? (
-                      <img src={item.imageUrl} alt={item.name} className="w-8 h-8 object-contain" />
-                    ) : (
-                      <Zap className="h-5 w-5 text-accent/30" />
-                    )}
-                  </div>
-                  <div className="flex-grow">
-                    <h4 className="font-black text-sm uppercase tracking-tight">{item.name}</h4>
-                    <div className="flex items-center gap-3 text-[10px] font-bold text-muted-foreground">
-                      <span>Valor unidade: R$ {((item.price ?? 0) / 100).toFixed(2)}</span>
-                      <span>•</span>
-                      <span>{item.quantity} unidade{item.quantity > 1 ? 's' : ''}</span>
-                    </div>
+              <Card key={idx} className="bg-card/30 border-border/30 rounded-2xl p-4 flex items-center gap-4">
+                <div className="h-12 w-12 rounded-xl bg-background flex items-center justify-center border border-border/50">
+                  {item.imageUrl ? (
+                    <img src={item.imageUrl} alt={item.name} className="w-8 h-8 object-contain" />
+                  ) : (
+                    <Zap className="h-5 w-5 text-accent/30" />
+                  )}
+                </div>
+                <div className="flex-grow">
+                  <h4 className="font-black text-sm uppercase tracking-tight">{item.name}</h4>
+                  <div className="flex items-center gap-3 text-[10px] font-bold text-muted-foreground">
+                    <span>{item.quantity} unidade{item.quantity > 1 ? 's' : ''}</span>
                   </div>
                 </div>
               </Card>
             ))}
-          </div>
-
-          {/* Support Section */}
-          <div className="space-y-3">
-            <span className="text-[11px] font-black uppercase tracking-widest text-muted-foreground px-2">Problemas com o pedido?</span>
-            <Card className="bg-card/30 border-border/30 rounded-2xl p-6 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="h-10 w-10 rounded-full bg-background flex items-center justify-center border border-border/50">
-                  <Headphones className="h-5 w-5 text-accent" />
-                </div>
-                <div>
-                  <h4 className="font-black text-sm uppercase">Mota Store</h4>
-                  <button 
-                    onClick={() => window.location.href = whatsappLink}
-                    className="text-accent text-[11px] font-black uppercase tracking-widest hover:underline"
-                  >
-                    Enviar mensagem
-                  </button>
-                </div>
-              </div>
-              <ExternalLink className="h-4 w-4 text-muted-foreground opacity-30" />
-            </Card>
-          </div>
-
-          {/* Important Notice */}
-          <div className="relative overflow-hidden rounded-2xl bg-amber-500/5 border border-amber-500/20 p-6">
-            <div className="absolute top-0 left-0 w-1 h-full bg-amber-500" />
-            <div className="flex gap-4">
-              <Info className="h-5 w-5 text-amber-500 shrink-0" />
-              <div className="space-y-2">
-                <h4 className="font-black text-sm uppercase tracking-tight text-amber-500">Importante</h4>
-                <p className="text-xs font-medium leading-relaxed text-muted-foreground">
-                  Seu produto foi enviado para o seu e-mail cadastrado e também está disponível no seu perfil. 
-                  Lembre-se de verificar a caixa de <strong>SPAM</strong>.
-                </p>
-              </div>
-            </div>
           </div>
 
           {/* Action Buttons */}
@@ -181,9 +139,9 @@ Aguardo a ativação! 😊`;
             <Button 
               size="lg" 
               className="w-full bg-accent hover:bg-accent/90 text-white dark:text-black font-black py-7 rounded-2xl shadow-xl shadow-accent/20 transition-all hover:scale-[1.02]"
-              onClick={() => navigate("/profile")}
+              onClick={() => window.location.href = whatsappLink}
             >
-              VISUALIZAR PRODUTO NO PERFIL
+              RECEBER PRODUTO NO WHATSAPP
             </Button>
             <Button 
               variant="ghost" 

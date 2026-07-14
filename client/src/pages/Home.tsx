@@ -55,6 +55,7 @@ export default function Home() {
 
     if (isAlreadyInCart) {
       toast.info("Este item já está no seu carrinho.");
+      navigate("/cart");
       return;
     }
 

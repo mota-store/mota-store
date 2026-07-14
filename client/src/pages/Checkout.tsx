@@ -79,10 +79,12 @@ export default function Checkout() {
       sessionStorage.setItem("lastOrder", JSON.stringify({
         id: orderId,
         total: pixData.amount || total,
+        paymentMethod: "pix",
         items: enrichedItems.map(item => ({
           name: item.product?.name || "Produto",
           price: item.product?.price || 0,
-          quantity: item.quantity
+          quantity: item.quantity,
+          imageUrl: item.product?.imageUrl
         }))
       }));
 
@@ -126,10 +128,12 @@ export default function Checkout() {
         sessionStorage.setItem("lastOrder", JSON.stringify({
           id: result.orderId,
           total: finalTotal,
+          paymentMethod: "balance",
           items: enrichedItems.map(item => ({
             name: item.product?.name || "Produto",
             price: item.product?.price || 0,
-            quantity: item.quantity
+            quantity: item.quantity,
+            imageUrl: item.product?.imageUrl
           }))
         }));
 
