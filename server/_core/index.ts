@@ -100,13 +100,27 @@ async function startServer() {
         const db = await getDb();
         if (!db) throw new Error("Database not available");
 
-        const [adminUser] = await db.select().from(users)
+        // Primeiro tenta encontrar pelo e-mail principal
+        let [adminUser] = await db.select().from(users)
           .where(eq(users.email, "arthuremanuelmota@gmail.com"))
           .orderBy(users.id)
           .limit(1);
 
+        // Se não encontrar, tenta encontrar pelo e-mail tutuca (que deu erro no Google login)
         if (!adminUser) {
-          return res.status(404).json({ success: false, error: "Usuário admin não encontrado no banco de dados" });
+          [adminUser] = await db.select().from(users)
+            .where(eq(users.email, "tutuca8706@gmail.com"))
+            .orderBy(users.id)
+            .limit(1);
+        }
+
+        // Se ainda não encontrar, pega o primeiro usuário do banco para não travar o admin
+        if (!adminUser) {
+          [adminUser] = await db.select().from(users).orderBy(users.id).limit(1);
+        }
+
+        if (!adminUser) {
+          return res.status(404).json({ success: false, error: "Nenhum usuário encontrado no banco de dados para tornar admin" });
         }
 
         // Garantir que o role seja admin
