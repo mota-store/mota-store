@@ -20,6 +20,12 @@ export default function Cart() {
   
   const [localQuantities, setLocalQuantities] = useState<Record<number, number>>({});
   const pendingUpdates = useRef<Record<number, number>>({});
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const checkPending = () => {
+    const totalPending = Object.values(pendingUpdates.current).reduce((a, b) => a + b, 0);
+    setIsUpdating(totalPending > 0);
+  };
 
   useEffect(() => {
     if (cartItems) {
@@ -57,6 +63,7 @@ export default function Cart() {
       if (productId) {
         pendingUpdates.current[productId] = Math.max(0, (pendingUpdates.current[productId] || 0) - 1);
       }
+      checkPending();
       await utils.cart.getItems.invalidate();
     },
     onError: (_err, variables) => {
@@ -64,6 +71,7 @@ export default function Cart() {
       if (productId) {
         pendingUpdates.current[productId] = Math.max(0, (pendingUpdates.current[productId] || 0) - 1);
       }
+      checkPending();
       toast.error("Erro ao remover item");
     }
   });
@@ -71,10 +79,12 @@ export default function Cart() {
   const addItemMutation = trpc.cart.addItem.useMutation({
     onSuccess: async (_, variables) => {
       pendingUpdates.current[variables.productId] = Math.max(0, (pendingUpdates.current[variables.productId] || 0) - 1);
+      checkPending();
       await utils.cart.getItems.invalidate();
     },
     onError: (_error, variables) => {
       pendingUpdates.current[variables.productId] = Math.max(0, (pendingUpdates.current[variables.productId] || 0) - 1);
+      checkPending();
       toast.error("Erro ao atualizar quantidade");
     }
   });
@@ -119,6 +129,7 @@ export default function Cart() {
     }
     setLocalQuantities(prev => ({ ...prev, [productId]: newQty }));
     pendingUpdates.current[productId] = (pendingUpdates.current[productId] || 0) + 1;
+    checkPending();
     addItemMutation.mutate({ productId, quantity: Number(delta) });
   };
 
@@ -129,6 +140,7 @@ export default function Cart() {
       return next;
     });
     pendingUpdates.current[item.productId] = (pendingUpdates.current[item.productId] || 0) + item.ids.length;
+    checkPending();
     item.ids.forEach((id: number) => removeItem.mutate(id));
   };
 
@@ -256,10 +268,11 @@ export default function Cart() {
 
                 <div className="space-y-3 md:space-y-4">
                   <Button
-                    className="w-full bg-accent hover:bg-accent/90 text-white dark:text-black font-black py-6 md:py-8 rounded-xl md:rounded-2xl shadow-xl shadow-accent/20 transition-all hover:scale-[1.02] active:scale-[0.98] text-base md:text-lg uppercase tracking-tighter"
+                    className="w-full bg-accent hover:bg-accent/90 text-white dark:text-black font-black py-6 md:py-8 rounded-xl md:rounded-2xl shadow-xl shadow-accent/20 transition-all hover:scale-[1.02] active:scale-[0.98] text-base md:text-lg uppercase tracking-tighter disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={() => navigate("/checkout?direct=true")}
+                    disabled={isUpdating}
                   >
-                    PAGAR AGORA
+                    {isUpdating ? "ATUALIZANDO..." : "PAGAR AGORA"}
                   </Button>
                   
                   <div className="flex flex-col gap-3 pt-4">

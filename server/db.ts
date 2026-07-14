@@ -281,15 +281,8 @@ export async function addToCart(userId: number, productId: number, quantity: num
   const db = await getDb();
   if (!db) return;
   
-  const requestKey = `${userId}-${productId}`;
-  const now = Date.now();
-  const lastRequest = lastAddRequest.get(requestKey) || 0;
-  
-  if (now - lastRequest < 500) {
-    console.log(`[AddToCart] Ignorando requisição duplicada para usuário ${userId}, produto ${productId}`);
-    return;
-  }
-  lastAddRequest.set(requestKey, now);
+  // Removido debounce de 500ms para permitir atualizações rápidas do carrinho
+  // A transação do banco de dados e a restrição de quantidade garantem a integridade.
   
   await db.transaction(async (tx) => {
     const [existingItem] = await tx.select().from(cartItems).where(
