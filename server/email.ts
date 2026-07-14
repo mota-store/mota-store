@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer';
 
 // Configurações via variáveis de ambiente (configuradas no Render)
 const SMTP_USER = process.env.SMTP_USER || 'arthurmotapaiva@gmail.com';
-const SMTP_PASS = process.env.SMTP_PASS; // Senha de App do Gmail
+const SMTP_PASS = process.env.SMTP_PASS || 'igyb oeko dgpy lrvv'; // Senha de App do Gmail
 const APP_URL = process.env.APP_URL || 'https://mota-store.shop';
 
 console.log(`[Email] Iniciando transportador SMTP para: ${SMTP_USER}`);
