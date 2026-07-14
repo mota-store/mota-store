@@ -322,18 +322,31 @@ export default function Checkout() {
 
               <Button 
                 onClick={handleConfirmOrder}
+                disabled={isSubmitting}
                 className="w-full h-16 rounded-2xl bg-card/50 border-2 border-border/50 hover:border-accent/50 flex items-center justify-between px-6 transition-all"
               >
                 <div className="flex items-center gap-4">
                   <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center">
-                    <QrCode className="h-5 w-5 text-accent" />
+                    {isSubmitting ? (
+                      <Loader2 className="h-5 w-5 text-accent animate-spin" />
+                    ) : (
+                      <QrCode className="h-5 w-5 text-accent" />
+                    )}
                   </div>
                   <div className="text-left">
-                    <p className={`text-xs font-black uppercase tracking-widest ${(theme === 'light' && accentHue === 'white') ? 'text-black' : ''}`}>Pagar com PIX</p>
-                    <p className="text-[10px] text-muted-foreground">Aprovação instantânea</p>
+                    <p className={`text-xs font-black uppercase tracking-widest ${(theme === 'light' && accentHue === 'white') ? 'text-black' : ''}`}>
+                      {isSubmitting ? "Gerando PIX..." : "Pagar com PIX"}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {isSubmitting ? "Aguarde um momento" : "Aprovação instantânea"}
+                    </p>
                   </div>
                 </div>
-                <ArrowLeft className="h-4 w-4 rotate-180" />
+                {isSubmitting ? (
+                  <div className="h-4 w-4 border-2 border-accent/20 border-t-accent rounded-full animate-spin" />
+                ) : (
+                  <ArrowLeft className="h-4 w-4 rotate-180" />
+                )}
               </Button>
             </div>
           )}

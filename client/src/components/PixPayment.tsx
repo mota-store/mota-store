@@ -98,14 +98,16 @@ export function PixPayment({
       setBankCopied(appName);
     }
     
-    const encodedCode = encodeURIComponent(pixCode || "");
-    const intentUrl = intentLink.replace("CODIGO_PIX", encodedCode);
-    const fallbackUrl = fallbackScheme.replace("CODIGO_PIX", encodedCode);
-
-    window.location.href = intentUrl;
+    // Tentar abrir o app diretamente via Deep Link
+    // Se estiver no mobile, o esquema personalizado deve abrir o app
+    window.location.href = fallbackScheme;
+    
+    // Fallback para intent em Android se o esquema simples falhar
     setTimeout(() => {
-      window.location.href = fallbackUrl;
-    }, 1500);
+      if (document.visibilityState === 'visible') {
+        window.location.href = intentLink;
+      }
+    }, 500);
   };
 
   const qrCodeSrc = getQrCodeSrc();
@@ -164,26 +166,26 @@ export function PixPayment({
               {
                 name: "Nubank",
                 icon: "/assets/banks/nubank.png",
-                intentLink: "intent://nu/pix/copia-e-cola?code=CODIGO_PIX#Intent;scheme=nubank;package=com.nu.production;end",
-                fallbackScheme: "nubank://nu/pix/copia-e-cola?code=CODIGO_PIX"
+                intentLink: "intent://nu/pix/copia-e-cola#Intent;scheme=nubank;package=com.nu.production;end",
+                fallbackScheme: "nubank://nu/pix/copia-e-cola"
               },
               {
                 name: "Inter",
                 icon: "/assets/banks/inter.png",
-                intentLink: "intent://pix?code=CODIGO_PIX#Intent;scheme=inter;package=br.com.intermedium;end",
-                fallbackScheme: "inter://pix?code=CODIGO_PIX"
+                intentLink: "intent://pix#Intent;scheme=inter;package=br.com.intermedium;end",
+                fallbackScheme: "inter://pix"
               },
               {
                 name: "Itaú",
                 icon: "/assets/banks/itau.png",
-                intentLink: "intent://pix/copia-e-cola?code=CODIGO_PIX#Intent;scheme=itau-empresas;package=com.itau;end",
-                fallbackScheme: "itau-empresas://pix/copia-e-cola?code=CODIGO_PIX"
+                intentLink: "intent://pix/copia-e-cola#Intent;scheme=itau;package=com.itau;end",
+                fallbackScheme: "itau://pix/copia-e-cola"
               },
               {
                 name: "Bradesco",
                 icon: "/assets/banks/bradesco.png",
-                intentLink: "intent://pix?code=CODIGO_PIX#Intent;scheme=bradesco;package=com.bradesco;end",
-                fallbackScheme: "bradesco://pix?code=CODIGO_PIX"
+                intentLink: "intent://pix#Intent;scheme=bradesco;package=com.bradesco;end",
+                fallbackScheme: "bradesco://pix"
               }
             ].map((bank) => (
               <button
