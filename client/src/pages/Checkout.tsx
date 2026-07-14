@@ -3,6 +3,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { ShoppingBag, ArrowLeft, Loader2, Wallet, QrCode } from "lucide-react";
 import { useLocation } from "wouter";
 import { PixPayment } from "@/components/PixPayment";
@@ -54,6 +55,7 @@ export default function Checkout() {
   const finalTotal = total - discountAmount;
   
   const finalTotalPix = total;
+  const canPayWithBalance = (balance || 0) >= finalTotal;
 
   useEffect(() => {
     const timer = setTimeout(() => setIsInitialLoading(false), 2000);

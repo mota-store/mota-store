@@ -133,9 +133,9 @@ export const appRouter = router({
           throw new Error("Avatar inválido. Deve ser uma imagem em base64.");
         }
         
-        // Limitar tamanho (máximo ~500KB em base64, que corresponde a ~375KB de imagem)
-        if (input.base64Data.length > 600000) {
-          throw new Error("Imagem muito grande. Máximo 500KB.");
+        // Limitar tamanho (máximo ~5MB em base64)
+        if (input.base64Data.length > 7000000) {
+          throw new Error("Imagem muito grande. Máximo 5MB.");
         }
         
         // Atualizar o perfil com o base64 diretamente
