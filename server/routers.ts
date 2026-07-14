@@ -381,13 +381,13 @@ export const appRouter = router({
     getItems: protectedProcedure.query(async ({ ctx }) => {
       return getCartItems(ctx.user.id);
     }),
-    add: protectedProcedure
+    addItem: protectedProcedure
       .input(z.object({ productId: z.number(), quantity: z.number().min(1).max(5).default(1) }))
       .mutation(async ({ ctx, input }) => {
         await addToCart(ctx.user.id, input.productId, input.quantity);
         return { success: true };
       }),
-    remove: protectedProcedure
+    removeItem: protectedProcedure
       .input(z.object({ cartItemId: z.number() }))
       .mutation(async ({ input }) => {
         const { removeFromCart } = await import("./db");

@@ -297,10 +297,16 @@ export async function addToCart(userId: number, productId: number, quantity: num
     ).limit(1);
     
     const currentQty = existingItem?.quantity || 0;
-    const newQty = currentQty + quantity;
+    let newQty = currentQty + quantity;
     
     if (newQty > 5) {
-      throw new Error("Limite máximo de 5 unidades por produto excedido");
+      newQty = 5;
+    }
+    
+    if (newQty < 1 && existingItem) {
+      // Se a quantidade for menor que 1, poderíamos remover, mas o frontend geralmente chama remove
+      // Por segurança, vamos manter no mínimo 1 se estivermos apenas atualizando
+      newQty = 1;
     }
     
     if (existingItem) {
