@@ -237,6 +237,15 @@ export const appRouter = router({
           throw new Error("Código de verificação inválido ou expirado");
         }
 
+        // Trava global por memória para evitar rajadas (bursts) rápidas de exclusão
+        const globalAny = global as any;
+        if (!globalAny.lastDeletionSent) globalAny.lastDeletionSent = new Map<number, number>();
+        const lastSentMemory = globalAny.lastDeletionSent.get(user.id) || 0;
+        if (Date.now() - lastSentMemory < 30000) { // 30 segundos de trava
+          return { success: true };
+        }
+        globalAny.lastDeletionSent.set(user.id, Date.now());
+
         // Limpar o token no banco ANTES de qualquer outra ação pesada (como enviar e-mail)
         await clearResetToken(user.id);
 
@@ -294,6 +303,16 @@ export const appRouter = router({
       .input(z.object({ userId: z.number() }))
       .mutation(async ({ input }) => {
         const { deleteUser, getUserById } = await import("./db");
+        
+        // Trava global por memória para evitar rajadas (bursts) rápidas de exclusão
+        const globalAny = global as any;
+        if (!globalAny.lastDeletionSent) globalAny.lastDeletionSent = new Map<number, number>();
+        const lastSentMemory = globalAny.lastDeletionSent.get(input.userId) || 0;
+        if (Date.now() - lastSentMemory < 30000) { // 30 segundos de trava
+          return { success: true };
+        }
+        globalAny.lastDeletionSent.set(input.userId, Date.now());
+
         const user = await getUserById(input.userId);
         if (user) {
           const emailService = await import("./email");
