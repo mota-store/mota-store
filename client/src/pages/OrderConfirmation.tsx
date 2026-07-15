@@ -21,7 +21,6 @@ export default function OrderConfirmation() {
 
   if (!orderData) return null;
 
-  const orderNumber = orderData.id.toString().padStart(4, '0');
   const whatsappNumber = "5591984886473";
   const now = new Date().toLocaleString('pt-BR');
   
@@ -77,19 +76,14 @@ Aguardo a ativação! 😊`;
             <div className="p-8 space-y-6">
               <div className="space-y-4">
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Produto</span>
-                  <span className="font-bold text-lg">{productList}</span>
-                </div>
-                
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Valor</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Valor Total</span>
                   <span className="text-2xl font-black text-green-500 tracking-tighter">
                     R$ {((orderData.total ?? 0) / 100).toFixed(2).replace(".", ",")}
                   </span>
                 </div>
 
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Método</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Método de Pagamento</span>
                   <div className="flex items-center gap-2">
                     <div className="h-5 w-5 bg-accent/20 rounded flex items-center justify-center">
                       {orderData.paymentMethod === "balance" ? (
@@ -107,7 +101,7 @@ Aguardo a ativação! 😊`;
 
               <div className="pt-6 border-t border-border/40">
                 <span className="text-[10px] font-mono text-muted-foreground break-all opacity-50 uppercase">
-                  #{orderData.id}-{Math.random().toString(36).substring(2, 15)}
+                  ID DO PEDIDO: #{orderData.id}
                 </span>
               </div>
             </div>
@@ -115,39 +109,58 @@ Aguardo a ativação! 😊`;
 
           {/* Product with Image Preview */}
           <div className="space-y-3">
+            <span className="text-[11px] font-black uppercase tracking-widest text-muted-foreground px-2">Itens do Pedido</span>
             {displayItems.map((item: any, idx: number) => (
               <Card key={idx} className="bg-card/30 border-border/30 rounded-2xl p-4 flex items-center gap-4">
-                <div className="h-12 w-12 rounded-xl bg-background flex items-center justify-center border border-border/50">
+                <div className="h-16 w-16 rounded-xl bg-background flex items-center justify-center border border-border/50">
                   {item.imageUrl ? (
-                    <img src={item.imageUrl} alt={item.name} className="w-8 h-8 object-contain" />
+                    <img src={item.imageUrl} alt={item.name} className="w-12 h-12 object-contain" />
                   ) : (
-                    <Zap className="h-5 w-5 text-accent/30" />
+                    <Zap className="h-6 w-6 text-accent/30" />
                   )}
                 </div>
                 <div className="flex-grow">
-                  <h4 className="font-black text-sm uppercase tracking-tight">{item.name}</h4>
-                  <div className="flex items-center gap-3 text-[10px] font-bold text-muted-foreground">
-                    <span>{item.quantity} unidade{item.quantity > 1 ? 's' : ''}</span>
+                  <h4 className="font-black text-base uppercase tracking-tight">{item.name}</h4>
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-xs font-bold text-muted-foreground">{item.quantity} unidade{item.quantity > 1 ? 's' : ''}</span>
+                    <span className="text-sm font-black text-accent">R$ {((item.price * item.quantity) / 100).toFixed(2).replace(".", ",")}</span>
                   </div>
                 </div>
               </Card>
             ))}
           </div>
 
+          {/* Important Notice */}
+          <div className="relative overflow-hidden rounded-2xl bg-accent/5 border border-accent/20 p-6">
+            <div className="absolute top-0 left-0 w-1 h-full bg-accent" />
+            <div className="flex gap-4">
+              <MessageCircle className="h-5 w-5 text-accent shrink-0" />
+              <div className="space-y-2">
+                <h4 className="font-black text-sm uppercase tracking-tight text-accent">O que fazer agora?</h4>
+                <p className="text-xs font-medium leading-relaxed text-muted-foreground">
+                  Para receber seu acesso, clique no botão abaixo e envie a mensagem para o nosso suporte no WhatsApp. 
+                  Lá faremos o envio imediato do seu produto.
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Action Buttons */}
           <div className="flex flex-col gap-3 pt-4">
             <Button 
               size="lg" 
-              className="w-full bg-accent hover:bg-accent/90 text-white dark:text-black font-black py-7 rounded-2xl shadow-xl shadow-accent/20 transition-all hover:scale-[1.02]"
+              className="w-full bg-green-500 hover:bg-green-600 text-white font-black py-7 rounded-2xl shadow-xl shadow-green-500/20 transition-all hover:scale-[1.02] flex items-center gap-2"
               onClick={() => window.location.href = whatsappLink}
             >
-              RECEBER PRODUTO NO WHATSAPP
+              <MessageCircle className="h-5 w-5" />
+              ENVIAR PEDIDO PARA O WHATSAPP
             </Button>
             <Button 
               variant="ghost" 
-              className="w-full font-black text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground"
+              className="w-full font-black text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground flex items-center justify-center gap-2"
               onClick={() => navigate("/")}
             >
+              <ArrowLeft className="h-3 w-3" />
               VOLTAR PARA A LOJA
             </Button>
           </div>
@@ -155,23 +168,4 @@ Aguardo a ativação! 😊`;
       </main>
     </div>
   );
-}
-
-function Headphones(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3" />
-    </svg>
-  )
 }

@@ -347,12 +347,60 @@ export async function removeFromCart(cartItemId: number) {
 export async function getUserOrders(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(orders).where(eq(orders.userId, userId));
+  
+  // Buscar pedidos com seus itens e produtos associados
+  const results = await db.select({
+    order: orders,
+    item: orderItems,
+    product: products
+  })
+  .from(orders)
+  .leftJoin(orderItems, eq(orders.id, orderItems.orderId))
+  .leftJoin(products, eq(orderItems.productId, products.id))
+  .where(eq(orders.userId, userId))
+  .orderBy(desc(orders.createdAt));
+
+  // Agrupar itens por pedido
+  const ordersMap = new Map<number, any>();
+  
+  for (const row of results) {
+    if (!ordersMap.has(row.order.id)) {
+      ordersMap.set(row.order.id, {
+        ...row.order,
+        items: []
+      });
+    }
+    
+    if (row.item) {
+      ordersMap.get(row.order.id).items.push({
+        ...row.item,
+        product: row.product
+      });
+    }
+  }
+
+  return Array.from(ordersMap.values());
 }
 
 export async function createOrder(userId: number, _totalAmountFromClient: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+
+  // Verificar se já existe um pedido pendente nos últimos 5 minutos para evitar duplicação
+  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+  const existingOrder = await db.select()
+    .from(orders)
+    .where(and(
+      eq(orders.userId, userId),
+      eq(orders.status, "pending"),
+      gt(orders.createdAt, fiveMinutesAgo)
+    ))
+    .limit(1);
+
+  if (existingOrder.length > 0) {
+    console.log(`[Order] Reutilizando pedido pendente existente: ${existingOrder[0].id}`);
+    return { id: existingOrder[0].id };
+  }
 
   return await db.transaction(async (tx) => {
     const totalAmount = await calculateCartTotal(tx, userId);

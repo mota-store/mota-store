@@ -250,14 +250,6 @@ export default function Cart() {
                 </h2>
 
                 <div className="space-y-3 md:space-y-4 mb-6 md:mb-8">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-muted-foreground">Subtotal</span>
-                    <span className="text-sm md:font-bold">R$ {(subtotal / 100).toFixed(2).replace(".", ",")}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-muted-foreground">Frete</span>
-                    <span className="text-green-500 font-bold uppercase text-[9px] md:text-[10px]">Grátis</span>
-                  </div>
                   <div className="pt-3 md:pt-4 border-t border-border/40 flex justify-between items-end">
                     <span className="text-[10px] md:text-xs font-black uppercase tracking-widest">Total</span>
                     <span className="text-2xl md:text-4xl font-black text-accent tracking-tighter">

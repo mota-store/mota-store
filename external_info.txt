@@ -1,0 +1,17 @@
+Repositório GitHub: https://github.com/mota-store/mota-store.git
+Conta Gmail remetente: arthurmotapaiva@gmail.com
+E-mail de teste: arthuremanuelmota@gmail.com
+URL da aplicação: https://mota-store.shop
+
+Credenciais OAuth2 do Google:
+GMAIL_CLIENT_ID = 1067935514097-gogg5cvuka13k514q2sju3ma0bak0ikr.apps.googleusercontent.com
+GMAIL_CLIENT_SECRET = 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
+GMAIL_REFRESH_TOKEN = 1//04DbYJj94qCuUCgYIARAAGAQSNwF-L9Ir0TrJH_oBcLFPM6v0ooYM96Hix27X8oFxxsLQmSzavNdKOwqmj3I8nlnMM2YIaulWuDc
+GMAIL_USER = arthurmotapaiva@gmail.com
+
+Número WhatsApp Suporte: 5591984886473
+OAUTH_SERVER_URL = https://mota-store.shop
+DATABASE_URL = mysql://avnadmin:AVNS_mS99uE-v6_n2Y6y2i9j@mysql-3243f798-mota-store.l.aivencloud.com:21318/defaultdb?ssl={"rejectUnauthorized":true}
+EFI_CLIENT_ID = Client_Id_0d707feaf817f5d2448c60cbf5b19d3b
+EFI_CLIENT_SECRET = Client_Secret_0d541f063591a737192f13db
+EFI_PIX_KEY = 1cdd3ef6-6778-4818-bee4-d6036d824de4
