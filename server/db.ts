@@ -305,10 +305,11 @@ export async function addToCart(userId: number, productId: number, quantity: num
   const db = await getDb();
   if (!db) return;
   
-  // Trava de idempotência de 200ms para evitar cliques duplos acidentais, mas permitir adições rápidas legítimas
-  const requestId = `${userId}-${productId}-${quantity}`;
+  // Trava de idempotência de 500ms para evitar cliques duplos acidentais, mas permitir adições rápidas legítimas.
+  // Removemos a quantidade da chave para evitar que adições subsequentes do mesmo item sejam bloqueadas erroneamente.
+  const requestId = `${userId}-${productId}`;
   const now = Date.now();
-  if (lastAddRequest.has(requestId) && now - lastAddRequest.get(requestId)! < 200) {
+  if (lastAddRequest.has(requestId) && now - lastAddRequest.get(requestId)! < 500) {
     console.log(`[addToCart] Ignorando requisição duplicada para ${requestId}`);
     return;
   }
