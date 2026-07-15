@@ -5,30 +5,29 @@ const SMTP_USER = process.env.SMTP_USER || 'arthurmotapaiva@gmail.com';
 const SMTP_PASS = process.env.SMTP_PASS || 'igyb oeko dgpy lrvv'; // Senha de App do Gmail
 const APP_URL = process.env.APP_URL || 'https://mota-store.shop';
 
-console.log(`[Email] Configurando transporte IPv4 (Porta 587) para: ${SMTP_USER}`);
+console.log(`[Email] Configurando transporte robusto (IPv4) para: ${SMTP_USER}`);
 
-// Configuração forçando IPv4 para evitar erro ENETUNREACH no Render
+// Configuração manual e robusta para evitar timeouts e problemas de rede no Render
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 587,
-  secure: false, // false para porta 587 (STARTTLS)
+  secure: false, // STARTTLS
   auth: {
     user: SMTP_USER,
     pass: SMTP_PASS,
   },
+  // Forçar família de IP no nível do socket
+  family: 4, 
+  // Configurações de timeout otimizadas
+  connectionTimeout: 10000, // 10s para conectar
+  greetingTimeout: 10000,   // 10s para saudação
+  socketTimeout: 20000,     // 20s de socket
   tls: {
-    // Força o uso de IPv4 e evita problemas com certificados auto-assinados se houver
+    // Garante compatibilidade e evita erros de certificado em redes restritivas
     rejectUnauthorized: false,
-    minVersion: 'TLSv1.2'
-  },
-  // Configurações de timeout e família de IP
-  connectionTimeout: 20000,
-  greetingTimeout: 20000,
-  socketTimeout: 30000,
-  // Forçar família 4 (IPv4)
-  family: 4,
-  debug: true,
-  logger: true 
+    minVersion: 'TLSv1.2',
+    servername: 'smtp.gmail.com'
+  }
 });
 
 const DARK_TEMPLATE = (content: string) => `
@@ -57,7 +56,7 @@ async function sendMail(options: { to: string; subject: string; html: string; te
     return false;
   }
 
-  console.log(`[Email] Tentando enviar e-mail (IPv4) para: ${options.to}`);
+  console.log(`[Email] Disparando e-mail para: ${options.to}`);
 
   try {
     const info = await transporter.sendMail({
@@ -76,10 +75,10 @@ async function sendMail(options: { to: string; subject: string; html: string; te
       }
     });
 
-    console.log(`[Email] SUCESSO! MessageId: ${info.messageId}`);
+    console.log(`[Email] ENVIADO! MessageId: ${info.messageId}`);
     return true;
   } catch (error: any) {
-    console.error(`[Email] FALHA no envio para ${options.to}: ${error.message}`);
+    console.error(`[Email] ERRO: ${error.message}`);
     return false;
   }
 }
