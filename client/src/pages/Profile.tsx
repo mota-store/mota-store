@@ -431,15 +431,7 @@ export default function Profile() {
             <div className="pt-4 border-t border-border/50">
               {!showPasswordFields ? (
                 <div className="space-y-3">
-                  {!nameChanged && (
-                    <Button
-                      type="submit"
-                      className="w-full h-12 rounded-xl bg-accent text-white dark:text-black font-black text-xs uppercase tracking-widest disabled:opacity-50"
-                      disabled={name === user?.name}
-                    >
-                      SALVAR ALTERAÇÕES
-                    </Button>
-                  )}
+
                   <Button
                     type="button"
                     variant="outline"
