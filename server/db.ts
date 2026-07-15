@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import * as schema from "../drizzle/schema";
-import { eq, and, desc, sql, count } from "drizzle-orm";
+import { eq, and, desc, sql, count, gt } from "drizzle-orm";
 import { products, cartItems, users, orders, orderItems, coupons, couponRedemptions, balanceTransactions } from "../drizzle/schema";
 import type { InsertProduct, InsertCoupon } from "../drizzle/schema";
 
@@ -305,10 +305,10 @@ export async function addToCart(userId: number, productId: number, quantity: num
   const db = await getDb();
   if (!db) return;
   
-  // Trava de idempotência de 1 segundo para evitar duplicação por cliques rápidos ou bugs de rede
+  // Trava de idempotência de 200ms para evitar cliques duplos acidentais, mas permitir adições rápidas legítimas
   const requestId = `${userId}-${productId}-${quantity}`;
   const now = Date.now();
-  if (lastAddRequest.has(requestId) && now - lastAddRequest.get(requestId)! < 1000) {
+  if (lastAddRequest.has(requestId) && now - lastAddRequest.get(requestId)! < 200) {
     console.log(`[addToCart] Ignorando requisição duplicada para ${requestId}`);
     return;
   }
@@ -803,10 +803,10 @@ export async function addUserBalance(userId: number, amount: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // Trava de idempotência de 2 segundos para evitar duplicação no admin
-  const requestId = `${userId}-${amount}`;
+  // Trava de idempotência de 500ms para evitar duplicação no admin por cliques acidentais
+  const requestId = `${userId}-${amount}-${Date.now()}`; // Chave mais específica com timestamp para permitir operações sequenciais
   const now = Date.now();
-  if (lastBalanceRequest.has(requestId) && now - lastBalanceRequest.get(requestId)! < 2000) {
+  if (lastBalanceRequest.has(requestId) && now - lastBalanceRequest.get(requestId)! < 500) {
     console.log(`[addUserBalance] Ignorando requisição duplicada para ${requestId}`);
     const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
     return { success: true, newBalance: user?.balance || 0 };

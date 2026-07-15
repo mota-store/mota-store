@@ -427,7 +427,7 @@ function AdminDashboard() {
                             <div key={tx.id} className="flex items-center justify-between text-xs py-1 px-2 rounded-lg bg-muted/10">
                               <div className="flex items-center gap-2">
                                 <span className={`w-2 h-2 rounded-full ${tx.amount >= 0 ? "bg-green-500" : "bg-red-500"}`} />
-                                <span className="font-medium">{tx.type === "admin_credit" ? "Crédito Admin" : tx.type === "purchase" ? "Compra" : tx.type === "coupon" ? "Cupom" : tx.type}</span>
+                                <span className="font-medium">{tx.type === "admin_credit" ? "Crédito Admin" : tx.type === "admin_debit" ? "Débito Admin" : tx.type === "purchase" ? "Compra" : tx.type === "coupon" ? "Cupom" : tx.type}</span>
                                 {tx.description && <span className="text-muted-foreground text-[10px]">- {tx.description}</span>}
                               </div>
                               <div className="flex items-center gap-3">
