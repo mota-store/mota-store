@@ -94,7 +94,7 @@ export const appRouter = router({
         name: z.string().optional(), 
         avatarUrl: z.string().optional(),
         password: z.string().min(6).optional(),
-        verificationCode: z.string().length(6).optional()
+        verificationCode: z.string().length(4).optional()
       }))
       .mutation(async ({ ctx, input }) => {
         // Se apenas mudar nome/avatar (sem senha), não precisa de código de verificação
@@ -184,7 +184,7 @@ export const appRouter = router({
         return { success: true };
       }),
     requestVerificationCode: protectedProcedure
-      .input(z.object({ digits: z.number().default(6) }).optional())
+      .input(z.object({ digits: z.number().min(4).max(6).default(6) }).optional())
       .mutation(async ({ ctx, input }) => {
         const { setResetToken, getUserByOpenId } = await import("./db");
         
@@ -268,11 +268,49 @@ export const appRouter = router({
     addUserBalance: adminProcedure
       .input(z.object({
         userId: z.number(),
-        amount: z.number().positive(), // em centavos
+        amount: z.number(), // em centavos, aceita positivo ou negativo
       }))
       .mutation(async ({ input }) => {
         const { addUserBalance } = await import("./db");
         return addUserBalance(input.userId, input.amount);
+      }),
+
+    deductUserBalance: adminProcedure
+      .input(z.object({
+        userId: z.number(),
+        amount: z.number().positive(), // em centavos
+      }))
+      .mutation(async ({ input }) => {
+        const { addUserBalance } = await import("./db");
+        return addUserBalance(input.userId, -input.amount);
+      }),
+
+    deleteUser: adminProcedure
+      .input(z.object({ userId: z.number() }))
+      .mutation(async ({ input }) => {
+        const { deleteUser, getUserById } = await import("./db");
+        const user = await getUserById(input.userId);
+        if (user) {
+          const emailService = await import("./email");
+          await emailService.sendAccountDeletionEmail(user.email!, user.name || "Cliente");
+        }
+        await deleteUser(input.userId);
+        return { success: true };
+      }),
+
+    banUser: adminProcedure
+      .input(z.object({ userId: z.number(), reason: z.string().optional() }))
+      .mutation(async ({ input }) => {
+        const { updateUser, getUserById } = await import("./db");
+        const user = await getUserById(input.userId);
+        if (!user) throw new Error("Usuário não encontrado");
+        
+        await updateUser(input.userId, { role: 'banned' });
+        
+        const emailService = await import("./email");
+        await emailService.sendBanEmail(user.email!, user.name || "Cliente", input.reason || "Violação dos termos de uso");
+        
+        return { success: true };
       }),
 
     createCoupon: adminProcedure
@@ -379,6 +417,11 @@ export const appRouter = router({
         const { getUserTransactions } = await import("./db");
         return getUserTransactions(input.userId);
       }),
+
+    listAllOrders: adminProcedure.query(async () => {
+      const { listAllOrders } = await import("./db");
+      return listAllOrders();
+    }),
   }),
 
   // ============================================

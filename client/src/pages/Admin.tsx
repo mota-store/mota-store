@@ -22,17 +22,17 @@ function AdminLogin() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const resp = await fetch("/api/admin/login", {
+      // Usar trpc para validar admin real no servidor
+      const data = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
         credentials: "include",
-      });
-      const data = await resp.json();
+      }).then(r => r.json());
+
       if (data.success) {
         document.cookie = `${ADMIN_COOKIE}=true; path=/; max-age=86400`;
-        navigate("/admin");
-        window.location.reload();
+        window.location.href = "/admin"; // Forçar recarregamento para validar adminProcedure
       } else {
         toast.error("Usuário ou senha incorretos");
       }
@@ -103,15 +103,31 @@ function AdminDashboard() {
   const [showAddCoupon, setShowAddCoupon] = useState(false);
 
   // Admin queries
-  const { data: allUsers, refetch: refetchUsers } = trpc.admin.listUsers.useQuery();
+  const { data: allUsers, refetch: refetchUsers, error: usersError } = trpc.admin.listUsers.useQuery();
   const { data: allProducts, refetch: refetchProducts } = trpc.admin.listAllProducts.useQuery();
   const { data: allCoupons, refetch: refetchCoupons } = trpc.admin.listCoupons.useQuery();
   const { data: allOrders, refetch: refetchOrders } = trpc.admin.listAllOrders.useQuery();
 
+  // Se o servidor retornar erro de permissão, redirecionar imediatamente
+  useEffect(() => {
+    if (usersError && (usersError.data?.code === 'FORBIDDEN' || usersError.data?.code === 'UNAUTHORIZED')) {
+      toast.error("Acesso negado: você não é um administrador.");
+      window.location.href = "/";
+    }
+  }, [usersError]);
+
   // Admin mutations
   const addUserBalance = trpc.admin.addUserBalance.useMutation({
-    onSuccess: () => { refetchUsers(); toast.success("Saldo adicionado!"); },
-    onError: () => toast.error("Erro ao adicionar saldo"),
+    onSuccess: () => { refetchUsers(); toast.success("Saldo atualizado!"); },
+    onError: () => toast.error("Erro ao atualizar saldo"),
+  });
+  const deleteUser = trpc.admin.deleteUser.useMutation({
+    onSuccess: () => { refetchUsers(); toast.success("Usuário excluído!"); },
+    onError: (err: any) => toast.error("Erro ao excluir usuário: " + err.message),
+  });
+  const banUser = trpc.admin.banUser.useMutation({
+    onSuccess: () => { refetchUsers(); toast.success("Usuário banido!"); },
+    onError: (err: any) => toast.error("Erro ao banir usuário: " + err.message),
   });
   const createCoupon = trpc.admin.createCoupon.useMutation({
     onSuccess: () => { refetchCoupons(); setShowAddCoupon(false); toast.success("Cupom criado!"); },
@@ -163,10 +179,19 @@ function AdminDashboard() {
     { enabled: !!expandedUserId }
   );
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // 1. Limpar cookie admin fake
     document.cookie = `${ADMIN_COOKIE}=; path=/; max-age=0`;
-    navigate("/");
-    window.location.reload();
+    
+    // 2. Chamar logout real do servidor
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch (e) {
+      console.error("Erro ao fazer logout no servidor", e);
+    }
+
+    // 3. Redirecionar para home com reload total
+    window.location.href = "/";
   };
 
   // Novo produto form
@@ -281,10 +306,12 @@ function AdminDashboard() {
 	                    </div>
 	                  </div>
 	                  <div className="flex items-center gap-4 flex-shrink-0 ml-2">
-	                    <div className="text-right">
-	                      <p className="text-xs font-black text-accent">R$ {((user.balance ?? 0) / 100).toFixed(2).replace(".", ",")}</p>
-	                      <p className="text-[9px] text-muted-foreground font-medium">{(user as any).orderCount ?? 0} compras</p>
-	                    </div>
+		                    <div className="text-right">
+		                      <p className="text-xs font-black text-accent">R$ {((user.balance ?? 0) / 100).toFixed(2).replace(".", ",")}</p>
+		                      <p className="text-[9px] text-muted-foreground font-medium">
+                            {allOrders?.filter(o => o.userId === user.id && o.status === 'completed').length || 0} compras
+                          </p>
+		                    </div>
 	                    <span className="text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full bg-accent/10 text-accent">{user.role}</span>
 	                    <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${
 	                      user.loginMethod === "email" ? "bg-blue-500/10 text-blue-500" :
@@ -294,45 +321,101 @@ function AdminDashboard() {
 	                    }`}>
 	                      {user.loginMethod || "desconhecido"}
 	                    </span>
-                    {expandedUserId === user.id ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
-                  </div>
-                </div>
+	                    {expandedUserId === user.id ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+	                  </div>
+	                </div>
 
-                {expandedUserId === user.id && (
-                  <div className="px-5 pb-5 space-y-4 border-t border-border/30">
-                    {/* Add balance */}
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="number"
-                        placeholder="Valor em reais (ex: 5.00)"
-                        className="bg-background/50 rounded-xl border-border/50 max-w-xs"
-                        id={`balance-${user.id}`}
-                      />
-		                      <Button
-		                        size="sm"
-		                        disabled={addUserBalance.isPending}
-		                        onClick={() => {
-		                          const input = document.getElementById(`balance-${user.id}`) as HTMLInputElement;
-		                          const val = parseFloat(input.value);
-		                          if (!val || val <= 0) { toast.error("Valor inválido"); return; }
-		                          if (val < 1) { toast.error("Mínimo R$ 1,00"); return; }
-		                          addUserBalance.mutate({ userId: user.id, amount: Math.round(val * 100) }, {
-                                onSuccess: () => {
-                                  input.value = "";
-                                  userTransactions.refetch();
+		                {expandedUserId === user.id && (
+		                  <div className="px-5 pb-5 space-y-6 border-t border-border/30">
+		                    {/* Ações Administrativas */}
+		                    <div className="pt-4 space-y-2">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Gestão de Conta</p>
+		                      <div className="flex flex-wrap gap-2">
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              disabled={banUser.isPending || user.role === 'banned'}
+                              onClick={() => {
+                                const reason = window.prompt("Motivo do banimento:");
+                                if (reason !== null) {
+                                  banUser.mutate({ userId: user.id, reason });
                                 }
-                              });
-		                        }}
-		                        className="bg-green-600 hover:bg-green-700 font-black text-xs uppercase tracking-widest"
-		                      >
-		                        {addUserBalance.isPending ? (
-                              <div className="h-3 w-3 border-2 border-white/30 border-t-white rounded-full animate-spin mr-1" />
-                            ) : (
-                              <DollarSign className="h-3 w-3 mr-1" />
-                            )}
-                            {addUserBalance.isPending ? "Processando..." : "Créditar"}
-		                      </Button>
-                    </div>
+                              }}
+                              className="font-black text-[10px] uppercase tracking-widest rounded-xl h-10"
+                            >
+                              {user.role === 'banned' ? "Já Banido" : "Banir Usuário"}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={deleteUser.isPending}
+                              onClick={() => {
+                                if (window.confirm(`Tem certeza que deseja EXCLUIR PERMANENTEMENTE a conta de ${user.name || user.email}? Esta ação não pode ser desfeita.`)) {
+                                  deleteUser.mutate({ userId: user.id });
+                                }
+                              }}
+                              className="border-destructive text-destructive hover:bg-destructive/10 font-black text-[10px] uppercase tracking-widest rounded-xl h-10"
+                            >
+                              Excluir Conta
+                            </Button>
+                          </div>
+		                    </div>
+
+	                    {/* Add balance */}
+                      <div className="space-y-2">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Gestão de Saldo</p>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            placeholder="Valor (ex: 5.00)"
+                            className="bg-background/50 rounded-xl border-border/50 max-w-[150px] h-10"
+                            id={`balance-${user.id}`}
+                          />
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              disabled={addUserBalance.isPending}
+                              onClick={() => {
+                                const input = document.getElementById(`balance-${user.id}`) as HTMLInputElement;
+                                const val = parseFloat(input.value);
+                                if (!val || val <= 0) { toast.error("Valor inválido"); return; }
+                                addUserBalance.mutate({ userId: user.id, amount: Math.round(val * 100) }, {
+                                  onSuccess: () => {
+                                    input.value = "";
+                                    userTransactions.refetch();
+                                  }
+                                });
+                              }}
+                              className="bg-green-600 hover:bg-green-700 font-black text-[10px] uppercase tracking-widest rounded-xl h-10 px-4"
+                            >
+                              Creditar
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              disabled={addUserBalance.isPending}
+                              onClick={() => {
+                                const input = document.getElementById(`balance-${user.id}`) as HTMLInputElement;
+                                const val = parseFloat(input.value);
+                                if (!val || val <= 0) { toast.error("Valor inválido"); return; }
+                                if (Math.round(val * 100) > user.balance) {
+                                  toast.error("Saldo insuficiente");
+                                  return;
+                                }
+                                addUserBalance.mutate({ userId: user.id, amount: -Math.round(val * 100) }, {
+                                  onSuccess: () => {
+                                    input.value = "";
+                                    userTransactions.refetch();
+                                  }
+                                });
+                              }}
+                              className="font-black text-[10px] uppercase tracking-widest rounded-xl h-10 px-4"
+                            >
+                              Debitar
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
 
                     {/* Transactions */}
                     {userTransactions?.data && userTransactions.data.length > 0 && (
@@ -713,15 +796,16 @@ function AdminDashboard() {
                     }`}>
                       {order.status}
                     </span>
-                    <p className="text-[9px] text-muted-foreground mt-1">
-                      {order.paymentMethod === "balance" ? "💰 Saldo" : "📱 PIX"}
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
+	                    <p className="text-[9px] text-muted-foreground mt-1">
+	                      {order.paymentMethod === "balance" ? "💰 Saldo" : 
+                         order.paymentMethod === "balance_pix" ? "💰📱 Saldo + PIX" : "📱 PIX"}
+	                    </p>
+	                  </div>
+	                </div>
+	              </Card>
+	            ))}
+	          </div>
+	        )}
       </div>
     </div>
   );

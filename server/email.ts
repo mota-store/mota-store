@@ -113,3 +113,18 @@ export async function sendAccountDeletionEmail(email: string, firstName: string)
   `);
   return sendMail({ to: email, subject, html, text: "" });
 }
+
+export async function sendBanEmail(email: string, firstName: string, reason: string) {
+  const subject = `Sua conta foi suspensa - Mota Store`;
+  const html = SIMPLE_LAYOUT(`
+    <h1 style="font-size: 20px; font-weight: 900; text-transform: uppercase; color: #ff0000; margin-top: 0;">Conta Suspensa</h1>
+    <p>Olá, ${firstName}.</p>
+    <p>Informamos que sua conta na <strong>Mota Store</strong> foi suspensa permanentemente por violação de nossas políticas.</p>
+    <div style="background: #f8f8f8; border-left: 4px solid #ff0000; padding: 15px; margin: 20px 0;">
+      <strong>Motivo:</strong> ${reason}
+    </div>
+    <p>Devido a esta suspensão, você não poderá mais realizar compras ou acessar sua conta utilizando este e-mail ou método de login.</p>
+    <p>Caso acredite que isso seja um erro, entre em contato com nosso suporte.</p>
+  `);
+  return sendMail({ to: email, subject, html, text: "" });
+}

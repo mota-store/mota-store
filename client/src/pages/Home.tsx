@@ -204,6 +204,14 @@ export default function Home() {
                           <span className="text-lg md:text-2xl font-black text-accent tracking-tighter">R$ {(product.price / 100).toFixed(2).replace(".", ",")}</span>
                           <span className="text-[7px] md:text-[8px] text-muted-foreground line-through opacity-40 font-bold">R$ {(product.price * 2 / 100).toFixed(2).replace(".", ",")}</span>
                         </div>
+                        {product.stock > 0 && (
+                          <div className="mt-1 flex items-center gap-1">
+                            <div className="h-1 w-1 rounded-full bg-green-500 animate-pulse" />
+                            <span className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-muted-foreground">
+                              Estoque: <span className="text-foreground">{product.stock}</span>
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       <Button

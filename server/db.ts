@@ -67,6 +67,13 @@ export async function getUserByEmail(email: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function getUserById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
 export async function upsertUser(data: {
   openId: string;
   name?: string | null;
@@ -409,6 +416,25 @@ export async function createOrder(userId: number, _totalAmountFromClient: number
       throw new Error("Carrinho vazio ou inválido");
     }
 
+    // Validar estoque antes de criar pedido
+    const items = await tx.select({
+      productId: cartItems.productId,
+      quantity: cartItems.quantity,
+      price: products.price,
+      stock: products.stock,
+      name: products.name
+    })
+    .from(cartItems)
+    .innerJoin(products, eq(cartItems.productId, products.id))
+    .where(eq(cartItems.userId, userId))
+    .for("update");
+
+    for (const item of items) {
+      if (item.stock < item.quantity) {
+        throw new Error(`Estoque insuficiente para o produto: ${item.name}`);
+      }
+    }
+
     const [result] = await tx.insert(orders).values({
       userId,
       totalAmount,
@@ -417,15 +443,6 @@ export async function createOrder(userId: number, _totalAmountFromClient: number
     });
 
     const orderId = result.insertId;
-
-    const items = await tx.select({
-      productId: cartItems.productId,
-      quantity: cartItems.quantity,
-      price: products.price
-    })
-    .from(cartItems)
-    .innerJoin(products, eq(cartItems.productId, products.id))
-    .where(eq(cartItems.userId, userId));
 
     for (const item of items) {
       await tx.insert(orderItems).values({
@@ -443,14 +460,33 @@ export async function createOrder(userId: number, _totalAmountFromClient: number
 export async function updateOrderStatus(orderId: number, status: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.update(orders).set({ status: status as any }).where(eq(orders.id, orderId));
-
-  if (status === "completed") {
-    const [order] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
-    if (order) {
-      await db.delete(cartItems).where(eq(cartItems.userId, order.userId));
+  
+  return await db.transaction(async (tx) => {
+    const [order] = await tx.select().from(orders).where(eq(orders.id, orderId)).for("update").limit(1);
+    if (!order) throw new Error("Pedido não encontrado");
+    
+    // Se o pedido já estiver completado, não faz nada (idempotência)
+    if (order.status === "completed" && status === "completed") {
+      return { success: true };
     }
-  }
+
+    await tx.update(orders).set({ status: status as any }).where(eq(orders.id, orderId));
+
+    if (status === "completed") {
+      // 1. Limpar carrinho
+      await tx.delete(cartItems).where(eq(cartItems.userId, order.userId));
+
+      // 2. Decrementar estoque
+      const items = await tx.select().from(orderItems).where(eq(orderItems.orderId, orderId));
+      for (const item of items) {
+        await tx.update(products)
+          .set({ stock: sql`${products.stock} - ${item.quantity}` })
+          .where(eq(products.id, item.productId));
+      }
+    }
+    
+    return { success: true };
+  });
 }
 
 // ============================================
@@ -500,6 +536,14 @@ export async function checkoutWithBalance(userId: number, _amountFromClient: num
   const now = Date.now();
   const lastTime = lastCheckoutTime.get(userId.toString()) || 0;
   if (now - lastTime < 5000) {
+    // Tentar encontrar um pedido recente completado para retornar (idempotência)
+    const recentOrder = await db.select().from(orders)
+      .where(and(eq(orders.userId, userId), eq(orders.status, "completed"), gt(orders.createdAt, new Date(Date.now() - 10000))))
+      .orderBy(desc(orders.createdAt)).limit(1);
+    
+    if (recentOrder.length > 0) {
+      return { success: true, orderId: recentOrder[0].id };
+    }
     throw new Error("Por favor, aguarde alguns segundos antes de tentar novamente.");
   }
   lastCheckoutTime.set(userId.toString(), now);
@@ -510,12 +554,31 @@ export async function checkoutWithBalance(userId: number, _amountFromClient: num
     
     if (!user) return { success: false, error: "Usuário não encontrado" };
     
-    const hasCashback = false; // user.hasCashbackBenefit === 1;
+    const hasCashback = false;
     const discount = hasCashback ? Math.floor(cartTotal * 0.1) : 0;
     const finalAmount = cartTotal - discount;
 
     if (user.balance < finalAmount) {
       return { success: false, error: "Saldo insuficiente" };
+    }
+
+    // Validar estoque ANTES de deduzir dinheiro
+    const items = await tx.select({
+      productId: cartItems.productId,
+      quantity: cartItems.quantity,
+      price: products.price,
+      stock: products.stock,
+      name: products.name
+    })
+    .from(cartItems)
+    .innerJoin(products, eq(cartItems.productId, products.id))
+    .where(eq(cartItems.userId, userId))
+    .for("update");
+
+    for (const item of items) {
+      if (item.stock < item.quantity) {
+        throw new Error(`Estoque insuficiente para o produto: ${item.name}`);
+      }
     }
 
     const newBalance = user.balance - finalAmount;
@@ -530,15 +593,6 @@ export async function checkoutWithBalance(userId: number, _amountFromClient: num
 
     const orderId = orderResult.insertId;
 
-    const items = await tx.select({
-      productId: cartItems.productId,
-      quantity: cartItems.quantity,
-      price: products.price
-    })
-    .from(cartItems)
-    .innerJoin(products, eq(cartItems.productId, products.id))
-    .where(eq(cartItems.userId, userId));
-
     for (const item of items) {
       await tx.insert(orderItems).values({
         orderId,
@@ -546,6 +600,11 @@ export async function checkoutWithBalance(userId: number, _amountFromClient: num
         quantity: item.quantity,
         priceAtPurchase: item.price,
       });
+      
+      // Decrementar estoque
+      await tx.update(products)
+        .set({ stock: sql`${products.stock} - ${item.quantity}` })
+        .where(eq(products.id, item.productId));
     }
 
     await tx.insert(balanceTransactions).values({
@@ -759,18 +818,47 @@ export async function addUserBalance(userId: number, amount: number) {
     if (!user) throw new Error("Usuário não encontrado");
 
     const newBalance = user.balance + amount;
+    if (newBalance < 0) {
+      throw new Error("O saldo do usuário não pode ficar negativo");
+    }
+
     await tx.update(users).set({ balance: newBalance }).where(eq(users.id, userId));
+
+    const type = amount >= 0 ? "admin_credit" : "admin_debit";
+    const descPrefix = amount >= 0 ? "Crédito administrativo" : "Débito administrativo";
+    const absAmount = Math.abs(amount);
 
     await tx.insert(balanceTransactions).values({
       userId,
       amount,
-      type: "admin_credit",
-      description: `Crédito administrativo - R$ ${(amount / 100).toFixed(2).replace(".", ",")}`,
+      type: type as any,
+      description: `${descPrefix} - R$ ${(absAmount / 100).toFixed(2).replace(".", ",")}`,
       newBalance,
     });
 
     return { success: true, newBalance };
   });
+}
+
+export async function listAllOrders() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const results = await db.select({
+    id: orders.id,
+    userId: orders.userId,
+    totalAmount: orders.totalAmount,
+    status: orders.status,
+    paymentMethod: orders.paymentMethod,
+    createdAt: orders.createdAt,
+    userName: users.name,
+    userEmail: users.email
+  })
+  .from(orders)
+  .leftJoin(users, eq(orders.userId, users.id))
+  .orderBy(desc(orders.createdAt));
+  
+  return results;
 }
 
 export async function getUserTransactions(userId: number) {

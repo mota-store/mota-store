@@ -107,13 +107,13 @@ export default function Profile() {
   // Verificar se o nome foi alterado e tem mais de 4 caracteres
   const nameChanged = name !== user?.name && name.length > 4;
 
-  const handleSendCode = async () => {
+  const handleSendCode = async (digits: number = 6) => {
     if (isSendingCode) return;
     try {
       setIsSendingCode(true);
-      await requestCodeMutation.mutateAsync();
+      await requestCodeMutation.mutateAsync({ digits });
       setCodeSent(true);
-      toast.success("Código de 6 dígitos enviado para seu e-mail!");
+      toast.success(`Código de ${digits} dígitos enviado para seu e-mail!`);
     } catch (err: any) {
       toast.error("Erro ao enviar código: " + err.message);
     } finally {
@@ -491,7 +491,7 @@ export default function Profile() {
                   {!codeSent ? (
                     <Button
                       type="button"
-                      onClick={handleSendCode}
+                      onClick={() => handleSendCode(4)}
                       disabled={isSendingCode || !newPassword || !confirmNewPassword || passwordsMatch !== true}
                       className="w-full h-12 rounded-xl bg-accent/10 border-2 border-accent/30 hover:bg-accent/20 font-black text-xs uppercase tracking-widest text-accent disabled:opacity-50"
                     >
@@ -636,7 +636,7 @@ export default function Profile() {
                   <p className="text-sm text-muted-foreground text-center">Vamos enviar um código de verificação para seu e-mail.</p>
                   <Button
                     onClick={() => {
-                      handleSendCode();
+                      handleSendCode(6);
                       setShowDeleteCodeInput(true);
                     }}
                     className="w-full h-11 rounded-xl bg-accent/10 border-2 border-accent/30 hover:bg-accent/20 font-black text-xs uppercase tracking-widest text-accent"

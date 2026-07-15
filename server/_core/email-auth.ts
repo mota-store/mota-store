@@ -81,6 +81,11 @@ export async function loginUser(
 
     const user = result[0];
 
+    // Check if user is banned
+    if (user.role === 'banned') {
+      return { success: false, error: "Esta conta foi banida permanentemente." };
+    }
+
     // Verify password
     if (!user.passwordHash) {
       return { success: false, error: "Invalid email or password" };

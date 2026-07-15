@@ -170,6 +170,15 @@ export default function ProductDetail() {
                     <span className="text-sm text-muted-foreground line-through opacity-40 font-bold mb-1">R$ {(((product.price ?? 0) * 2) / 100).toFixed(2).replace(".", ",")}</span>
                   </div>
 
+                  {product.stock > 0 && (
+                    <div className="flex items-center gap-1.5 px-1">
+                      <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                        Disponível em estoque: <span className="text-foreground">{product.stock}</span>
+                      </span>
+                    </div>
+                  )}
+
                   <div className="space-y-2 pt-2">
                     <div className="grid grid-cols-1 gap-1.5">
                       {["Acesso Completo", "Suporte Prioritário", "Ativação Automática"].map((text, i) => (

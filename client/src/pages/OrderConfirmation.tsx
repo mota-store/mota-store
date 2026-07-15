@@ -47,37 +47,37 @@ Aguardo a ativação! 😊`;
   const whatsappLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 
   return (
-    <div className="min-h-screen bg-background text-foreground pt-24 pb-20">
+    <div className="min-h-screen bg-background text-foreground pt-16 pb-10">
       <Header />
 
       <main className="container px-4 max-w-2xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-6"
+          className="space-y-4"
         >
           {/* Status Header */}
-          <div className="text-center space-y-4 mb-10">
-            <div className="flex justify-center items-center gap-4 mb-2">
+          <div className="text-center space-y-2 mb-4">
+            <div className="flex justify-center items-center gap-4 mb-1">
               <div className="h-px flex-1 bg-green-500/20" />
-              <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center border border-green-500/30">
-                <CheckCircle2 className="h-6 w-6 text-green-500" />
+              <div className="h-8 w-8 rounded-full bg-green-500/10 flex items-center justify-center border border-green-500/30">
+                <CheckCircle2 className="h-5 w-5 text-green-500" />
               </div>
               <div className="h-px flex-1 bg-green-500/20" />
             </div>
-            <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter">
+            <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tighter">
               Pagamento <span className="text-green-500">Aprovado</span>
             </h1>
-            <p className="text-muted-foreground text-sm font-medium">{now}</p>
+            <p className="text-muted-foreground text-[10px] font-medium">{now}</p>
           </div>
 
           {/* Main Info Card */}
-          <Card className="bg-card/40 border-border/40 backdrop-blur-md rounded-[2rem] overflow-hidden">
-            <div className="p-8 space-y-6">
-              <div className="space-y-4">
+          <Card className="bg-card/40 border-border/40 backdrop-blur-md rounded-[1.5rem] overflow-hidden">
+            <div className="p-5 space-y-4">
+              <div className="space-y-3">
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Valor Total</span>
-                  <span className="text-2xl font-black text-green-500 tracking-tighter">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-0.5">Valor Total</span>
+                  <span className="text-xl font-black text-green-500 tracking-tighter">
                     R$ {((orderData.total ?? 0) / 100).toFixed(2).replace(".", ",")}
                   </span>
                 </div>
@@ -99,8 +99,8 @@ Aguardo a ativação! 😊`;
                 </div>
               </div>
 
-              <div className="pt-6 border-t border-border/40">
-                <span className="text-[10px] font-mono text-muted-foreground break-all opacity-50 uppercase">
+              <div className="pt-4 border-t border-border/40">
+                <span className="text-[9px] font-mono text-muted-foreground break-all opacity-50 uppercase">
                   ID DO PEDIDO: #{orderData.id}
                 </span>
               </div>
@@ -108,22 +108,22 @@ Aguardo a ativação! 😊`;
           </Card>
 
           {/* Product with Image Preview */}
-          <div className="space-y-3">
-            <span className="text-[11px] font-black uppercase tracking-widest text-muted-foreground px-2">Itens do Pedido</span>
+          <div className="space-y-2">
+            <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground px-2">Itens do Pedido</span>
             {displayItems.map((item: any, idx: number) => (
-              <Card key={idx} className="bg-card/30 border-border/30 rounded-2xl p-4 flex items-center gap-4">
-                <div className="h-16 w-16 rounded-xl bg-background flex items-center justify-center border border-border/50">
+              <Card key={idx} className="bg-card/30 border-border/30 rounded-xl p-3 flex items-center gap-3">
+                <div className="h-12 w-12 rounded-lg bg-background flex items-center justify-center border border-border/50">
                   {item.imageUrl ? (
-                    <img src={item.imageUrl} alt={item.name} className="w-12 h-12 object-contain" />
+                    <img src={item.imageUrl} alt={item.name} className="w-10 h-10 object-contain" />
                   ) : (
-                    <Zap className="h-6 w-6 text-accent/30" />
+                    <Zap className="h-5 w-5 text-accent/30" />
                   )}
                 </div>
                 <div className="flex-grow">
-                  <h4 className="font-black text-base uppercase tracking-tight">{item.name}</h4>
-                  <div className="flex items-center justify-between mt-1">
-                    <span className="text-xs font-bold text-muted-foreground">{item.quantity} unidade{item.quantity > 1 ? 's' : ''}</span>
-                    <span className="text-sm font-black text-accent">R$ {((item.price * item.quantity) / 100).toFixed(2).replace(".", ",")}</span>
+                  <h4 className="font-black text-sm uppercase tracking-tight">{item.name}</h4>
+                  <div className="flex items-center justify-between mt-0.5">
+                    <span className="text-[10px] font-bold text-muted-foreground">{item.quantity} un.</span>
+                    <span className="text-xs font-black text-accent">R$ {((item.price * item.quantity) / 100).toFixed(2).replace(".", ",")}</span>
                   </div>
                 </div>
               </Card>
@@ -131,33 +131,32 @@ Aguardo a ativação! 😊`;
           </div>
 
           {/* Important Notice */}
-          <div className="relative overflow-hidden rounded-2xl bg-accent/5 border border-accent/20 p-6">
+          <div className="relative overflow-hidden rounded-xl bg-accent/5 border border-accent/20 p-4">
             <div className="absolute top-0 left-0 w-1 h-full bg-accent" />
-            <div className="flex gap-4">
-              <MessageCircle className="h-5 w-5 text-accent shrink-0" />
-              <div className="space-y-2">
-                <h4 className="font-black text-sm uppercase tracking-tight text-accent">O que fazer agora?</h4>
-                <p className="text-xs font-medium leading-relaxed text-muted-foreground">
-                  Para receber seu acesso, clique no botão abaixo e envie a mensagem para o nosso suporte no WhatsApp. 
-                  Lá faremos o envio imediato do seu produto.
+            <div className="flex gap-3">
+              <MessageCircle className="h-4 w-4 text-accent shrink-0" />
+              <div className="space-y-1">
+                <h4 className="font-black text-[11px] uppercase tracking-tight text-accent">O que fazer agora?</h4>
+                <p className="text-[10px] font-medium leading-tight text-muted-foreground">
+                  Para receber seu acesso, clique no botão abaixo e envie a mensagem para o nosso suporte no WhatsApp.
                 </p>
               </div>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col gap-3 pt-4">
+          <div className="flex flex-col gap-2 pt-2">
             <Button 
               size="lg" 
-              className="w-full bg-green-500 hover:bg-green-600 text-white font-black py-7 rounded-2xl shadow-xl shadow-green-500/20 transition-all hover:scale-[1.02] flex items-center gap-2"
+              className="w-full bg-green-500 hover:bg-green-600 text-white font-black py-6 rounded-xl shadow-lg shadow-green-500/10 transition-all hover:scale-[1.01] flex items-center gap-2 text-xs"
               onClick={() => window.location.href = whatsappLink}
             >
-              <MessageCircle className="h-5 w-5" />
-              ENVIAR PEDIDO PARA O WHATSAPP
+              <MessageCircle className="h-4 w-4" />
+              ENVIAR PARA WHATSAPP
             </Button>
             <Button 
               variant="ghost" 
-              className="w-full font-black text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground flex items-center justify-center gap-2"
+              className="w-full font-black text-[9px] uppercase tracking-widest text-muted-foreground hover:text-foreground flex items-center justify-center gap-2 h-8"
               onClick={() => navigate("/")}
             >
               <ArrowLeft className="h-3 w-3" />
