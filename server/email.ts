@@ -11,9 +11,9 @@ console.log(`[Email] Iniciando transportador SMTP para: ${SMTP_USER}`);
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   pool: true,
-  maxConnections: 1,
-  rateDelta: 20000,
-  rateLimit: 5,
+  maxConnections: 5, // Aumentado para permitir mais envios simultâneos
+  rateDelta: 10000, // Reduzido para 10 segundos
+  rateLimit: 10,    // Aumentado para 10 e-mails por janela
   auth: {
     user: SMTP_USER,
     pass: SMTP_PASS,
@@ -46,8 +46,13 @@ async function sendMail(options: { to: string; subject: string; html: string; te
     return false;
   }
 
+  // Timeout de 10 segundos para o envio de e-mail não travar a aplicação
+  const timeoutPromise = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('SMTP Timeout (10s)')), 10000)
+  );
+
   try {
-    const info = await transporter.sendMail({
+    const mailPromise = transporter.sendMail({
       from: `"Mota Store" <${SMTP_USER}>`,
       to: options.to,
       subject: options.subject,
@@ -61,6 +66,8 @@ async function sendMail(options: { to: string; subject: string; html: string; te
         "List-Unsubscribe": "<mailto:arthurmotapaiva@gmail.com>"
       }
     });
+
+    const info = await Promise.race([mailPromise, timeoutPromise]) as any;
     console.log(`[Email] Enviado com sucesso! MessageId: ${info.messageId}`);
     return true;
   } catch (error: any) {
