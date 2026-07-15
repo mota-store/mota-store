@@ -19,7 +19,7 @@ const BANNER_IMAGE_URL = 'https://mota-store.shop/assets/email-banner.png'; // L
 function createRawMessage(options: { to: string; subject: string; html: string; text: string }) {
   const utf8Subject = `=?utf-8?B?${Buffer.from(options.subject).toString('base64')}?=`;
   const messageParts = [
-    `From: "Mota Store" <${GMAIL_USER}>`,
+    `From: Mota Store <${GMAIL_USER}>`,
     `To: ${options.to}`,
     `Subject: ${utf8Subject}`,
     'MIME-Version: 1.0',
