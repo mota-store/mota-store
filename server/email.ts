@@ -93,3 +93,15 @@ export async function sendPasswordResetEmail(email: string, firstName: string, t
   `);
   return sendMail({ to: email, subject, html, text: "" });
 }
+
+export async function sendAccountDeletionEmail(email: string, firstName: string) {
+  const subject = `Confirmação de exclusão de conta - Mota Store`;
+  const html = SIMPLE_LAYOUT(`
+    <p>Olá, <strong>${firstName}</strong>.</p>
+    <p>Conforme solicitado, sua conta na <strong>Mota Store</strong> foi excluída com sucesso.</p>
+    <p>Lamentamos ver você partir, mas respeitamos sua decisão. Todos os seus dados pessoais foram removidos de nossa base ativa.</p>
+    <p>Se você mudou de ideia ou excluiu por engano, sinta-se à vontade para criar uma nova conta a qualquer momento em nossa loja.</p>
+    <p>Agradecemos pelo tempo que esteve conosco!</p>
+  `);
+  return sendMail({ to: email, subject, html, text: "" });
+}
