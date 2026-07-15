@@ -10,6 +10,9 @@ const oauth2Client = new google.auth.OAuth2(GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET
 oauth2Client.setCredentials({ refresh_token: GMAIL_REFRESH_TOKEN });
 const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 
+// URL da imagem enviada pelo usuário (Banner da Mota Store)
+const BANNER_IMAGE_URL = 'https://mota-store.shop/assets/email-banner.png'; // Link direto para o ativo no servidor
+
 /**
  * Função interna para criar e codificar o e-mail de forma simplificada
  */
@@ -42,17 +45,19 @@ async function sendMail(options: { to: string; subject: string; html: string; te
   }
 }
 
-// TEMPLATE ULTRA SIMPLIFICADO (Evita SPAM)
+// TEMPLATE PRETO E BRANCO ULTRA SIMPLIFICADO (Evita SPAM)
 const SIMPLE_LAYOUT = (content: string) => `
-  <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
-    <div style="padding: 20px; border-bottom: 2px solid #eee;">
-      <h2 style="margin: 0; color: #10b981;">MOTA STORE</h2>
+  <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #000; line-height: 1.6; border: 1px solid #eee;">
+    <div style="text-align: center; background-color: #000; padding: 0;">
+      <img src="https://i.ibb.co/XW7pX7q/mota-store-banner.png" alt="Mota Store" style="width: 100%; max-width: 600px; display: block; margin: 0 auto;">
     </div>
-    <div style="padding: 20px;">
+    <div style="padding: 30px; background-color: #fff;">
       ${content}
     </div>
-    <div style="padding: 20px; font-size: 12px; color: #999; border-top: 1px solid #eee;">
-      Este é um e-mail automático da Mota Store. Por favor, não responda.
+    <div style="padding: 20px; font-size: 11px; color: #666; text-align: center; background-color: #fafafa; border-top: 1px solid #eee;">
+      <strong>MOTA STORE - MELHOR PREÇO DO MERCADO</strong><br>
+      Este é um e-mail automático. Por favor, não responda.<br>
+      Acesse nossa loja: <a href="${APP_URL}" style="color: #000; font-weight: bold;">${APP_URL.replace('https://', '')}</a>
     </div>
   </div>
 `;
@@ -60,10 +65,12 @@ const SIMPLE_LAYOUT = (content: string) => `
 export async function sendWelcomeEmail(email: string, firstName: string) {
   const subject = `Bem-vindo à Mota Store!`;
   const html = SIMPLE_LAYOUT(`
-    <p>Olá, <strong>${firstName}</strong>!</p>
-    <p>Sua conta na Mota Store foi criada com sucesso.</p>
-    <p>Acesse nossa loja para conferir as melhores ofertas: <a href="${APP_URL}">${APP_URL}</a></p>
-    <p>Seja muito bem-vindo!</p>
+    <h1 style="font-size: 20px; font-weight: 900; text-transform: uppercase; margin-top: 0;">Olá, ${firstName}!</h1>
+    <p>Sua conta na <strong>Mota Store</strong> foi criada com sucesso.</p>
+    <p>Estamos felizes em ter você conosco. Acesse nossa loja para conferir as melhores ofertas e produtos de alta qualidade.</p>
+    <div style="margin-top: 30px; text-align: center;">
+      <a href="${APP_URL}" style="background-color: #000; color: #fff; padding: 15px 30px; text-decoration: none; font-weight: bold; border-radius: 5px; text-transform: uppercase; font-size: 14px;">Acessar Loja</a>
+    </div>
   `);
   return sendMail({ to: email, subject, html, text: "" });
 }
@@ -71,12 +78,12 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
 export async function sendVerificationCodeEmail(email: string, firstName: string, code: string) {
   const subject = `${code} é o seu código de verificação`;
   const html = SIMPLE_LAYOUT(`
-    <p>Olá, <strong>${firstName}</strong>.</p>
-    <p>Seu código de verificação é:</p>
-    <div style="background: #f4f4f4; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #10b981; border-radius: 8px;">
+    <h1 style="font-size: 20px; font-weight: 900; text-transform: uppercase; margin-top: 0;">Código de Verificação</h1>
+    <p>Olá, ${firstName}. Use o código abaixo para completar sua ação na Mota Store:</p>
+    <div style="background: #000; color: #fff; padding: 25px; text-align: center; font-size: 36px; font-weight: 900; letter-spacing: 10px; margin: 25px 0; border-radius: 8px;">
       ${code}
     </div>
-    <p>Este código expira em 10 minutos.</p>
+    <p style="font-size: 13px; color: #666; text-align: center;">Este código expira em 10 minutos por motivos de segurança.</p>
   `);
   return sendMail({ to: email, subject, html, text: "" });
 }
@@ -85,22 +92,23 @@ export async function sendPasswordResetEmail(email: string, firstName: string, t
   const resetLink = `${APP_URL}/reset-password?token=${token}`;
   const subject = `Recuperação de senha - Mota Store`;
   const html = SIMPLE_LAYOUT(`
-    <p>Olá, <strong>${firstName}</strong>.</p>
-    <p>Recebemos um pedido para redefinir sua senha.</p>
-    <p>Clique no link abaixo para criar uma nova senha:</p>
-    <p><a href="${resetLink}" style="background: #10b981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Redefinir minha senha</a></p>
-    <p>Se você não solicitou isso, pode ignorar este e-mail.</p>
+    <h1 style="font-size: 20px; font-weight: 900; text-transform: uppercase; margin-top: 0;">Recuperar Senha</h1>
+    <p>Olá, ${firstName}. Recebemos um pedido para redefinir sua senha na Mota Store.</p>
+    <p>Clique no botão abaixo para criar uma nova senha:</p>
+    <div style="margin: 30px 0; text-align: center;">
+      <a href="${resetLink}" style="background-color: #000; color: #fff; padding: 15px 30px; text-decoration: none; font-weight: bold; border-radius: 5px; text-transform: uppercase; font-size: 14px;">Redefinir Minha Senha</a>
+    </div>
+    <p style="font-size: 12px; color: #666;">Se você não solicitou isso, pode ignorar este e-mail com segurança.</p>
   `);
   return sendMail({ to: email, subject, html, text: "" });
 }
 
 export async function sendAccountDeletionEmail(email: string, firstName: string) {
-  const subject = `Confirmação de exclusão de conta - Mota Store`;
+  const subject = `Conta Excluída com Sucesso - Mota Store`;
   const html = SIMPLE_LAYOUT(`
-    <p>Olá, <strong>${firstName}</strong>.</p>
-    <p>Conforme solicitado, sua conta na <strong>Mota Store</strong> foi excluída com sucesso.</p>
-    <p>Lamentamos ver você partir, mas respeitamos sua decisão. Todos os seus dados pessoais foram removidos de nossa base ativa.</p>
-    <p>Se você mudou de ideia ou excluiu por engano, sinta-se à vontade para criar uma nova conta a qualquer momento em nossa loja.</p>
+    <h1 style="font-size: 20px; font-weight: 900; text-transform: uppercase; margin-top: 0;">Conta Excluída</h1>
+    <p>Olá, ${firstName}. Conforme solicitado, sua conta na <strong>Mota Store</strong> foi excluída.</p>
+    <p>Todos os seus dados pessoais foram removidos de nossa base ativa. Lamentamos sua partida, mas saiba que você será sempre bem-vindo caso decida voltar.</p>
     <p>Agradecemos pelo tempo que esteve conosco!</p>
   `);
   return sendMail({ to: email, subject, html, text: "" });

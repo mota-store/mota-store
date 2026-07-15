@@ -94,7 +94,7 @@ export const appRouter = router({
         name: z.string().optional(), 
         avatarUrl: z.string().optional(),
         password: z.string().min(6).optional(),
-        verificationCode: z.string().length(4).optional()
+        verificationCode: z.string().length(6).optional()
       }))
       .mutation(async ({ ctx, input }) => {
         // Se apenas mudar nome/avatar (sem senha), não precisa de código de verificação
@@ -184,7 +184,7 @@ export const appRouter = router({
         return { success: true };
       }),
     requestVerificationCode: protectedProcedure
-      .input(z.object({ digits: z.number().default(4) }).optional())
+      .input(z.object({ digits: z.number().default(6) }).optional())
       .mutation(async ({ ctx, input }) => {
         const { setResetToken, getUserByOpenId } = await import("./db");
         
@@ -208,7 +208,7 @@ export const appRouter = router({
           }
         }
         
-        const digits = input?.digits || 4;
+        const digits = input?.digits || 6;
         const min = Math.pow(10, digits - 1);
         const max = Math.pow(10, digits) - 1;
         const code = Math.floor(min + Math.random() * (max - min + 1)).toString();

@@ -112,7 +112,7 @@ export default function Profile() {
       setIsSendingCode(true);
       await requestCodeMutation.mutateAsync();
       setCodeSent(true);
-      toast.success("Código de 4 dígitos enviado para seu e-mail!");
+      toast.success("Código de 6 dígitos enviado para seu e-mail!");
     } catch (err: any) {
       toast.error("Erro ao enviar código: " + err.message);
     } finally {
@@ -248,8 +248,8 @@ export default function Profile() {
   };
 
   const handleDeleteAccount = async () => {
-    if (!deleteVerificationCode) {
-      toast.error("Digite o código de verificação");
+    if (!deleteVerificationCode || deleteVerificationCode.length !== 6) {
+      toast.error("Digite o código de verificação de 6 dígitos");
       return;
     }
     setIsDeleting(true);
