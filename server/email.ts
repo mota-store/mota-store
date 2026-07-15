@@ -1,34 +1,26 @@
-import nodemailer from 'nodemailer';
+import { google } from 'googleapis';
 
 // Configurações via variáveis de ambiente (configuradas no Render)
-const SMTP_USER = process.env.SMTP_USER || 'arthurmotapaiva@gmail.com';
-const SMTP_PASS = process.env.SMTP_PASS || 'igyb oeko dgpy lrvv'; // Senha de App do Gmail
+const GMAIL_USER = process.env.GMAIL_USER || 'arthurmotapaiva@gmail.com';
+const GMAIL_CLIENT_ID = process.env.GMAIL_CLIENT_ID || '1067935514097-gogg5cvuka13k514q2sju3ma0bak0ikr.apps.googleusercontent.com';
+const GMAIL_CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET || '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';
+const GMAIL_REFRESH_TOKEN = process.env.GMAIL_REFRESH_TOKEN || '';
 const APP_URL = process.env.APP_URL || 'https://mota-store.shop';
 
-console.log(`[Email] Configurando transporte robusto (IPv4) para: ${SMTP_USER}`);
+console.log(`[Email] Iniciando Gmail API OAuth2 para: ${GMAIL_USER}`);
 
-// Configuração manual e robusta para evitar timeouts e problemas de rede no Render
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // STARTTLS
-  auth: {
-    user: SMTP_USER,
-    pass: SMTP_PASS,
-  },
-  // Forçar família de IP no nível do socket
-  family: 4, 
-  // Configurações de timeout otimizadas
-  connectionTimeout: 10000, // 10s para conectar
-  greetingTimeout: 10000,   // 10s para saudação
-  socketTimeout: 20000,     // 20s de socket
-  tls: {
-    // Garante compatibilidade e evita erros de certificado em redes restritivas
-    rejectUnauthorized: false,
-    minVersion: 'TLSv1.2',
-    servername: 'smtp.gmail.com'
-  }
+// Configuração do OAuth2 Client
+const oauth2Client = new google.auth.OAuth2(
+  GMAIL_CLIENT_ID,
+  GMAIL_CLIENT_SECRET,
+  'https://developers.google.com/oauthplayground'
+);
+
+oauth2Client.setCredentials({
+  refresh_token: GMAIL_REFRESH_TOKEN
 });
+
+const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 
 const DARK_TEMPLATE = (content: string) => `
   <div style="background-color: #09090b; color: #fafafa; font-family: sans-serif; padding: 40px 20px; margin: 0; width: 100%;">
@@ -50,35 +42,67 @@ const DARK_TEMPLATE = (content: string) => `
   </div>
 `;
 
+/**
+ * Função interna para criar e codificar o e-mail no formato exigido pela Gmail API (base64url)
+ */
+function createRawMessage(options: { to: string; subject: string; html: string; text: string }) {
+  const boundary = 'foo_bar_baz';
+  const utf8Subject = `=?utf-8?B?${Buffer.from(options.subject).toString('base64')}?=`;
+  
+  const messageParts = [
+    `From: "Mota Store" <${GMAIL_USER}>`,
+    `To: ${options.to}`,
+    `Subject: ${utf8Subject}`,
+    'MIME-Version: 1.0',
+    `Content-Type: multipart/alternative; boundary="${boundary}"`,
+    '',
+    `--${boundary}`,
+    'Content-Type: text/plain; charset="utf-8"',
+    'Content-Transfer-Encoding: base64',
+    '',
+    Buffer.from(options.text).toString('base64'),
+    '',
+    `--${boundary}`,
+    'Content-Type: text/html; charset="utf-8"',
+    'Content-Transfer-Encoding: base64',
+    '',
+    Buffer.from(options.html).toString('base64'),
+    '',
+    `--${boundary}--`
+  ];
+
+  const message = messageParts.join('\n');
+  return Buffer.from(message)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
 async function sendMail(options: { to: string; subject: string; html: string; text: string }) {
-  if (!SMTP_PASS) {
-    console.error("[Email] Erro: SMTP_PASS não configurado no ambiente.");
+  if (!GMAIL_REFRESH_TOKEN) {
+    console.error("[Email] Erro: GMAIL_REFRESH_TOKEN não configurado no ambiente.");
     return false;
   }
 
-  console.log(`[Email] Disparando e-mail para: ${options.to}`);
+  console.log(`[Email] Disparando e-mail via Gmail API para: ${options.to}`);
 
   try {
-    const info = await transporter.sendMail({
-      from: `"Mota Store" <${SMTP_USER}>`,
-      to: options.to,
-      subject: options.subject,
-      text: options.text,
-      html: options.html,
-      replyTo: "arthurmotapaiva@gmail.com",
-      headers: {
-        "X-Mailer": "Mota Store Mailer",
-        "X-Priority": "3",
-        "Importance": "Normal",
-        "List-Unsubscribe": "<mailto:arthurmotapaiva@gmail.com>",
-        "Message-ID": `<${Date.now()}.${Math.random().toString(36).substring(2)}@mota-store.shop>`
-      }
+    const raw = createRawMessage(options);
+    const response = await gmail.users.messages.send({
+      userId: 'me',
+      requestBody: {
+        raw: raw,
+      },
     });
 
-    console.log(`[Email] ENVIADO! MessageId: ${info.messageId}`);
+    console.log(`[Email] ENVIADO! ID: ${response.data.id}`);
     return true;
   } catch (error: any) {
-    console.error(`[Email] ERRO: ${error.message}`);
+    console.error(`[Email] ERRO na Gmail API: ${error.message}`);
+    if (error.response && error.response.data) {
+      console.error(`[Email] Detalhes do erro:`, JSON.stringify(error.response.data));
+    }
     return false;
   }
 }
