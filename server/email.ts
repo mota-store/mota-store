@@ -5,16 +5,21 @@ const SMTP_USER = process.env.SMTP_USER || 'arthurmotapaiva@gmail.com';
 const SMTP_PASS = process.env.SMTP_PASS || 'igyb oeko dgpy lrvv'; // Senha de App do Gmail
 const APP_URL = process.env.APP_URL || 'https://mota-store.shop';
 
-console.log(`[Email] Configurando transporte direto para: ${SMTP_USER}`);
+console.log(`[Email] Configurando transporte SSL (Porta 465) para: ${SMTP_USER}`);
 
-// Configuração simplificada para envio direto e imediato
+// Configuração para porta 465 (SSL) - Geralmente mais estável em servidores de nuvem
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true, // true para porta 465, false para outras portas
   auth: {
     user: SMTP_USER,
     pass: SMTP_PASS,
   },
-  // Ativando logs de depuração para ver a comunicação com o Gmail
+  // Aumentando timeouts de conexão
+  connectionTimeout: 20000, // 20 segundos para conectar
+  greetingTimeout: 20000,   // 20 segundos para o greeting
+  socketTimeout: 30000,     // 30 segundos de socket ocioso
   debug: true,
   logger: true 
 });
@@ -45,10 +50,15 @@ async function sendMail(options: { to: string; subject: string; html: string; te
     return false;
   }
 
-  console.log(`[Email] Tentando enviar e-mail para: ${options.to} | Assunto: ${options.subject}`);
+  console.log(`[Email] Tentando enviar e-mail via SSL para: ${options.to}`);
+
+  // Timeout de 35 segundos para o envio de e-mail (maior que os timeouts internos)
+  const timeoutPromise = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('SMTP Global Timeout (35s)')), 35000)
+  );
 
   try {
-    const info = await transporter.sendMail({
+    const mailPromise = transporter.sendMail({
       from: `"Mota Store" <${SMTP_USER}>`,
       to: options.to,
       subject: options.subject,
@@ -63,16 +73,12 @@ async function sendMail(options: { to: string; subject: string; html: string; te
         "Message-ID": `<${Date.now()}.${Math.random().toString(36).substring(2)}@mota-store.shop>`
       }
     });
-    
-    console.log(`[Email] SUCESSO! MessageId: ${info.messageId} | Resposta: ${info.response}`);
+
+    const info = await Promise.race([mailPromise, timeoutPromise]) as any;
+    console.log(`[Email] SUCESSO! MessageId: ${info.messageId}`);
     return true;
   } catch (error: any) {
-    console.error(`[Email] ERRO CRÍTICO no envio para ${options.to}:`, {
-      message: error.message,
-      code: error.code,
-      command: error.command,
-      response: error.response
-    });
+    console.error(`[Email] FALHA no envio para ${options.to}: ${error.message}`);
     return false;
   }
 }
