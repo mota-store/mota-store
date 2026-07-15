@@ -818,10 +818,8 @@ export async function addUserBalance(userId: number, amount: number) {
     if (!user) throw new Error("Usuário não encontrado");
 
     const newBalance = user.balance + amount;
-    if (newBalance < 0) {
-      throw new Error("O saldo do usuário não pode ficar negativo");
-    }
-
+    // O admin pode debitar qualquer valor, mesmo que o saldo fique negativo
+    // Se precisarmos de uma trava rígida para usuários comuns, ela deve estar nas rotas de compra/saque
     await tx.update(users).set({ balance: newBalance }).where(eq(users.id, userId));
 
     const type = amount >= 0 ? "admin_credit" : "admin_debit";

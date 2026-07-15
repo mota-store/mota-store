@@ -121,6 +121,10 @@ function AdminDashboard() {
     onSuccess: () => { refetchUsers(); toast.success("Saldo atualizado!"); },
     onError: () => toast.error("Erro ao atualizar saldo"),
   });
+  const deductUserBalance = trpc.admin.deductUserBalance.useMutation({
+    onSuccess: () => { refetchUsers(); toast.success("Saldo debitado!"); },
+    onError: () => toast.error("Erro ao debitar saldo"),
+  });
   const deleteUser = trpc.admin.deleteUser.useMutation({
     onSuccess: () => { refetchUsers(); toast.success("Usuário excluído!"); },
     onError: (err: any) => toast.error("Erro ao excluir usuário: " + err.message),
@@ -393,16 +397,13 @@ function AdminDashboard() {
                             <Button
                               size="sm"
                               variant="destructive"
-                              disabled={addUserBalance.isPending}
+                              disabled={deductUserBalance.isPending}
                               onClick={() => {
                                 const input = document.getElementById(`balance-${user.id}`) as HTMLInputElement;
                                 const val = parseFloat(input.value);
                                 if (!val || val <= 0) { toast.error("Valor inválido"); return; }
-                                if (Math.round(val * 100) > user.balance) {
-                                  toast.error("Saldo insuficiente");
-                                  return;
-                                }
-                                addUserBalance.mutate({ userId: user.id, amount: -Math.round(val * 100) }, {
+                                // O admin pode debitar qualquer valor, mesmo que o saldo fique negativo
+                                deductUserBalance.mutate({ userId: user.id, amount: Math.round(val * 100) }, {
                                   onSuccess: () => {
                                     input.value = "";
                                     userTransactions.refetch();
