@@ -57,7 +57,7 @@ function AdminLogin() {
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1 block">Usuário</label>
-            <Input value={username} onChange={e => setUsername(e.target.value)} placeholder="whtxz" className="bg-background/50 rounded-xl border-border/50" />
+            <Input value={username} onChange={e => setUsername(e.target.value)} placeholder="Seu usuário" className="bg-background/50 rounded-xl border-border/50" />
           </div>
           <div className="relative">
             <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1 block">Senha</label>
