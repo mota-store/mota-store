@@ -141,8 +141,8 @@ export function registerGoogleOAuthRoutes(app: Express) {
         maxAge: ONE_YEAR_MS,
       });
 
-      // Redirecionar para o perfil se for novo usuário ou login social para conferir dados
-      const redirectUri = "/profile?onboarding=true";
+      // Redirecionar para a home após login com Google
+      const redirectUri = "/";
 
       res.redirect(302, redirectUri);
     } catch (error: any) {
