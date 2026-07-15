@@ -52,11 +52,13 @@ export const appRouter = router({
           const lastSent = globalAny.lastWelcomeEmailSent.get(input.email) || 0;
           const now = Date.now();
           
-          if (now - lastSent > 30000) { // 30 segundos de intervalo
+          if (now - lastSent > 30000 || lastSent === 0) { // 30 segundos de intervalo ou primeira vez
             globalAny.lastWelcomeEmailSent.set(input.email, now);
             try {
+              console.log(`[Register] Disparando e-mail de boas-vindas para: ${input.email}`);
               const emailService = await import("./email");
-              await emailService.sendWelcomeEmail(result.user.email!, result.user.name || "Cliente");
+              const sent = await emailService.sendWelcomeEmail(result.user.email!, result.user.name || "Cliente");
+              console.log(`[Register] Status do envio de boas-vindas: ${sent ? 'Sucesso' : 'Falha'}`);
             } catch (e) {
               console.error("[Register] Failed to send welcome email:", e);
             }
@@ -156,7 +158,10 @@ export const appRouter = router({
 
         await setResetToken(user.id, token, expires);
         
-        emailService.sendPasswordResetEmail(user.email!, user.name || "Cliente", token).catch(e => {
+        console.log(`[ForgotPassword] Disparando e-mail de recuperação para: ${input.email}`);
+        await emailService.sendPasswordResetEmail(user.email!, user.name || "Cliente", token).then(sent => {
+          console.log(`[ForgotPassword] Status do envio de recuperação: ${sent ? 'Sucesso' : 'Falha'}`);
+        }).catch(e => {
           console.error("[ForgotPassword] Failed to send reset email:", e);
         });
         
@@ -211,7 +216,10 @@ export const appRouter = router({
 
         await setResetToken(ctx.user.id, code, expires);
         
-        emailService.sendVerificationCodeEmail(ctx.user.email!, ctx.user.name || "Cliente", code).catch(e => {
+        console.log(`[VerificationCode] Disparando e-mail de código para: ${ctx.user.email}`);
+        await emailService.sendVerificationCodeEmail(ctx.user.email!, ctx.user.name || "Cliente", code).then(sent => {
+          console.log(`[VerificationCode] Status do envio de código: ${sent ? 'Sucesso' : 'Falha'}`);
+        }).catch(e => {
           console.error("[VerificationCode] Failed to send code email:", e);
         });
         

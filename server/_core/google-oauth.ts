@@ -124,8 +124,10 @@ export function registerGoogleOAuthRoutes(app: Express) {
       // Passo 4.3: Envio de e-mail síncrono com await
       if (isNewUser && email) {
         try {
+          console.log(`[Google OAuth] Disparando e-mail de boas-vindas para: ${email}`);
           const emailService = await import("../email");
-          await emailService.sendWelcomeEmail(email, name || "Cliente");
+          const sent = await emailService.sendWelcomeEmail(email, name || "Cliente");
+          console.log(`[Google OAuth] Status do envio de boas-vindas: ${sent ? 'Sucesso' : 'Falha'}`);
         } catch (e) {
           console.error("[Google OAuth] Failed to send welcome email:", e);
         }
