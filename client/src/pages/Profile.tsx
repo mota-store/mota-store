@@ -80,7 +80,8 @@ export default function Profile() {
     onSuccess: () => {
       toast.success("Sua conta foi excluída permanentemente.");
       logout();
-      navigate("/");
+      // Redirecionar para a home e forçar o scroll para o topo
+      window.location.href = "/";
     },
     onError: (err: any) => {
       toast.error("Erro ao excluir conta: " + (err.message || "Erro desconhecido"));
