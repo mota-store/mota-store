@@ -639,8 +639,10 @@ export default function Profile() {
                       handleSendCode(6);
                       setShowDeleteCodeInput(true);
                     }}
-                    className="w-full h-11 rounded-xl bg-accent/10 border-2 border-accent/30 hover:bg-accent/20 font-black text-xs uppercase tracking-widest text-accent"
+                    disabled={isSendingCode}
+                    className="w-full h-11 rounded-xl bg-accent/10 border-2 border-accent/30 hover:bg-accent/20 font-black text-xs uppercase tracking-widest text-accent disabled:opacity-50"
                   >
+                    {isSendingCode ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
                     Enviar Código
                   </Button>
                 </div>

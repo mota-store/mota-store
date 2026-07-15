@@ -231,12 +231,16 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         const { getUserByResetToken, deleteUser, clearResetToken } = await import("./db");
         
+        // 1. Validar e invalidar o token imediatamente para evitar reentrância/duplicação
         const user = await getUserByResetToken(input.verificationCode);
         if (!user || user.id !== ctx.user.id || !user.resetTokenExpires || user.resetTokenExpires < new Date()) {
-          return { success: false, error: "Código de verificação inválido ou expirado" };
+          throw new Error("Código de verificação inválido ou expirado");
         }
 
-        // Enviar e-mail de confirmação ANTES de excluir para garantir que os dados existam
+        // Limpar o token no banco ANTES de qualquer outra ação pesada (como enviar e-mail)
+        await clearResetToken(user.id);
+
+        // 2. Enviar e-mail de confirmação
         try {
           console.log(`[DeleteAccount] Enviando e-mail de despedida para: ${user.email}`);
           await emailService.sendAccountDeletionEmail(user.email!, user.name || "Cliente");
@@ -244,9 +248,10 @@ export const appRouter = router({
           console.error("[DeleteAccount] Falha ao enviar e-mail de exclusão:", e);
         }
 
+        // 3. Excluir o usuário
         await deleteUser(ctx.user.id);
         
-        // Limpar cookie de sessão
+        // 4. Limpar cookie de sessão
         const { getSessionCookieOptions } = await import("./_core/cookies");
         const { COOKIE_NAME } = await import("../shared/const");
         const cookieOptions = getSessionCookieOptions(ctx.req);
