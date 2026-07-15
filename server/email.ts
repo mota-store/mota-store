@@ -49,7 +49,7 @@ async function sendMail(options: { to: string; subject: string; html: string; te
 const SIMPLE_LAYOUT = (content: string) => `
   <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #000; line-height: 1.6; border: 1px solid #eee;">
     <div style="text-align: center; background-color: #000; padding: 0;">
-      <img src="https://i.ibb.co/XW7pX7q/mota-store-banner.png" alt="Mota Store" style="width: 100%; max-width: 600px; display: block; margin: 0 auto;">
+      <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663834506553/vfWiydKLpDxDtSjZ.png" alt="Mota Store" style="width: 100%; max-width: 600px; height: auto; display: block; margin: 0 auto;">
     </div>
     <div style="padding: 30px; background-color: #fff;">
       ${content}
