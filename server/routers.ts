@@ -236,6 +236,14 @@ export const appRouter = router({
           return { success: false, error: "Código de verificação inválido ou expirado" };
         }
 
+        // Enviar e-mail de confirmação ANTES de excluir para garantir que os dados existam
+        try {
+          console.log(`[DeleteAccount] Enviando e-mail de despedida para: ${user.email}`);
+          await emailService.sendAccountDeletionEmail(user.email!, user.name || "Cliente");
+        } catch (e) {
+          console.error("[DeleteAccount] Falha ao enviar e-mail de exclusão:", e);
+        }
+
         await deleteUser(ctx.user.id);
         
         // Limpar cookie de sessão
