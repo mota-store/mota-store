@@ -5,19 +5,18 @@ const SMTP_USER = process.env.SMTP_USER || 'arthurmotapaiva@gmail.com';
 const SMTP_PASS = process.env.SMTP_PASS || 'igyb oeko dgpy lrvv'; // Senha de App do Gmail
 const APP_URL = process.env.APP_URL || 'https://mota-store.shop';
 
-console.log(`[Email] Iniciando transportador SMTP para: ${SMTP_USER}`);
+console.log(`[Email] Configurando transporte direto para: ${SMTP_USER}`);
 
-// Configuração do Transportador Nodemailer com Pool e Rate Limiting para evitar SPAM
+// Configuração simplificada para envio direto e imediato
 const transporter = nodemailer.createTransport({
   service: 'gmail',
-  pool: true,
-  maxConnections: 5, // Aumentado para permitir mais envios simultâneos
-  rateDelta: 10000, // Reduzido para 10 segundos
-  rateLimit: 10,    // Aumentado para 10 e-mails por janela
   auth: {
     user: SMTP_USER,
     pass: SMTP_PASS,
   },
+  // Ativando logs de depuração para ver a comunicação com o Gmail
+  debug: true,
+  logger: true 
 });
 
 const DARK_TEMPLATE = (content: string) => `
@@ -46,13 +45,10 @@ async function sendMail(options: { to: string; subject: string; html: string; te
     return false;
   }
 
-  // Timeout de 10 segundos para o envio de e-mail não travar a aplicação
-  const timeoutPromise = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error('SMTP Timeout (10s)')), 10000)
-  );
+  console.log(`[Email] Tentando enviar e-mail para: ${options.to} | Assunto: ${options.subject}`);
 
   try {
-    const mailPromise = transporter.sendMail({
+    const info = await transporter.sendMail({
       from: `"Mota Store" <${SMTP_USER}>`,
       to: options.to,
       subject: options.subject,
@@ -63,15 +59,20 @@ async function sendMail(options: { to: string; subject: string; html: string; te
         "X-Mailer": "Mota Store Mailer",
         "X-Priority": "3",
         "Importance": "Normal",
-        "List-Unsubscribe": "<mailto:arthurmotapaiva@gmail.com>"
+        "List-Unsubscribe": "<mailto:arthurmotapaiva@gmail.com>",
+        "Message-ID": `<${Date.now()}.${Math.random().toString(36).substring(2)}@mota-store.shop>`
       }
     });
-
-    const info = await Promise.race([mailPromise, timeoutPromise]) as any;
-    console.log(`[Email] Enviado com sucesso! MessageId: ${info.messageId}`);
+    
+    console.log(`[Email] SUCESSO! MessageId: ${info.messageId} | Resposta: ${info.response}`);
     return true;
   } catch (error: any) {
-    console.error(`[Email] Falha no envio para ${options.to}: ${error.message}`);
+    console.error(`[Email] ERRO CRÍTICO no envio para ${options.to}:`, {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+      response: error.response
+    });
     return false;
   }
 }
