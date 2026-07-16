@@ -804,33 +804,9 @@ export async function getAdminStats() {
   };
 }
 
-const lastBalanceRequest = new Map<string, number>();
-
 export async function addUserBalance(userId: number, amount: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-
-  // Trava de idempotência de 500ms para evitar duplicação no admin por cliques acidentais
-  // Usamos o timestamp arredondado para os 500ms mais próximos para que cliques rápidos no mesmo meio-segundo sejam bloqueados,
-  // mas operações legítimas em sequência (ex: 1 segundo depois) funcionem.
-  const now = Date.now();
-  const timeBucket = Math.floor(now / 500);
-  const requestId = `${userId}-${amount}-${timeBucket}`;
-  
-  if (lastBalanceRequest.has(requestId)) {
-    console.log(`[addUserBalance] Ignorando requisição duplicada para ${requestId}`);
-    const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-    return { success: true, newBalance: user?.balance || 0 };
-  }
-  lastBalanceRequest.set(requestId, now);
-
-  // Limpeza periódica do mapa para evitar vazamento de memória
-  if (lastBalanceRequest.size > 1000) {
-    const cutoff = now - 10000;
-    for (const [key, time] of lastBalanceRequest.entries()) {
-      if (time < cutoff) lastBalanceRequest.delete(key);
-    }
-  }
 
   return await db.transaction(async (tx) => {
     const [user] = await tx.select().from(users).where(eq(users.id, userId)).for("update").limit(1);

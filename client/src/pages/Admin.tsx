@@ -183,13 +183,15 @@ function AdminDashboard() {
     { enabled: !!expandedUserId }
   );
 
+  const logoutMutation = trpc.auth.logout.useMutation();
+
   const handleLogout = async () => {
     // 1. Limpar cookie admin fake
     document.cookie = `${ADMIN_COOKIE}=; path=/; max-age=0`;
     
-    // 2. Chamar logout real do servidor
+    // 2. Chamar logout real do servidor via tRPC
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      await logoutMutation.mutateAsync();
     } catch (e) {
       console.error("Erro ao fazer logout no servidor", e);
     }

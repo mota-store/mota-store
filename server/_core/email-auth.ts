@@ -83,7 +83,7 @@ export async function loginUser(
 
     // Check if user is banned
     if (user.role === 'banned') {
-      return { success: false, error: "Esta conta foi banida permanentemente." };
+      return { success: false, error: "Sua conta está banida. Entre em contato com o suporte." };
     }
 
     // Verify password
