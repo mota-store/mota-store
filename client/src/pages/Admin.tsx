@@ -133,6 +133,10 @@ function AdminDashboard() {
     onSuccess: () => { refetchUsers(); toast.success("Usuário banido!"); },
     onError: (err: any) => toast.error("Erro ao banir usuário: " + err.message),
   });
+  const unbanUser = trpc.admin.unbanUser.useMutation({
+    onSuccess: () => { refetchUsers(); toast.success("Usuário desbanido!"); },
+    onError: (err: any) => toast.error("Erro ao desbanir usuário: " + err.message),
+  });
   const createCoupon = trpc.admin.createCoupon.useMutation({
     onSuccess: () => { refetchCoupons(); setShowAddCoupon(false); toast.success("Cupom criado!"); },
     onError: (err: any) => toast.error(`Erro ao criar cupom: ${err.message || "Erro desconhecido"}`),
@@ -337,20 +341,32 @@ function AdminDashboard() {
 		                    <div className="pt-4 space-y-2">
                           <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Gestão de Conta</p>
 		                      <div className="flex flex-wrap gap-2">
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              disabled={banUser.isPending || user.role === 'banned'}
-                              onClick={() => {
-                                const reason = window.prompt("Motivo do banimento:");
-                                if (reason !== null) {
-                                  banUser.mutate({ userId: user.id, reason });
-                                }
-                              }}
-                              className="font-black text-[10px] uppercase tracking-widest rounded-xl h-10"
-                            >
-                              {user.role === 'banned' ? "Já Banido" : "Banir Usuário"}
-                            </Button>
+	                            {user.role === 'banned' ? (
+	                              <Button
+	                                variant="default"
+	                                size="sm"
+	                                disabled={unbanUser.isPending}
+	                                onClick={() => unbanUser.mutate({ userId: user.id })}
+	                                className="bg-green-600 hover:bg-green-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl h-10"
+	                              >
+	                                Desbanir Usuário
+	                              </Button>
+	                            ) : (
+	                              <Button
+	                                variant="destructive"
+	                                size="sm"
+	                                disabled={banUser.isPending}
+	                                onClick={() => {
+	                                  const reason = window.prompt("Motivo do banimento:");
+	                                  if (reason !== null) {
+	                                    banUser.mutate({ userId: user.id, reason });
+	                                  }
+	                                }}
+	                                className="font-black text-[10px] uppercase tracking-widest rounded-xl h-10"
+	                              >
+	                                Banir Usuário
+	                              </Button>
+	                            )}
                             <Button
                               variant="outline"
                               size="sm"

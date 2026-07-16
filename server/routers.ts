@@ -382,6 +382,16 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    unbanUser: adminProcedure
+      .input(z.object({ userId: z.number() }))
+      .mutation(async ({ input }) => {
+        const { updateUser, getUserById } = await import("./db");
+        const user = await getUserById(input.userId);
+        if (!user) throw new Error("Usuário não encontrado");
+        await updateUser(input.userId, { role: 'user' });
+        return { success: true };
+      }),
+
     createCoupon: adminProcedure
       .input(z.object({
         code: z.string().min(3).max(50).toUpperCase(),
@@ -542,6 +552,12 @@ export const appRouter = router({
         const { updateOrderStatus } = await import("./db");
         await updateOrderStatus(input.orderId, input.status);
         return { success: true };
+      }),
+    cancel: protectedProcedure
+      .input(z.object({ orderId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { cancelOrder } = await import("./db");
+        return cancelOrder(input.orderId, ctx.user.id);
       }),
   }),
 

@@ -28,6 +28,7 @@ export async function getDb() {
       await connection.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS balance INT NOT NULL DEFAULT 0");
       await connection.query("ALTER TABLE users MODIFY COLUMN role ENUM('user', 'admin', 'banned') NOT NULL DEFAULT 'user'");
       await connection.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS stock INT NOT NULL DEFAULT 0");
+      await connection.query("ALTER TABLE orders MODIFY COLUMN status ENUM('pending', 'completed', 'failed', 'cancelled') NOT NULL DEFAULT 'pending'");
       connection.release();
       console.log("[DB] Esquema verificado/atualizado.");
     } catch (e) {
@@ -858,4 +859,45 @@ export async function getUserTransactions(userId: number) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(balanceTransactions).where(eq(balanceTransactions.userId, userId)).orderBy(desc(balanceTransactions.createdAt));
+}
+
+export async function cancelOrder(orderId: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db.transaction(async (tx) => {
+    const [order] = await tx.select().from(orders)
+      .where(and(eq(orders.id, orderId), eq(orders.userId, userId)))
+      .for("update").limit(1);
+
+    if (!order) throw new Error("Pedido não encontrado");
+    if (order.status !== 'pending') throw new Error("Apenas pedidos pendentes podem ser cancelados");
+
+    await tx.update(orders).set({ status: 'cancelled' }).where(eq(orders.id, orderId));
+
+    if (order.paymentMethod === 'balance' || order.paymentMethod === 'balance_pix') {
+      const [user] = await tx.select().from(users).where(eq(users.id, userId)).for("update").limit(1);
+      if (user) {
+        const [purchaseTx] = await tx.select().from(balanceTransactions)
+          .where(and(eq(balanceTransactions.relatedOrderId, orderId), eq(balanceTransactions.userId, userId)))
+          .limit(1);
+
+        if (purchaseTx && purchaseTx.amount < 0) {
+          const refundAmount = Math.abs(purchaseTx.amount);
+          const newBalance = user.balance + refundAmount;
+          await tx.update(users).set({ balance: newBalance }).where(eq(users.id, userId));
+          await tx.insert(balanceTransactions).values({
+            userId,
+            amount: refundAmount,
+            type: 'refund' as any,
+            description: `Estorno por cancelamento - Pedido #${orderId}`,
+            relatedOrderId: orderId,
+            newBalance,
+          });
+        }
+      }
+    }
+
+    return { success: true };
+  });
 }

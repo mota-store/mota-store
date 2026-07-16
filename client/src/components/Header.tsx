@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Menu, X, User, LogOut, Sun, Moon, Search } from "lucide-react";
+import { ShoppingCart, Menu, X, User, LogOut, Sun, Moon, Search, QrCode } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useCart } from "@/contexts/CartContext";
 import { useLocation } from "wouter";
@@ -25,6 +25,11 @@ export function Header({ onSearch, searchQuery = "" }: HeaderProps) {
   const [localSearchQuery, setLocalSearchQuery] = useState("");
   
   const { data: products } = trpc.products.list.useQuery();
+  const { data: orders } = trpc.orders.list.useQuery(undefined, { enabled: isAuthenticated });
+
+  const hasPendingOrder = React.useMemo(() => {
+    return orders?.some(order => order.status === "pending") ?? false;
+  }, [orders]);
 
   React.useEffect(() => {
     if (cartCount > prevCount) {
@@ -153,13 +158,23 @@ export function Header({ onSearch, searchQuery = "" }: HeaderProps) {
             Suporte
           </a>
 
-          {/* Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            className="p-2 md:p-2.5 hover:bg-card rounded-lg md:rounded-xl transition-all text-foreground border border-transparent hover:border-border/50"
-          >
-            {theme === "light" ? <Moon className="h-4 w-4 md:h-5 md:w-5" /> : <Sun className="h-4 w-4 md:h-5 md:w-5" />}
-          </button>
+	          {isAuthenticated && hasPendingOrder && (
+	            <button
+	              onClick={() => navigate("/checkout")}
+	              className="p-2 md:p-2.5 hover:bg-card rounded-lg md:rounded-xl transition-all text-yellow-500 border border-transparent hover:border-border/50 animate-pulse"
+	              title="Pagamento pendente"
+	            >
+	              <QrCode className="h-4 w-4 md:h-5 md:w-5" />
+	            </button>
+	          )}
+	
+	          {/* Theme Toggle */}
+	          <button
+	            onClick={toggleTheme}
+	            className="p-2 md:p-2.5 hover:bg-card rounded-lg md:rounded-xl transition-all text-foreground border border-transparent hover:border-border/50"
+	          >
+	            {theme === "light" ? <Moon className="h-4 w-4 md:h-5 md:w-5" /> : <Sun className="h-4 w-4 md:h-5 md:w-5" />}
+	          </button>
 
           {/* Cart */}
           {isAuthenticated && (
