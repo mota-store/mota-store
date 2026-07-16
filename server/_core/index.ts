@@ -93,37 +93,42 @@ async function startServer() {
         const { sdk } = await import("./sdk");
         const { getDb } = await import("../db");
         const { users } = await import("../../drizzle/schema");
-        const { eq, and } = await import("drizzle-orm");
+        const { eq } = await import("drizzle-orm");
         const { getSessionCookieOptions } = await import("./cookies");
         const { COOKIE_NAME, ONE_YEAR_MS } = await import("../../shared/const");
 
         const db = await getDb();
         if (!db) throw new Error("Database not available");
 
-        // Primeiro tenta encontrar pelo e-mail principal
+        const ADMIN_SERVICE_OPENID = "admin-service-account";
+        const ADMIN_SERVICE_EMAIL = "admin@mota-store.shop";
+
+        // Busca ou cria a conta de serviço dedicada para o admin
         let [adminUser] = await db.select().from(users)
-          .where(eq(users.email, "arthuremanuelmota@gmail.com"))
-          .orderBy(users.id)
+          .where(eq(users.openId, ADMIN_SERVICE_OPENID))
           .limit(1);
 
-        // Se não encontrar, tenta encontrar pelo e-mail tutuca (que deu erro no Google login)
         if (!adminUser) {
+          console.log("[Admin Login] Creating dedicated admin service account...");
+          await db.insert(users).values({
+            openId: ADMIN_SERVICE_OPENID,
+            email: ADMIN_SERVICE_EMAIL,
+            name: "Mota Store Admin",
+            role: "admin",
+            loginMethod: "admin-login",
+            balance: 0,
+          } as any);
+
           [adminUser] = await db.select().from(users)
-            .where(eq(users.email, "tutuca8706@gmail.com"))
-            .orderBy(users.id)
+            .where(eq(users.openId, ADMIN_SERVICE_OPENID))
             .limit(1);
         }
 
-        // Se ainda não encontrar, pega o primeiro usuário do banco para não travar o admin
         if (!adminUser) {
-          [adminUser] = await db.select().from(users).orderBy(users.id).limit(1);
+          return res.status(500).json({ success: false, error: "Erro ao criar/recuperar conta de serviço admin" });
         }
 
-        if (!adminUser) {
-          return res.status(404).json({ success: false, error: "Nenhum usuário encontrado no banco de dados para tornar admin" });
-        }
-
-        // Garantir que o role seja admin
+        // Garantir que o role seja admin (caso tenha sido alterado manualmente)
         if (adminUser.role !== 'admin') {
           await db.update(users).set({ role: 'admin' }).where(eq(users.id, adminUser.id));
           adminUser.role = 'admin';
@@ -138,7 +143,7 @@ async function startServer() {
           ...cookieOptions,
           maxAge: ONE_YEAR_MS,
         });
-        console.log("[Admin Login] Session created for:", adminUser.email);
+        console.log("[Admin Login] Session created for service account:", adminUser.email);
 
         res.json({ success: true });
       } catch (error) {

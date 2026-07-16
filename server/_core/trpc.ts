@@ -18,6 +18,10 @@ const requireUser = t.middleware(async opts => {
     throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
   }
 
+  if (ctx.user.role === 'banned') {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Sua conta está banida. Entre em contato com o suporte." });
+  }
+
   return next({
     ctx: {
       ...ctx,
@@ -34,8 +38,9 @@ export const adminProcedure = t.procedure.use(
 
     const isAdmin = ctx.user?.role === 'admin';
     const isOwner = !!(ENV.ownerOpenId && ctx.user?.openId === ENV.ownerOpenId);
+    const isBanned = ctx.user?.role === 'banned';
 
-    if (!ctx.user || (!isAdmin && !isOwner)) {
+    if (!ctx.user || isBanned || (!isAdmin && !isOwner)) {
       throw new TRPCError({ code: "FORBIDDEN", message: NOT_ADMIN_ERR_MSG });
     }
 

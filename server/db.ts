@@ -26,6 +26,7 @@ export async function getDb() {
       await connection.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS resetToken VARCHAR(255)");
       await connection.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS resetTokenExpires TIMESTAMP NULL");
       await connection.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS balance INT NOT NULL DEFAULT 0");
+      await connection.query("ALTER TABLE users MODIFY COLUMN role ENUM('user', 'admin', 'banned') NOT NULL DEFAULT 'user'");
       await connection.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS stock INT NOT NULL DEFAULT 0");
       connection.release();
       console.log("[DB] Esquema verificado/atualizado.");
@@ -805,14 +806,26 @@ export async function addUserBalance(userId: number, amount: number) {
   if (!db) throw new Error("Database not available");
 
   // Trava de idempotência de 500ms para evitar duplicação no admin por cliques acidentais
-  const requestId = `${userId}-${amount}-${Date.now()}`; // Chave mais específica com timestamp para permitir operações sequenciais
+  // Usamos o timestamp arredondado para os 500ms mais próximos para que cliques rápidos no mesmo meio-segundo sejam bloqueados,
+  // mas operações legítimas em sequência (ex: 1 segundo depois) funcionem.
   const now = Date.now();
-  if (lastBalanceRequest.has(requestId) && now - lastBalanceRequest.get(requestId)! < 500) {
+  const timeBucket = Math.floor(now / 500);
+  const requestId = `${userId}-${amount}-${timeBucket}`;
+  
+  if (lastBalanceRequest.has(requestId)) {
     console.log(`[addUserBalance] Ignorando requisição duplicada para ${requestId}`);
     const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
     return { success: true, newBalance: user?.balance || 0 };
   }
   lastBalanceRequest.set(requestId, now);
+
+  // Limpeza periódica do mapa para evitar vazamento de memória
+  if (lastBalanceRequest.size > 1000) {
+    const cutoff = now - 10000;
+    for (const [key, time] of lastBalanceRequest.entries()) {
+      if (time < cutoff) lastBalanceRequest.delete(key);
+    }
+  }
 
   return await db.transaction(async (tx) => {
     const [user] = await tx.select().from(users).where(eq(users.id, userId)).for("update").limit(1);
