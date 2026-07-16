@@ -97,6 +97,11 @@ export async function upsertUser(data: {
   }
   
   if (existing) {
+    // Se o usuário estiver banido, não permitimos atualizar nada via upsert (login social)
+    if (existing.role === 'banned') {
+      return existing.id;
+    }
+
     // Atualizar o usuário e garantir que o openId esteja correto
     await db.update(users)
       .set({ 

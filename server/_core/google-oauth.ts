@@ -109,6 +109,12 @@ export function registerGoogleOAuthRoutes(app: Express) {
         }
       }
       
+      if (existingUser && existingUser.role === 'banned') {
+        console.log(`[Google OAuth] Tentativa de login bloqueada para usuário banido: ${email}`);
+        res.redirect("/login?error=" + encodeURIComponent("Sua conta está banida. Entre em contato com o suporte."));
+        return;
+      }
+
       const isNewUser = !existingUser;
 
       // Salvar ou atualizar usuário no banco
