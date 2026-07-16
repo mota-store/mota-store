@@ -118,14 +118,24 @@ export function registerGoogleOAuthRoutes(app: Express) {
       const isNewUser = !existingUser;
 
       // Salvar ou atualizar usuário no banco
-      await db.upsertUser({
-        openId: googleId,
-        name: name || (existingUser?.name) || null,
-        email: email || (existingUser?.email) || null,
-        loginMethod: "google",
-        avatarUrl: picture || (existingUser?.avatarUrl) || null,
-        lastSignedIn: new Date(),
-      });
+      try {
+        await db.upsertUser({
+          openId: googleId,
+          name: name || (existingUser?.name) || null,
+          email: email || (existingUser?.email) || null,
+          loginMethod: "google",
+          avatarUrl: picture || (existingUser?.avatarUrl) || null,
+          lastSignedIn: new Date(),
+        });
+      } catch (upsertError: any) {
+        // Se for erro de duplicidade, ignoramos e seguimos o fluxo, pois o usuário já existe
+        if (upsertError.code === 'ER_DUP_ENTRY' || upsertError.message?.includes('ER_DUP_ENTRY')) {
+          console.log(`[Google OAuth] Usuário já existe (ER_DUP_ENTRY), prosseguindo login para: ${email}`);
+        } else {
+          // Outros erros ainda devem ser lançados para o catch externo
+          throw upsertError;
+        }
+      }
 
       // Passo 4.3: Envio de e-mail síncrono com await
       if (isNewUser && email) {

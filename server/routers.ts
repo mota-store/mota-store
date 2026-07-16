@@ -362,6 +362,19 @@ export const appRouter = router({
         if (!user) throw new Error("Usuário não encontrado");
         
         await updateUser(input.userId, { role: 'banned' });
+
+        // Trava de idempotência global para evitar envios duplicados de e-mail de banimento
+        const globalAny = global as any;
+        if (!globalAny.lastBanEmailSent) globalAny.lastBanEmailSent = new Map<number, number>();
+        
+        const now = Date.now();
+        const lastSent = globalAny.lastBanEmailSent.get(input.userId) || 0;
+        
+        if (now - lastSent < 30000) { // 30 segundos de trava
+          console.log(`[admin.banUser] Ignorando envio de e-mail duplicado para usuário ${input.userId}`);
+          return { success: true };
+        }
+        globalAny.lastBanEmailSent.set(input.userId, now);
         
         const emailService = await import("./email");
         await emailService.sendBanEmail(user.email!, user.name || "Cliente", input.reason || "Violação dos termos de uso");

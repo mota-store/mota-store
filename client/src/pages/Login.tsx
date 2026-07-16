@@ -8,6 +8,7 @@ import { useLocation } from "wouter";
 import { Mail, Lock, User, ArrowLeft, Zap, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { BannedModal } from "@/components/BannedModal";
 
 function getPasswordStrength(pwd: string): "fraca" | "média" | "forte" | null {
   if (!pwd) return null;
@@ -61,6 +62,16 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isBannedModalOpen, setIsBannedModalOpen] = useState(false);
+  const [bannedErrorMsg, setBannedErrorMsg] = useState("");
+
+  useEffect(() => {
+    const errorParam = searchParams.get("error");
+    if (errorParam && errorParam.toLowerCase().includes("banida")) {
+      setBannedErrorMsg(errorParam);
+      setIsBannedModalOpen(true);
+    }
+  }, []);
 
   const loginMutation = trpc.auth.login.useMutation();
   const registerMutation = trpc.auth.register.useMutation();
@@ -108,7 +119,12 @@ export default function Login() {
         if (result.success) {
           window.location.href = "/";
         } else {
-          setError(result.error || "Email ou senha inválidos");
+          const errorMsg = result.error || "Email ou senha inválidos";
+          setError(errorMsg);
+          if (errorMsg.toLowerCase().includes("banida")) {
+            setBannedErrorMsg(errorMsg);
+            setIsBannedModalOpen(true);
+          }
         }
       }
     } catch (err: any) {
@@ -122,6 +138,12 @@ export default function Login() {
 
   return (
     <div className="h-screen relative flex items-center justify-center p-4 overflow-hidden touch-none">
+      <BannedModal 
+        isOpen={isBannedModalOpen} 
+        onClose={() => setIsBannedModalOpen(false)} 
+        errorMsg={bannedErrorMsg} 
+        email={email}
+      />
       {/* Background Video with Pixel Art */}
       <div className="absolute inset-0 z-0">
         <video 
