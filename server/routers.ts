@@ -199,12 +199,19 @@ export const appRouter = router({
         const { setResetToken, getUserByOpenId } = await import("./db");
 
         // Verificar se já existe um código válido recente no banco (menos de 9 minutos)
+        // A trava de 540s (9 minutos restantes de 10) significa que o código foi enviado há menos de 60s.
         const user = await getUserByOpenId(ctx.user.openId);
         if (user?.resetTokenExpires) {
           const now = new Date();
           const expires = new Date(user.resetTokenExpires);
           const diffSeconds = (expires.getTime() - now.getTime()) / 1000;
-          if (diffSeconds > 540) { // Código enviado há menos de 60 segundos
+          
+          // Se o usuário já tem um token que expira em mais de 540 segundos, 
+          // significa que ele acabou de pedir um (há menos de 60 segundos).
+          // MAS, se for uma chamada de reenvio legítima do frontend (após 60s), 
+          // o diffSeconds será <= 540 e ele passará por aqui.
+          if (diffSeconds > 540) { 
+            console.log(`[VerificationCode] Ignorando reenvio muito rápido para ${ctx.user.email} (diff: ${diffSeconds}s)`);
             return { success: true, alreadySent: true };
           }
         }
@@ -250,7 +257,9 @@ export const appRouter = router({
         // 2. Enviar e-mail de confirmação
         try {
           console.log(`[DeleteAccount] Enviando e-mail de despedida para: ${user.email}`);
-          await emailService.sendAccountDeletionEmail(user.email!, user.name || "Cliente");
+          // Garantir que estamos usando o emailService importado no topo ou importar aqui
+          const emailSrv = await import("./email");
+          await emailSrv.sendAccountDeletionEmail(user.email!, user.name || "Cliente");
         } catch (e) {
           console.error("[DeleteAccount] Falha ao enviar e-mail de exclusão:", e);
         }
