@@ -601,7 +601,9 @@ export async function checkoutWithBalance(userId: number, _amountFromClient: num
         productId: item.productId,
         quantity: item.quantity,
         priceAtPurchase: item.price,
-      });
+        // @ts-ignore - name não está no schema mas pode ser útil salvar para histórico se o produto for deletado
+        name: item.name 
+      } as any);
       
       // Decrementar estoque
       await tx.update(products)

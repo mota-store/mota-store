@@ -285,23 +285,7 @@ export const appRouter = router({
         amount: z.number(), // em centavos, aceita positivo ou negativo
       }))
       .mutation(async ({ input }) => {
-        const { addUserBalance, getUserById } = await import("./db");
-        
-        // Trava de idempotência global para evitar cliques duplos no admin
-        const globalAny = global as any;
-        if (!globalAny.lastAdminBalanceRequest) globalAny.lastAdminBalanceRequest = new Map<string, number>();
-        
-        const now = Date.now();
-        const timeBucket = Math.floor(now / 500);
-        const requestId = `${input.userId}-${input.amount}-${timeBucket}`;
-        
-        if (globalAny.lastAdminBalanceRequest.has(requestId)) {
-          console.log(`[admin.addUserBalance] Ignorando requisição duplicada para ${requestId}`);
-          const user = await getUserById(input.userId);
-          return { success: true, newBalance: user?.balance || 0 };
-        }
-        globalAny.lastAdminBalanceRequest.set(requestId, now);
-
+        const { addUserBalance } = await import("./db");
         return addUserBalance(input.userId, input.amount);
       }),
 
@@ -311,23 +295,7 @@ export const appRouter = router({
         amount: z.number().positive(), // em centavos
       }))
       .mutation(async ({ input }) => {
-        const { addUserBalance, getUserById } = await import("./db");
-        
-        // Trava de idempotência global para evitar cliques duplos no admin
-        const globalAny = global as any;
-        if (!globalAny.lastAdminBalanceRequest) globalAny.lastAdminBalanceRequest = new Map<string, number>();
-        
-        const now = Date.now();
-        const timeBucket = Math.floor(now / 500);
-        const requestId = `${input.userId}-${-input.amount}-${timeBucket}`;
-        
-        if (globalAny.lastAdminBalanceRequest.has(requestId)) {
-          console.log(`[admin.deductUserBalance] Ignorando requisição duplicada para ${requestId}`);
-          const user = await getUserById(input.userId);
-          return { success: true, newBalance: user?.balance || 0 };
-        }
-        globalAny.lastAdminBalanceRequest.set(requestId, now);
-
+        const { addUserBalance } = await import("./db");
         return addUserBalance(input.userId, -input.amount);
       }),
 
