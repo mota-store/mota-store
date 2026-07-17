@@ -25,7 +25,10 @@ export function Header({ onSearch, searchQuery = "" }: HeaderProps) {
   const [localSearchQuery, setLocalSearchQuery] = useState("");
   
   const { data: products } = trpc.products.list.useQuery();
-  const { data: orders } = trpc.orders.list.useQuery(undefined, { enabled: isAuthenticated });
+  const { data: orders, refetch: refetchOrders } = trpc.orders.list.useQuery(undefined, { 
+    enabled: isAuthenticated,
+    refetchInterval: 5000 // Atualiza a cada 5 segundos para garantir que o botão suma após o pagamento
+  });
 
   const hasPendingOrder = React.useMemo(() => {
     return orders?.some(order => order.status === "pending") ?? false;

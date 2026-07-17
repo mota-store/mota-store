@@ -540,21 +540,15 @@ export async function checkoutWithBalance(userId: number, _amountFromClient: num
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // Trava de segurança: impede requisições duplicadas em menos de 5 segundos
+  // Trava de segurança removida conforme solicitação do usuário
+  /*
   const now = Date.now();
   const lastTime = lastCheckoutTime.get(userId.toString()) || 0;
   if (now - lastTime < 5000) {
-    // Tentar encontrar um pedido recente completado para retornar (idempotência)
-    const recentOrder = await db.select().from(orders)
-      .where(and(eq(orders.userId, userId), eq(orders.status, "completed"), gt(orders.createdAt, new Date(Date.now() - 10000))))
-      .orderBy(desc(orders.createdAt)).limit(1);
-    
-    if (recentOrder.length > 0) {
-      return { success: true, orderId: recentOrder[0].id };
-    }
     throw new Error("Por favor, aguarde alguns segundos antes de tentar novamente.");
   }
   lastCheckoutTime.set(userId.toString(), now);
+  */
 
   return await db.transaction(async (tx) => {
     const cartTotal = await calculateCartTotal(tx, userId);

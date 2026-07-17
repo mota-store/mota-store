@@ -77,57 +77,76 @@ export default function Orders() {
           </div>
         ) : (
           <div className="space-y-4">
-            {orders.map((order) => (
+            {orders.filter(o => o.status !== 'cancelled').map((order) => (
               <motion.div
                 key={order.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
               >
                 <Card 
-                  className="p-6 bg-card/40 border-border/40 backdrop-blur-md rounded-2xl hover:border-accent/30 transition-all cursor-pointer group"
+                  className="p-4 md:p-6 bg-card/40 border-border/40 backdrop-blur-md rounded-2xl hover:border-accent/30 transition-all cursor-pointer group"
                   onClick={() => navigate(`/order/${order.id}`)}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-xl bg-accent/5 flex items-center justify-center border border-border/50 group-hover:scale-105 transition-transform">
-                        <ShoppingBag className="h-6 w-6 text-accent" />
+                      <div className="h-16 w-16 md:h-20 md:w-20 rounded-xl bg-accent/5 overflow-hidden border border-border/50 group-hover:scale-105 transition-transform flex items-center justify-center shrink-0">
+                        {order.items?.[0]?.product?.imageUrl ? (
+                          <img 
+                            src={order.items[0].product.imageUrl} 
+                            alt={order.items[0].product.name}
+                            className="w-full h-full object-cover aspect-[16/9]"
+                          />
+                        ) : (
+                          <ShoppingBag className="h-8 w-8 text-accent" />
+                        )}
                       </div>
-                      <div>
-                        <h3 className="font-black uppercase tracking-tight">Pedido #{order.id}</h3>
-                        <div className="flex flex-wrap items-center gap-3 text-[10px] font-bold text-muted-foreground mt-1">
-                          <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {new Date(order.createdAt).toLocaleDateString('pt-BR')}</span>
-                          <span className="flex items-center gap-1"><CreditCard className="h-3 w-3" /> R$ {((order.totalAmount ?? 0) / 100).toFixed(2).replace(".", ",")}</span>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-[10px] font-black text-accent uppercase tracking-widest">ID #{order.id}</span>
+                          <span className="text-[10px] font-bold text-muted-foreground">•</span>
+                          <span className="text-[10px] font-bold text-muted-foreground flex items-center gap-1">
+                            <Calendar className="h-3 w-3" /> {new Date(order.createdAt).toLocaleDateString('pt-BR')}
+                          </span>
+                        </div>
+                        <h3 className="font-black uppercase tracking-tight text-sm md:text-base truncate max-w-[200px] md:max-w-xs">
+                          {order.items?.[0]?.product?.name || "Pedido Mota Store"}
+                          {order.items?.length > 1 && <span className="text-accent ml-1">+{order.items.length - 1}</span>}
+                        </h3>
+                        <div className="flex items-center gap-3 text-[10px] font-bold text-muted-foreground mt-1">
+                          <span className="flex items-center gap-1 text-foreground">
+                            <CreditCard className="h-3 w-3 text-accent" /> 
+                            R$ {((order.totalAmount ?? 0) / 100).toFixed(2).replace(".", ",")}
+                          </span>
                         </div>
                       </div>
                     </div>
                     
-	                    <div className="flex items-center justify-between sm:justify-end gap-4">
-	                      {order.status === 'pending' && (
-	                        <Button
-	                          variant="ghost"
-	                          size="sm"
-	                          className="text-red-500 hover:text-red-600 hover:bg-red-500/10 font-black text-[10px] uppercase tracking-widest gap-1"
-	                          onClick={(e) => {
-	                            e.stopPropagation();
-	                            if (window.confirm("Deseja realmente cancelar este pedido?")) {
-	                              cancelOrder.mutate({ orderId: order.id });
-	                            }
-	                          }}
-	                          disabled={cancelOrder.isPending}
-	                        >
-	                          <XCircle className="h-3 w-3" />
-	                          Cancelar Pagamento
-	                        </Button>
-	                      )}
-	                      <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase ${
-	                        order.status === 'completed' ? 'bg-green-500/10 text-green-500' : 
-	                        order.status === 'pending' ? 'bg-amber-500/10 text-amber-500' : 'bg-red-500/10 text-red-500'
-	                      }`}>
-	                        {order.status === 'completed' ? 'Concluído' : order.status === 'pending' ? 'Pendente' : 'Cancelado'}
-	                      </span>
-                      <Button variant="ghost" size="sm" className="font-black text-[10px] uppercase tracking-widest gap-1 group-hover:text-accent">
-                        Ver Detalhes
-                        <ChevronRight className="h-3 w-3" />
+                    <div className="flex items-center justify-between sm:justify-end gap-3 md:gap-4">
+                      {order.status === 'pending' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-500 hover:text-red-600 hover:bg-red-500/10 font-black text-[10px] uppercase tracking-widest gap-1 h-8 md:h-10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm("Deseja realmente cancelar este pedido?")) {
+                              cancelOrder.mutate({ orderId: order.id });
+                            }
+                          }}
+                          disabled={cancelOrder.isPending}
+                        >
+                          <XCircle className="h-3 w-3" />
+                          Cancelar
+                        </Button>
+                      )}
+                      <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase ${
+                        order.status === 'completed' ? 'bg-green-500/10 text-green-500' : 
+                        order.status === 'pending' ? 'bg-amber-500/10 text-amber-500' : 'bg-red-500/10 text-red-500'
+                      }`}>
+                        {order.status === 'completed' ? 'Concluído' : order.status === 'pending' ? 'Pendente' : 'Cancelado'}
+                      </span>
+                      <Button variant="ghost" size="sm" className="font-black text-[10px] uppercase tracking-widest gap-1 group-hover:text-accent h-8 md:h-10">
+                        <ChevronRight className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
