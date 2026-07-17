@@ -89,15 +89,17 @@ export default function Orders() {
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
-                      <div className="h-16 w-16 md:h-20 md:w-20 rounded-xl bg-accent/5 overflow-hidden border border-border/50 group-hover:scale-105 transition-transform flex items-center justify-center shrink-0">
+                      <div className="h-16 w-16 md:h-20 md:w-20 rounded-xl bg-white overflow-hidden border border-border/50 group-hover:scale-105 transition-transform flex items-center justify-center shrink-0 shadow-inner">
                         {order.items?.[0]?.product?.imageUrl ? (
                           <img 
                             src={order.items[0].product.imageUrl} 
                             alt={order.items[0].product.name}
-                            className="w-full h-full object-contain p-1"
+                            className="w-full h-full object-contain p-1.5"
                           />
                         ) : (
-                          <ShoppingBag className="h-8 w-8 text-accent" />
+                          <div className="bg-accent/5 w-full h-full flex items-center justify-center">
+                            <ShoppingBag className="h-8 w-8 text-accent" />
+                          </div>
                         )}
                       </div>
                       <div className="min-w-0">
@@ -109,7 +111,7 @@ export default function Orders() {
                           </span>
                         </div>
                         <h3 className="font-black uppercase tracking-tight text-sm md:text-base truncate max-w-[200px] md:max-w-xs">
-                          {order.items?.[0]?.product?.name || "Pedido Mota Store"}
+                          {order.items?.[0]?.product?.name || order.items?.[0]?.name || "Pedido Mota Store"}
                           {order.items?.length > 1 && <span className="text-accent ml-1">+{order.items.length - 1}</span>}
                         </h3>
                         <div className="flex items-center gap-3 text-[10px] font-bold text-muted-foreground mt-1">
