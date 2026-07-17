@@ -118,11 +118,19 @@ function AdminDashboard() {
 
   // Admin mutations
   const addUserBalance = trpc.admin.addUserBalance.useMutation({
-    onSuccess: () => { refetchUsers(); toast.success("Saldo atualizado!"); },
+    onSuccess: (data: any, variables: any) => { 
+      refetchUsers(); 
+      const amountFormatted = (variables.amount / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      toast.success(`Saldo creditado: ${amountFormatted}`); 
+    },
     onError: () => toast.error("Erro ao atualizar saldo"),
   });
   const deductUserBalance = trpc.admin.deductUserBalance.useMutation({
-    onSuccess: () => { refetchUsers(); toast.success("Saldo debitado!"); },
+    onSuccess: (data: any, variables: any) => { 
+      refetchUsers(); 
+      const amountFormatted = (variables.amount / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      toast.success(`Saldo debitado: ${amountFormatted}`); 
+    },
     onError: () => toast.error("Erro ao debitar saldo"),
   });
   const deleteUser = trpc.admin.deleteUser.useMutation({
@@ -341,32 +349,36 @@ function AdminDashboard() {
 		                    <div className="pt-4 space-y-2">
                           <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Gestão de Conta</p>
 		                      <div className="flex flex-wrap gap-2">
-	                            {user.role === 'banned' ? (
-	                              <Button
-	                                variant="default"
-	                                size="sm"
-	                                disabled={unbanUser.isPending}
-	                                onClick={() => unbanUser.mutate({ userId: user.id })}
-	                                className="bg-green-600 hover:bg-green-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl h-10"
-	                              >
-	                                Desbanir Usuário
-	                              </Button>
-	                            ) : (
-	                              <Button
-	                                variant="destructive"
-	                                size="sm"
-	                                disabled={banUser.isPending}
-	                                onClick={() => {
-	                                  const reason = window.prompt("Motivo do banimento:");
-	                                  if (reason !== null) {
-	                                    banUser.mutate({ userId: user.id, reason });
-	                                  }
-	                                }}
-	                                className="font-black text-[10px] uppercase tracking-widest rounded-xl h-10"
-	                              >
-	                                Banir Usuário
-	                              </Button>
-	                            )}
+		                            {user.role === 'banned' ? (
+		                              <Button
+		                                variant="default"
+		                                size="sm"
+		                                disabled={unbanUser.isPending}
+		                                onClick={(e) => {
+		                                  e.stopPropagation();
+		                                  unbanUser.mutate({ userId: user.id });
+		                                }}
+		                                className="bg-green-600 hover:bg-green-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl h-10"
+		                              >
+		                                Desbanir Usuário
+		                              </Button>
+		                            ) : (
+		                              <Button
+		                                variant="destructive"
+		                                size="sm"
+		                                disabled={banUser.isPending}
+		                                onClick={(e) => {
+		                                  e.stopPropagation();
+		                                  const reason = window.prompt("Motivo do banimento:");
+		                                  if (reason !== null) {
+		                                    banUser.mutate({ userId: user.id, reason });
+		                                  }
+		                                }}
+		                                className="font-black text-[10px] uppercase tracking-widest rounded-xl h-10"
+		                              >
+		                                Banir Usuário
+		                              </Button>
+		                            )}
                             <Button
                               variant="outline"
                               size="sm"

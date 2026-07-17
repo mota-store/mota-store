@@ -55,10 +55,28 @@ export function Header({ onSearch, searchQuery = "" }: HeaderProps) {
 
   const filteredProducts = React.useMemo(() => {
     if (!products || !localSearchQuery.trim()) return [];
-    return products.filter(p => 
-      p.name.toLowerCase().includes(localSearchQuery.toLowerCase()) ||
-      p.description?.toLowerCase().includes(localSearchQuery.toLowerCase())
-    ).slice(0, 5);
+    const query = localSearchQuery.toLowerCase();
+    return products
+      .filter(p => 
+        p.name.toLowerCase().includes(query) ||
+        p.description?.toLowerCase().includes(query)
+      )
+      .sort((a, b) => {
+        // Prioridade 1: Nome começa com a letra pesquisada
+        const aStarts = a.name.toLowerCase().startsWith(query);
+        const bStarts = b.name.toLowerCase().startsWith(query);
+        if (aStarts && !bStarts) return -1;
+        if (!aStarts && bStarts) return 1;
+
+        // Prioridade 2: Nome contém a letra pesquisada
+        const aContains = a.name.toLowerCase().includes(query);
+        const bContains = b.name.toLowerCase().includes(query);
+        if (aContains && !bContains) return -1;
+        if (!aContains && bContains) return 1;
+
+        return 0;
+      })
+      .slice(0, 5);
   }, [products, localSearchQuery]);
 
   const handleProductClick = (productId: number) => {
