@@ -94,7 +94,7 @@ export default function Orders() {
                           <img 
                             src={order.items[0].product.imageUrl} 
                             alt={order.items[0].product.name}
-                            className="w-full h-full object-cover aspect-[16/9]"
+                            className="w-full h-full object-contain p-1"
                           />
                         ) : (
                           <ShoppingBag className="h-8 w-8 text-accent" />
