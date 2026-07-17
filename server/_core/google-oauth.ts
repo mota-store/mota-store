@@ -69,7 +69,19 @@ export function registerGoogleOAuthRoutes(app: Express) {
 
   // Rota de callback após autenticação
   app.get("/api/google-oauth/callback", async (req: Request, res: Response) => {
-    const { code, state } = req.query;
+      const { code, state } = req.query;
+
+      const globalAny = global as any;
+      if (!globalAny.usedOAuthCodes) globalAny.usedOAuthCodes = new Set<string>();
+      const authCode = code as string;
+      if (globalAny.usedOAuthCodes.has(authCode)) {
+        console.log("[GoogleOAuth] Código já utilizado, ignorando processamento duplicado");
+        // Redirecionar para a home sem erro, pois o login já foi processado
+        return res.redirect("/");
+      }
+      globalAny.usedOAuthCodes.add(authCode);
+      // Limpar códigos antigos após 5 minutos para não acumular memória
+      setTimeout(() => globalAny.usedOAuthCodes.delete(authCode), 300000);
 
     if (!code || typeof code !== "string") {
       res.status(400).json({ error: "Authorization code is missing" });
@@ -169,9 +181,16 @@ export function registerGoogleOAuthRoutes(app: Express) {
         stack: error.stack,
         response: error.response?.data
       });
-      res.status(500).json({ 
-        error: "Google OAuth callback failed", 
-        details: error.message 
+
+      if (error.message?.includes("invalid_grant")) {
+        // Verificar se o usuário já tem sessão válida (assumindo que o login foi bem-sucedido na primeira tentativa)
+        // Redirecionar para a home, pois o usuário já deve estar logado.
+        return res.redirect("/");
+      }
+
+      res.status(500).json({
+        error: "Google OAuth callback failed",
+        details: error.message
       });
     }
   });

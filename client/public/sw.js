@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mota-store-v1';
+const CACHE_NAME = 'mota-store-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
