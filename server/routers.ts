@@ -147,6 +147,16 @@ export const appRouter = router({
     requestPasswordReset: publicProcedure
       .input(z.object({ email: z.string().email() }))
       .mutation(async ({ input }) => {
+        // Trava global de memória para evitar envios duplicados em rajada
+        const globalAny = global as any;
+        if (!globalAny.lastResetEmailSent) globalAny.lastResetEmailSent = new Map<string, number>();
+        const lastSent = globalAny.lastResetEmailSent.get(input.email) || 0;
+        if (Date.now() - lastSent < 60000) {
+          console.log(`[requestPasswordReset] Ignorando envio duplicado para ${input.email}`);
+          return { success: true };
+        }
+        globalAny.lastResetEmailSent.set(input.email, Date.now());
+
         const { getUserByEmail, setResetToken } = await import("./db");
         const crypto = await import("crypto");
         
@@ -187,42 +197,30 @@ export const appRouter = router({
       .input(z.object({ digits: z.number().min(4).max(6).default(6) }).optional())
       .mutation(async ({ ctx, input }) => {
         const { setResetToken, getUserByOpenId } = await import("./db");
-        
-        // Trava global por memória para evitar rajadas (bursts) rápidas que o DB pode não pegar a tempo
-        const globalAny = global as any;
-        if (!globalAny.lastVerificationSent) globalAny.lastVerificationSent = new Map<string, number>();
-        const lastSentMemory = globalAny.lastVerificationSent.get(ctx.user.email!) || 0;
-        if (Date.now() - lastSentMemory < 10000) { // 10 segundos de trava de memória
-          return { success: true, alreadySent: true };
-        }
-        globalAny.lastVerificationSent.set(ctx.user.email!, Date.now());
 
-        // Verificar se já existe um código enviado recentemente no banco (menos de 30 segundos)
+        // Verificar se já existe um código válido recente no banco (menos de 9 minutos)
         const user = await getUserByOpenId(ctx.user.openId);
         if (user?.resetTokenExpires) {
           const now = new Date();
           const expires = new Date(user.resetTokenExpires);
           const diffSeconds = (expires.getTime() - now.getTime()) / 1000;
-          if (diffSeconds > 570) {
+          if (diffSeconds > 540) { // Código enviado há menos de 60 segundos
             return { success: true, alreadySent: true };
           }
         }
-        
+
         const digits = input?.digits || 6;
         const min = Math.pow(10, digits - 1);
         const max = Math.pow(10, digits) - 1;
         const code = Math.floor(min + Math.random() * (max - min + 1)).toString();
-        const expires = new Date(Date.now() + 600000);
+        const expires = new Date(Date.now() + 600000); // 10 minutos
 
         await setResetToken(ctx.user.id, code, expires);
-        
+
         console.log(`[VerificationCode] Disparando e-mail de código para: ${ctx.user.email}`);
-        await emailService.sendVerificationCodeEmail(ctx.user.email!, ctx.user.name || "Cliente", code).then(sent => {
-          console.log(`[VerificationCode] Status do envio de código: ${sent ? 'Sucesso' : 'Falha'}`);
-        }).catch(e => {
-          console.error("[VerificationCode] Failed to send code email:", e);
-        });
-        
+        const emailService = await import("./email");
+        await emailService.sendVerificationCodeEmail(ctx.user.email!, ctx.user.name || "Cliente", code);
+
         return { success: true };
       }),
 

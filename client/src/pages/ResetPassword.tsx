@@ -20,23 +20,33 @@ export default function ResetPassword() {
   const [showPassword, setShowPassword] = useState(false);
   const [success, setSuccess] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+
+  React.useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setTimeout(() => setCooldown(c => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [cooldown]);
 
   const resetMutation = trpc.auth.resetPassword.useMutation();
-  const requestResetMutation = trpc.auth.requestPasswordReset.useMutation();
+  const requestResetMutation = trpc.auth.requestPasswordReset.useMutation({
+    onSuccess: () => {
+      setEmailSent(true);
+      setCooldown(60);
+      toast.success("E-mail de recuperação enviado!");
+    },
+    onError: (err: any) => toast.error("Erro ao solicitar recuperação: " + err.message),
+  });
 
   const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (requestResetMutation.isPending || (emailSent && cooldown > 0)) return;
+    
     setLoading(true);
     try {
-      const result = await requestResetMutation.mutateAsync({ email });
-      if (result.success) {
-        setEmailSent(true);
-        toast.success("E-mail de recuperação enviado!");
-      } else {
-        toast.error("Erro ao solicitar recuperação");
-      }
+      await requestResetMutation.mutateAsync({ email });
     } catch (err) {
-      toast.error("Erro ao processar solicitação");
+      // Erro já tratado no onError do useMutation
     } finally {
       setLoading(false);
     }
@@ -83,7 +93,25 @@ export default function ResetPassword() {
                   <Zap className="h-10 w-10 text-accent" />
                 </div>
                 <h2 className="text-3xl font-black mb-4 uppercase tracking-tighter">E-MAIL ENVIADO!</h2>
-                <p className="text-muted-foreground mb-10 font-medium">Verifique sua caixa de entrada para redefinir sua senha.</p>
+                <p className="text-muted-foreground mb-6 font-medium">Verifique sua caixa de entrada para redefinir sua senha.</p>
+                
+                <div className="flex items-center justify-center mb-8">
+                  <button
+                    type="button"
+                    disabled={cooldown > 0 || requestResetMutation.isPending}
+                    onClick={handleRequestReset}
+                    className={`text-xs font-bold transition-colors ${
+                      cooldown > 0
+                        ? "text-muted-foreground cursor-not-allowed"
+                        : "text-accent hover:text-accent/80 cursor-pointer"
+                    }`}
+                  >
+                    {cooldown > 0
+                      ? `Reenviar e-mail em ${cooldown}s`
+                      : "Não recebeu o e-mail? Reenviar"}
+                  </button>
+                </div>
+
                 <Button 
                   className="w-full h-14 bg-accent dark:text-black hover:bg-accent/90 text-accent-foreground font-black rounded-xl"
                   onClick={() => navigate("/login")}
@@ -120,9 +148,9 @@ export default function ResetPassword() {
                   <Button
                     type="submit"
                     className="w-full bg-accent hover:bg-accent/90 text-accent-foreground h-14 rounded-xl font-black text-lg shadow-lg shadow-accent/20"
-                    disabled={loading}
+                    disabled={loading || requestResetMutation.isPending || emailSent}
                   >
-                    {loading ? "ENVIANDO..." : "ENVIAR LINK"}
+                    {loading || requestResetMutation.isPending ? "ENVIANDO..." : emailSent ? "E-MAIL ENVIADO" : "ENVIAR LINK"}
                   </Button>
                   
                   <div className="text-center">

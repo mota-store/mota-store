@@ -75,6 +75,13 @@ export default function Profile() {
   const [deleteVerificationCode, setDeleteVerificationCode] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const [showNameConfirm, setShowNameConfirm] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setTimeout(() => setCooldown(c => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [cooldown]);
 
   const deleteAccountMutation = trpc.auth.deleteAccount.useMutation({
     onSuccess: () => {
@@ -108,11 +115,12 @@ export default function Profile() {
   const nameChanged = name !== user?.name && name.length > 4;
 
   const handleSendCode = async (digits: number = 6) => {
-    if (isSendingCode) return;
+    if (isSendingCode || cooldown > 0) return;
     try {
       setIsSendingCode(true);
       await requestCodeMutation.mutateAsync({ digits });
       setCodeSent(true);
+      setCooldown(60);
       toast.success(`Código de ${digits} dígitos enviado para seu e-mail!`);
     } catch (err: any) {
       toast.error("Erro ao enviar código: " + err.message);
@@ -508,6 +516,22 @@ export default function Profile() {
                         placeholder="0000"
                         maxLength={4}
                       />
+                      <div className="flex items-center justify-center mt-2">
+                        <button
+                          type="button"
+                          disabled={cooldown > 0 || isSendingCode}
+                          onClick={() => handleSendCode(4)}
+                          className={`text-xs font-bold transition-colors ${
+                            cooldown > 0
+                              ? "text-muted-foreground cursor-not-allowed"
+                              : "text-accent hover:text-accent/80 cursor-pointer"
+                          }`}
+                        >
+                          {cooldown > 0
+                            ? `Reenviar código em ${cooldown}s`
+                            : "Não recebeu o código? Reenviar"}
+                        </button>
+                      </div>
                     </div>
                   )}
 
@@ -655,6 +679,22 @@ export default function Profile() {
                     placeholder="000000"
                     maxLength={6}
                   />
+                  <div className="flex items-center justify-center mt-1">
+                    <button
+                      type="button"
+                      disabled={cooldown > 0 || isSendingCode}
+                      onClick={() => handleSendCode(6)}
+                      className={`text-xs font-bold transition-colors ${
+                        cooldown > 0
+                          ? "text-muted-foreground cursor-not-allowed"
+                          : "text-accent hover:text-accent/80 cursor-pointer"
+                      }`}
+                    >
+                      {cooldown > 0
+                        ? `Reenviar código em ${cooldown}s`
+                        : "Não recebeu o código? Reenviar"}
+                    </button>
+                  </div>
                   <div className="flex gap-3">
                     <Button
                       onClick={() => {
