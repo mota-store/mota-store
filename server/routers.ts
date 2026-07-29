@@ -71,7 +71,31 @@ export const appRouter = router({
     login: publicProcedure
       .input(z.object({ email: z.string().email(), password: z.string() }))
       .mutation(async ({ input, ctx }) => {
+        // Rate Limiting para evitar brute force
+        const globalAny = global as any;
+        if (!globalAny.loginAttempts) globalAny.loginAttempts = new Map<string, { count: number, lastAttempt: number }>();
+        
+        const clientIp = ctx.req.ip || ctx.req.headers['x-forwarded-for'] || 'unknown';
+        const attempt = globalAny.loginAttempts.get(clientIp) || { count: 0, lastAttempt: 0 };
+        const now = Date.now();
+
+        // Bloqueio de 15 minutos se houver mais de 5 tentativas erradas
+        if (attempt.count >= 5 && now - attempt.lastAttempt < 15 * 60 * 1000) {
+          const minutesLeft = Math.ceil((15 * 60 * 1000 - (now - attempt.lastAttempt)) / 60000);
+          throw new Error(`Muitas tentativas. Tente novamente em ${minutesLeft} minutos.`);
+        }
+
         const result = await loginUser(input.email, input.password);
+        
+        if (!result.success) {
+          globalAny.loginAttempts.set(clientIp, { 
+            count: attempt.count + 1, 
+            lastAttempt: now 
+          });
+        } else {
+          // Limpa tentativas após login com sucesso
+          globalAny.loginAttempts.delete(clientIp);
+        }
         if (result.success && result.user) {
           const { sdk } = await import("./_core/sdk");
           const token = await sdk.createSessionToken(result.user.openId, {

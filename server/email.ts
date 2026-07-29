@@ -1,17 +1,27 @@
 import { google } from 'googleapis';
 
-const GMAIL_USER = process.env.GMAIL_USER || 'arthurmotapaiva@gmail.com';
-const GMAIL_CLIENT_ID = process.env.GMAIL_CLIENT_ID || '1067935514097-gogg5cvuka13k514q2sju3ma0bak0ikr.apps.googleusercontent.com';
-const GMAIL_CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET || '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';
-const GMAIL_REFRESH_TOKEN = process.env.GMAIL_REFRESH_TOKEN || '';
+// Carregar variáveis de ambiente com segurança
+const GMAIL_USER = process.env.GMAIL_USER;
+const GMAIL_CLIENT_ID = process.env.GMAIL_CLIENT_ID;
+const GMAIL_CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET;
+const GMAIL_REFRESH_TOKEN = process.env.GMAIL_REFRESH_TOKEN;
 const APP_URL = process.env.APP_URL || 'https://mota-store.shop';
 
-const oauth2Client = new google.auth.OAuth2(GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, 'https://developers.google.com/oauthplayground');
-oauth2Client.setCredentials({ refresh_token: GMAIL_REFRESH_TOKEN });
-const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+/**
+ * Configuração do Cliente OAuth2
+ * IMPORTANTE: Nunca coloque chaves diretamente aqui. Use o arquivo .env
+ */
+const oauth2Client = new google.auth.OAuth2(
+  GMAIL_CLIENT_ID,
+  GMAIL_CLIENT_SECRET,
+  'https://developers.google.com/oauthplayground'
+);
 
-// URL da imagem enviada pelo usuário (Banner da Mota Store)
-const BANNER_IMAGE_URL = 'https://mota-store.shop/assets/email-banner.png'; // Link direto para o ativo no servidor
+if (GMAIL_REFRESH_TOKEN) {
+  oauth2Client.setCredentials({ refresh_token: GMAIL_REFRESH_TOKEN });
+}
+
+const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 
 /**
  * Função interna para criar e codificar o e-mail de forma simplificada
@@ -34,18 +44,24 @@ function createRawMessage(options: { to: string; subject: string; html: string; 
 }
 
 async function sendMail(options: { to: string; subject: string; html: string; text: string }) {
-  if (!GMAIL_REFRESH_TOKEN) return false;
+  if (!GMAIL_REFRESH_TOKEN || !GMAIL_CLIENT_ID || !GMAIL_CLIENT_SECRET || !GMAIL_USER) {
+    console.error("[Email] Erro: Credenciais do Gmail ausentes no ambiente (.env)");
+    return false;
+  }
+
   try {
     const raw = createRawMessage(options);
     await gmail.users.messages.send({ userId: 'me', requestBody: { raw } });
+    console.log(`[Email] Sucesso: E-mail enviado para ${options.to}`);
     return true;
   } catch (error: any) {
-    console.error(`[Email] ERRO: ${error.message}`);
+    console.error(`[Email] ERRO ao enviar para ${options.to}: ${error.message}`);
+    // Se o erro for de token expirado, isso será registrado aqui
     return false;
   }
 }
 
-// TEMPLATE PRETO E BRANCO ULTRA SIMPLIFICADO (Evita SPAM)
+// LAYOUT PADRÃO DA LOJA
 const SIMPLE_LAYOUT = (content: string) => `
   <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #000; line-height: 1.6; border: 1px solid #eee;">
     <div style="text-align: center; background-color: #000; padding: 0;">
