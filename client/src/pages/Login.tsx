@@ -134,10 +134,61 @@ export default function Login() {
     }
   };
 
+  // Função para alternar entre login e registro com View Transition
+  const handleToggleTab = () => {
+    if (document.startViewTransition) {
+      document.startViewTransition(() => {
+        setIsRegister(!isRegister);
+        setError("");
+      });
+    } else {
+      // Fallback para navegadores que não suportam View Transitions
+      setIsRegister(!isRegister);
+      setError("");
+    }
+  };
+
   const strength = getPasswordStrength(password);
 
   return (
     <div className="h-screen relative flex items-center justify-center p-4 overflow-hidden touch-none">
+      <style>{`
+        ::view-transition-old(login-form),
+        ::view-transition-new(login-form) {
+          animation-duration: 0.6s;
+        }
+
+        ::view-transition-old(login-form) {
+          animation: slideOutLeft 0.6s ease-in-out forwards;
+        }
+
+        ::view-transition-new(login-form) {
+          animation: slideInRight 0.6s ease-in-out forwards;
+        }
+
+        @keyframes slideOutLeft {
+          from {
+            opacity: 1;
+            transform: translateX(0);
+          }
+          to {
+            opacity: 0;
+            transform: translateX(-100px);
+          }
+        }
+
+        @keyframes slideInRight {
+          from {
+            opacity: 0;
+            transform: translateX(100px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+      `}</style>
+
       <BannedModal 
         isOpen={isBannedModalOpen} 
         onClose={() => setIsBannedModalOpen(false)} 
@@ -162,6 +213,7 @@ export default function Login() {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className="relative z-20 w-full max-w-md"
+        style={{ viewTransitionName: "login-form" }}
       >
         <Button
           variant="ghost"
@@ -335,16 +387,13 @@ export default function Login() {
           </div>
 
           <div className="mt-6 text-center">
-<button
-	              type="button"
-	              onClick={() => {
-	                setIsRegister(!isRegister);
-	                setError("");
-	              }}
-	              className="text-xs font-black text-white hover:underline uppercase tracking-widest"
-	            >
-	              <span className={`${isRegister ? "-mt-[200px]" : "-mt-[135px]"} inline-block`}>{isRegister ? "Já tenho uma conta" : "Criar nova conta"}</span>
-	            </button>
+            <button
+              type="button"
+              onClick={handleToggleTab}
+              className="text-xs font-black text-white hover:underline uppercase tracking-widest"
+            >
+              <span className={`${isRegister ? "-mt-[200px]" : "-mt-[135px]"} inline-block`}>{isRegister ? "Já tenho uma conta" : "Criar nova conta"}</span>
+            </button>
           </div>
         </div>
       </motion.div>
